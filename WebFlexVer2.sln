@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebFlex.Shared", "WebFlex.Shared\WebFlex.Shared.csproj", "{7B1C0C18-722C-49C8-BD11-7F0B18DDB3B7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebFlex.UI", "WebFlex.UI\WebFlex.UI.csproj", "{86C5FFD0-7FB9-42A7-8C17-A3C1070CA517}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebFlex.OpcCollector", "WebFlex.OpcCollector\WebFlex.OpcCollector.csproj", "{8F693060-3ED7-4CAB-A5F2-FD98FACFD80B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7B1C0C18-722C-49C8-BD11-7F0B18DDB3B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7B1C0C18-722C-49C8-BD11-7F0B18DDB3B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7B1C0C18-722C-49C8-BD11-7F0B18DDB3B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7B1C0C18-722C-49C8-BD11-7F0B18DDB3B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86C5FFD0-7FB9-42A7-8C17-A3C1070CA517}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86C5FFD0-7FB9-42A7-8C17-A3C1070CA517}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86C5FFD0-7FB9-42A7-8C17-A3C1070CA517}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86C5FFD0-7FB9-42A7-8C17-A3C1070CA517}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F693060-3ED7-4CAB-A5F2-FD98FACFD80B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F693060-3ED7-4CAB-A5F2-FD98FACFD80B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F693060-3ED7-4CAB-A5F2-FD98FACFD80B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F693060-3ED7-4CAB-A5F2-FD98FACFD80B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
