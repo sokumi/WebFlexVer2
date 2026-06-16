@@ -25,10 +25,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\" />
     <Folder Include="Worker\" />
-    <Folder Include="Runtime\" />
-    <Folder Include="Options\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 </Project>
