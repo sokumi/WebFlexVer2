@@ -7,7 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Scripts\src\ts\Views\device\dvc1000.ts" />
+    <Content Include="Scripts\src\ts\framework\common.ts" />
+    <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\views\device\dvc1000.ts" />
     <Content Include="webpack.config.js" />
   </ItemGroup>
 

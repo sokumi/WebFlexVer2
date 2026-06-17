@@ -4,6 +4,38 @@ const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 const tsRoot = path.resolve(__dirname, "Scripts/src/ts");
 const viewsRoot = path.resolve(tsRoot, "views");
+const tempRoot = path.resolve(__dirname, "Scripts/.generated");
+
+function ensureDir(dir) {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+    }
+}
+
+function toImportPath(filePath) {
+    return filePath.replace(/\\/g, "/");
+}
+
+function createPageWrapper(entryName, sourcePath) {
+    ensureDir(tempRoot);
+
+    const safeName = entryName.replace(/[\\/]/g, "__");
+    const wrapperPath = path.join(tempRoot, `${safeName}.ts`);
+
+    let importPath = path.relative(path.dirname(wrapperPath), sourcePath);
+    importPath = "./" + importPath.replace(/\\/g, "/").replace(/\.ts$/, "");
+
+    const content = `
+import Page from "${importPath}";
+import { runPage } from "../src/ts/framework/page";
+
+runPage(Page);
+`;
+
+    fs.writeFileSync(wrapperPath, content.trim(), "utf8");
+
+    return wrapperPath;
+}
 
 function getViewEntries(dir, prefix = "views") {
     const entries = {};
@@ -18,11 +50,7 @@ function getViewEntries(dir, prefix = "views") {
         const fullPath = path.join(dir, item.name);
 
         if (item.isDirectory()) {
-            Object.assign(
-                entries,
-                getViewEntries(fullPath, `${prefix}/${item.name}`)
-            );
-
+            Object.assign(entries, getViewEntries(fullPath, `${prefix}/${item.name}`));
             continue;
         }
 
@@ -33,7 +61,7 @@ function getViewEntries(dir, prefix = "views") {
         const name = item.name.replace(/\.ts$/, "");
         const entryName = `${prefix}/${name}`;
 
-        entries[entryName] = fullPath;
+        entries[entryName] = createPageWrapper(entryName, fullPath);
     }
 
     return entries;
