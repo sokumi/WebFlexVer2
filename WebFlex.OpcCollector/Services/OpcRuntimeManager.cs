@@ -40,9 +40,14 @@ public class OpcRuntimeManager {
             await ReloadTargetsAsync(cancellationToken);
         }
 
-        if ((nowUtc - _lastSaveAt).TotalMilliseconds >= _options.SaveIntervalMilliseconds) {
+        var nowSecond = new DateTime(
+            nowUtc.Year, nowUtc.Month, nowUtc.Day,
+            nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
+            DateTimeKind.Utc);
+
+        if (nowSecond != _lastSaveAt) {
             var count = _opcUaRuntimeService.EnqueueCurrentValuesSnapshot();
-            _lastSaveAt = nowUtc;
+            _lastSaveAt = nowSecond;
 
             if (count > 0) {
                 _logger.LogInformation(
