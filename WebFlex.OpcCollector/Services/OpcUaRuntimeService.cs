@@ -98,8 +98,7 @@ public class OpcUaRuntimeService {
                     continue;
                 }
 
-                await ReadInitialValueAsync(runtime, tag, cancellationToken);
-
+                // 초기값 읽기 제거 — 구독 후 KEPServer가 값을 바로 밀어줌
                 runtime.Subscription.AddItem(item);
                 runtime.Items[tag.NodeId] = item;
                 runtime.Tags[tag.NodeId] = tag;
@@ -108,7 +107,7 @@ public class OpcUaRuntimeService {
 
             if (addedCount > 0) {
                 await runtime.Subscription.ApplyChangesAsync();
-                 
+
             }
 
             _logger.LogInformation(
@@ -174,15 +173,16 @@ public class OpcUaRuntimeService {
     }
 
     private async Task ReadInitialValueAsync(
-    OpcDeviceRuntime runtime,
-    OpcCollectTargetTagDto tag,
-    CancellationToken cancellationToken) {
+        OpcDeviceRuntime runtime,
+        OpcCollectTargetTagDto tag,
+        CancellationToken cancellationToken) {
         try {
             var nodeId = NodeId.Parse(tag.NodeId);
             var value = await runtime.Session.ReadValueAsync(nodeId);
 
             var nowUtc = DateTime.UtcNow;
 
+            // Bad여도 CurrentValues에 넣음 — 구독 후 정상값으로 업데이트됨
             runtime.CurrentValues[tag.NodeId] = new OpcCurrentRuntimeValue {
                 EndpointUrl = runtime.EndpointUrl,
                 NodeId = tag.NodeId,
@@ -195,14 +195,35 @@ public class OpcUaRuntimeService {
                 SaveToDatabase = tag.SaveToDatabase
             };
 
-            runtime.LastConnectionOkTime = nowUtc;
-             
+            if (StatusCode.IsGood(value.StatusCode)) {
+                runtime.LastConnectionOkTime = nowUtc;
+            } else {
+                // Bad는 오류가 아니라 정상 상황 — 채널 오프라인 등
+                _logger.LogDebug(
+                    "OPC 초기값 Bad | Device={DeviceName} | NodeId={NodeId} | Status={Status}",
+                    runtime.DeviceName,
+                    tag.NodeId,
+                    value.StatusCode);
+            }
         } catch (Exception ex) {
-            _logger.LogError(
-                ex,
-                "OPC 초기값 읽기 실패 | Device={DeviceName} | NodeId={NodeId}",
+            // ReadValueAsync가 Bad 상태를 예외로 던지는 경우 — CurrentValues에 Bad로 넣어둠
+            _logger.LogDebug(
+                "OPC 초기값 읽기 예외 | Device={DeviceName} | NodeId={NodeId} | {Message}",
                 runtime.DeviceName,
-                tag.NodeId);
+                tag.NodeId,
+                ex.Message);
+
+            var nowUtc = DateTime.UtcNow;
+
+            runtime.CurrentValues[tag.NodeId] = new OpcCurrentRuntimeValue {
+                EndpointUrl = runtime.EndpointUrl,
+                NodeId = tag.NodeId,
+                Value = null,
+                Status = "Bad",
+                SourceTimestamp = null,
+                ReceivedAt = nowUtc,
+                SaveToDatabase = tag.SaveToDatabase
+            };
         }
     }
 
@@ -301,7 +322,7 @@ public class OpcUaRuntimeService {
                         runtime.EndpointUrl);
                 }
             });
-             
+
         }
     }
 
@@ -369,7 +390,7 @@ public class OpcUaRuntimeService {
                 count++;
             }
         }
-         
+
 
         return count;
     }

@@ -62,7 +62,10 @@ public class DeviceController : Controller {
     }
 
     [HttpGet, ActionName("browse")]
-    public async Task<IActionResult> Browse(long deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> Browse(
+     long deviceId,
+     bool onlyCollectable = true,
+     CancellationToken cancellationToken = default) {
         var device = await _db.OpcDevices
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
@@ -76,7 +79,10 @@ public class DeviceController : Controller {
         }
 
         try {
-            var nodes = await _opcBrowseService.BrowseAsync(device, cancellationToken);
+            var nodes = await _opcBrowseService.BrowseAsync(
+     device,
+     onlyCollectable,
+     cancellationToken);
             return Json(ApiResponse<List<DeviceNodeDto>>.Ok(nodes));
         } catch (Exception ex) {
             return Json(ApiResponse<List<DeviceNodeDto>>.Fail(ex.Message));

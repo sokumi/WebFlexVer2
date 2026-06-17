@@ -59,7 +59,8 @@ __webpack_require__.r(__webpack_exports__);
                 return;
             }
             try {
-                const res = await this.get(`/device/browse?deviceId=${this.selectedDeviceId}`);
+                const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
+                const res = await this.get(`/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`);
                 if (!res.success) {
                     alert((_a = res.message) !== null && _a !== void 0 ? _a : "노드 조회에 실패했습니다.");
                     return;
@@ -203,13 +204,16 @@ __webpack_require__.r(__webpack_exports__);
             </div>
         `);
         if (isVariable) {
+            const euText = node.engineeringUnit ? ` [${node.engineeringUnit}]` : "";
+            const descText = node.description ? ` — ${node.description}` : "";
             const $label = $(`
-                <label>
-                    <input type="checkbox" ${checked ? "checked" : ""} />
-                    <span>${node.displayName}</span>
-                    <small>${node.nodeId}</small>
-                </label>
-            `);
+    <label>
+        <input type="checkbox" ${checked ? "checked" : ""} />
+        <span>${node.displayName}${euText}</span>
+        <small>${node.nodeId}</small>
+        <span class="node-meta">${node.dataType}${descText} · ${node.accessLevel}</span>
+    </label>
+`);
             $label.find("input").on("change", (e) => {
                 const checked = $(e.currentTarget).prop("checked") === true;
                 this.toggleNode(node, checked);

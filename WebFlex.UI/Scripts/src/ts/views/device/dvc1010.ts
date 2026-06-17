@@ -19,6 +19,9 @@ type DeviceNode = {
     nodeClass: string;
     dataType: string;
     hasChildren: boolean;
+    description: string;
+    accessLevel: string;
+    engineeringUnit: string;
 };
 
 type TreeNode = DeviceNode & {
@@ -97,8 +100,10 @@ export default class {
         }
 
         try {
+            const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
+
             const res = await this.get<ApiResponse<DeviceNode[]>>(
-                `/device/browse?deviceId=${this.selectedDeviceId}`
+                `/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
             );
 
             if (!res.success) {
@@ -242,13 +247,17 @@ export default class {
         `);
 
         if (isVariable) {
+            const euText = node.engineeringUnit ? ` [${node.engineeringUnit}]` : "";
+            const descText = node.description ? ` — ${node.description}` : "";
+
             const $label = $(`
-                <label>
-                    <input type="checkbox" ${checked ? "checked" : ""} />
-                    <span>${node.displayName}</span>
-                    <small>${node.nodeId}</small>
-                </label>
-            `);
+    <label>
+        <input type="checkbox" ${checked ? "checked" : ""} />
+        <span>${node.displayName}${euText}</span>
+        <small>${node.nodeId}</small>
+        <span class="node-meta">${node.dataType}${descText} · ${node.accessLevel}</span>
+    </label>
+`);
 
             $label.find("input").on("change", (e) => {
                 const checked = $(e.currentTarget).prop("checked") === true;
