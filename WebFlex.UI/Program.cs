@@ -14,7 +14,8 @@ builder.Services.AddDbContext<WebFlexDbContext>(options =>
 builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));
 
-// Add services to the container.
+builder.Services.AddScoped<WebFlex.UI.Services.Device.OpcBrowseService>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();

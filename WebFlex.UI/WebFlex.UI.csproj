@@ -7,8 +7,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Scripts\src\ts\framework\common.ts" />
     <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\types\global.d.ts" />
+    <Content Include="Scripts\src\ts\views\device\dvc1010.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1000.ts" />
     <Content Include="webpack.config.js" />
   </ItemGroup>
@@ -19,7 +20,6 @@
 
   <ItemGroup>
     <Folder Include="Migrations\" />
-    <Folder Include="Services\" />
     <Folder Include="ViewModels\" />
   </ItemGroup>
 

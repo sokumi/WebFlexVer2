@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "디바이스 태그 관리";
+}
+
+<div class="page-device-tag">
+    <section class="page-toolbar">
+        <select id="selDevice">
+            <option value="">디바이스 선택</option>
+        </select>
+
+        <button id="btnBrowse" class="btn-basic" type="button">노드 불러오기</button>
+        <button id="btnSelectAll" class="btn-basic" type="button">전체 선택</button>
+        <button id="btnClearSelect" class="btn-basic" type="button">선택 해제</button>
+        <button id="btnSave" class="btn-basic" type="button">선택 태그 저장</button>
+        <button id="btnSearch" class="btn-basic" type="button">태그 조회</button>
+    </section>
+
+    <section class="tag-layout">
+        <div class="tag-panel">
+            <h3>디바이스 노드</h3>
+
+            <div id="nodeList" class="node-list"></div>
+        </div>
+
+        <div class="tag-panel">
+            <h3>선택 노드</h3>
+
+            <table class="basic-grid">
+                <thead>
+                    <tr>
+                        <th>NodeId</th>
+                        <th>DisplayName</th>
+                        <th>DataType</th>
+                    </tr>
+                </thead>
+                <tbody id="selectedNodeBody"></tbody>
+            </table>
+        </div>
+
+        <div class="tag-panel">
+            <h3>등록된 태그</h3>
+
+            <table class="basic-grid">
+                <thead>
+                    <tr>
+                        <th>태그코드</th>
+                        <th>태그명</th>
+                        <th>NodeId</th>
+                        <th>수집</th>
+                        <th>저장</th>
+                    </tr>
+                </thead>
+                <tbody id="tagBody"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/device/dvc1010.js" asp-append-version="true"></script>
+}

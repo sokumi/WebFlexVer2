@@ -11,6 +11,9 @@ public static class MVCPath {
 
     internal static class Device {
         public const string DVC1000 = "~/Views/Device/DVC1000.cshtml";
+        public const string DVC1010 = "~/Views/Device/DVC1010.cshtml";
+        public const string DVC2000 = "~/Views/Device/DVC2000.cshtml";
+        public const string DVC9000 = "~/Views/Device/DVC9000.cshtml";
     }
 
     internal static class Opc {

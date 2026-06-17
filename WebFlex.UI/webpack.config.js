@@ -75,7 +75,10 @@ module.exports = {
     },
     output: {
         filename: "[name].js",
-        path: path.resolve(__dirname, "wwwroot/1.0.0/js")
+        path: path.resolve(__dirname, "wwwroot/1.0.0/js"),
+        devtoolModuleFilenameTemplate: info => {
+            return "file:///" + path.resolve(info.absoluteResourcePath).replace(/\\/g, "/");
+        }
     },
     devtool: "source-map",
     resolve: {

@@ -1,0 +1,134 @@
+﻿.page-device {
+    height: 100%;
+}
+
+.page-toolbar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.page-body {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 12px;
+}
+
+.basic-grid {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+}
+
+    .basic-grid th,
+    .basic-grid td {
+        border: 1px solid #dddddd;
+        padding: 6px 8px;
+        font-size: 13px;
+    }
+
+    .basic-grid tbody tr {
+        cursor: pointer;
+    }
+
+        .basic-grid tbody tr:hover {
+            background: #f2f2f8;
+        }
+
+.page-right {
+    border: 1px solid #dddddd;
+    padding: 10px;
+    background: #ffffff;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 130px 1fr;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+    .form-row input,
+    .form-row select,
+    .form-row textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+.tag-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 12px;
+}
+
+.tag-panel {
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    padding: 10px;
+    min-height: 500px;
+    overflow: auto;
+}
+
+.node-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.node-item {
+    border-bottom: 1px solid #eeeeee;
+    padding: 4px 0;
+}
+
+    .node-item label {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .node-item small {
+        color: #777777;
+        font-size: 11px;
+    }
+
+.node-object {
+    color: #444444;
+    font-weight: 600;
+}
+
+.node-variable {
+    color: #222222;
+}
+
+.tree-node-row {
+    padding: 4px 0;
+    border-bottom: 1px solid #eeeeee;
+}
+
+    .tree-node-row label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .tree-node-row small,
+    .tree-group small {
+        color: #777777;
+        font-size: 11px;
+        margin-left: 6px;
+    }
+
+.tree-group {
+    font-weight: 700;
+    color: #333333;
+}
+
+.node-variable {
+    color: #222222;
+}
+
+.node-object {
+    color: #333333;
+    background: #fafafa;
+}

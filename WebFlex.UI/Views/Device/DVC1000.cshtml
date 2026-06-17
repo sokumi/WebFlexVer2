@@ -1,15 +1,125 @@
 ﻿@{
-    ViewData["Title"] = "디바이스 관리";
+    ViewData["Title"] = "디바이스 등록";
 }
 
 <div class="page-device">
-    <h1>디바이스 관리</h1>
+    <section class="page-toolbar">
+        <button id="btnNew" class="btn-basic" type="button">신규</button>
+        <button id="btnSave" class="btn-basic" type="button">저장</button>
+        <button id="btnDelete" class="btn-basic" type="button">삭제</button>
+        <button id="btnSearch" class="btn-basic" type="button">조회</button>
+    </section>
 
-    <button id="btnSearch" class="btn-search" type="button">
-        조회
-    </button>
+    <section class="page-body">
+        <div class="page-left">
+            <table id="grid1" class="basic-grid">
+                <thead>
+                    <tr>
+                        <th>코드</th>
+                        <th>디바이스명</th>
+                        <th>타입</th>
+                        <th>주소</th>
+                        <th>포트</th>
+                        <th>수집</th>
+                        <th>사용</th>
+                    </tr>
+                </thead>
+                <tbody id="grid1Body"></tbody>
+            </table>
+        </div>
 
-    <div id="grid1" class="grid-area"></div>
+        <div class="page-right">
+            <input id="hidId" type="hidden" />
+
+            <div class="form-row">
+                <label for="txtDeviceCode">디바이스 코드</label>
+                <input id="txtDeviceCode" type="text" disabled />
+            </div>
+
+            <div class="form-row">
+                <label for="txtDeviceName">디바이스명</label>
+                <input id="txtDeviceName" type="text" />
+            </div>
+
+            <div class="form-row">
+                <label for="selDeviceType">디바이스 타입</label>
+                <select id="selDeviceType">
+                    <option value="OPCUA">OPC UA</option>
+                    <option value="MODBUS_TCP">Modbus TCP</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <label for="txtDeviceAddress">주소</label>
+                <input id="txtDeviceAddress" type="text" placeholder="127.0.0.1" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtPort">포트</label>
+                <input id="txtPort" type="number" value="4840" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtEndpointUrl">Endpoint URL</label>
+                <input id="txtEndpointUrl" type="text" placeholder="비워두면 자동 생성" />
+            </div>
+
+            <div class="form-row">
+                <label for="chkCollect">수집 사용</label>
+                <input id="chkCollect" type="checkbox" checked />
+            </div>
+
+            <div class="form-row">
+                <label for="chkEnabled">사용 여부</label>
+                <input id="chkEnabled" type="checkbox" checked />
+            </div>
+
+            <div class="form-row">
+                <label for="chkUseSecurity">보안 사용</label>
+                <input id="chkUseSecurity" type="checkbox" />
+            </div>
+
+            <div class="form-row">
+                <label for="chkUseAnonymous">익명 접속</label>
+                <input id="chkUseAnonymous" type="checkbox" checked />
+            </div>
+
+            <div class="form-row">
+                <label for="txtUserName">사용자명</label>
+                <input id="txtUserName" type="text" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtPassword">비밀번호</label>
+                <input id="txtPassword" type="password" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtPublishingIntervalMs">Publishing Interval</label>
+                <input id="txtPublishingIntervalMs" type="number" value="1000" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtSamplingIntervalMs">Sampling Interval</label>
+                <input id="txtSamplingIntervalMs" type="number" value="1000" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtQueueSize">Queue Size</label>
+                <input id="txtQueueSize" type="number" value="100" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtSortOrder">정렬</label>
+                <input id="txtSortOrder" type="number" value="0" />
+            </div>
+
+            <div class="form-row">
+                <label for="txtDescription">설명</label>
+                <textarea id="txtDescription"></textarea>
+            </div>
+        </div>
+    </section>
 </div>
 
 @section Scripts {
