@@ -7,6 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\ts\Views\device\dvc1000.ts" />
+    <Content Include="webpack.config.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\WebFlex.OpcCollector\WebFlex.OpcCollector.csproj" />
   </ItemGroup>
 

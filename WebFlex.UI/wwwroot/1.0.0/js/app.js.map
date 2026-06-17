@@ -1,0 +1,1 @@
+{"version":3,"file":"app.js","mappings":";;;;;;AAAA,OAAO,CAAC,GAAG,CAAC,qBAAqB,CAAC,CAAC","sources":["webpack://webflex-ui/./Scripts/src/ts/app.ts"],"sourcesContent":["console.log(\"WebFlex app loaded.\"); \r\n"],"names":[],"sourceRoot":""}
