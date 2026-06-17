@@ -152,10 +152,14 @@ FROM STDIN (FORMAT BINARY)
     private async Task UpsertCurrentValueAsync(
         List<OpcCollectedValue> batch,
         CancellationToken cancellationToken) {
+        // node_id 기준 최신값만 (같은 node_id가 배치에 여러 번 있을 경우 마지막 것만)
+        var latest = batch
+            .GroupBy(x => (x.EndpointUrl, x.NodeId))
+            .Select(g => g.Last())
+            .ToList();
+
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
-
-        await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
         await using var cmd = new NpgsqlCommand(@"
 INSERT INTO public.currentvalue
@@ -168,46 +172,35 @@ INSERT INTO public.currentvalue
     received_at,
     updated_at
 )
-VALUES
-(
-    @endpoint_url,
-    @node_id,
-    @value,
-    @status,
-    @source_timestamp,
-    @received_at,
+SELECT
+    unnest(@endpoint_urls),
+    unnest(@node_ids),
+    unnest(@values),
+    unnest(@statuses),
+    unnest(@source_timestamps),
+    unnest(@received_ats),
     now()
-)
 ON CONFLICT (endpoint_url, node_id)
 DO UPDATE SET
-    value = EXCLUDED.value,
-    status = EXCLUDED.status,
-    source_timestamp = EXCLUDED.source_timestamp,
-    received_at = EXCLUDED.received_at,
-    updated_at = now();
-", conn, tx);
+    value             = EXCLUDED.value,
+    status            = EXCLUDED.status,
+    source_timestamp  = EXCLUDED.source_timestamp,
+    received_at       = EXCLUDED.received_at,
+    updated_at        = now();
+", conn);
 
-        var endpointParam = cmd.Parameters.Add("@endpoint_url", NpgsqlDbType.Text);
-        var nodeIdParam = cmd.Parameters.Add("@node_id", NpgsqlDbType.Text);
-        var valueParam = cmd.Parameters.Add("@value", NpgsqlDbType.Text);
-        var statusParam = cmd.Parameters.Add("@status", NpgsqlDbType.Text);
-        var sourceTimestampParam = cmd.Parameters.Add("@source_timestamp", NpgsqlDbType.TimestampTz);
-        var receivedAtParam = cmd.Parameters.Add("@received_at", NpgsqlDbType.TimestampTz);
+        cmd.Parameters.Add(new NpgsqlParameter("@endpoint_urls", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = latest.Select(x => x.EndpointUrl).ToArray() });
+        cmd.Parameters.Add(new NpgsqlParameter("@node_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = latest.Select(x => x.NodeId).ToArray() });
+        cmd.Parameters.Add(new NpgsqlParameter("@values", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = latest.Select(x => (object?)x.Value ?? DBNull.Value).ToArray() });
+        cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) { Value = latest.Select(x => (object?)x.Status ?? DBNull.Value).ToArray() });
+        cmd.Parameters.Add(new NpgsqlParameter("@source_timestamps", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
+            Value = latest.Select(x => x.SourceTimestamp.HasValue
+                                                                                                                        ? (object)x.SourceTimestamp.Value
+                                                                                                                        : DBNull.Value).ToArray()
+        });
+        cmd.Parameters.Add(new NpgsqlParameter("@received_ats", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) { Value = latest.Select(x => x.ReceivedAt).ToArray() });
 
-        foreach (var item in batch) {
-            endpointParam.Value = item.EndpointUrl;
-            nodeIdParam.Value = item.NodeId;
-            valueParam.Value = (object?)item.Value ?? DBNull.Value;
-            statusParam.Value = (object?)item.Status ?? DBNull.Value;
-            sourceTimestampParam.Value = item.SourceTimestamp.HasValue
-                ? item.SourceTimestamp.Value
-                : DBNull.Value;
-            receivedAtParam.Value = item.ReceivedAt;
-
-            await cmd.ExecuteNonQueryAsync(cancellationToken);
-        }
-
-        await tx.CommitAsync(cancellationToken);
+        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public void Dispose() {
