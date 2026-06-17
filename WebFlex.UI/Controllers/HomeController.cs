@@ -11,7 +11,9 @@ namespace WebFlex.UI.Controllers {
         }
 
         public IActionResult Index() {
-            return View();
+            ViewData["Title"] = "∏ﬁ¿Œ";
+
+            return View(MVCPath.Main.Index);
         }
 
         public IActionResult Privacy() {

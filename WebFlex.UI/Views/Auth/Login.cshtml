@@ -1,0 +1,22 @@
+﻿@{
+    Layout = "_LayoutLogin";
+    ViewData["Title"] = "로그인";
+}
+
+<div class="login-page">
+    <h1>WebFlexV2</h1>
+
+    <form method="post" action="/auth/login">
+        <div>
+            <label for="txtUserId">아이디</label>
+            <input id="txtUserId" name="userId" type="text" />
+        </div>
+
+        <div>
+            <label for="txtPassword">비밀번호</label>
+            <input id="txtPassword" name="password" type="password" />
+        </div>
+
+        <button id="btnLogin" type="submit">로그인</button>
+    </form>
+</div>

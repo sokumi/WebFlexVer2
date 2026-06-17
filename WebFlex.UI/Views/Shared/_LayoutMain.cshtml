@@ -1,0 +1,46 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - WebFlexV2</title>
+
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout-main.css" asp-append-version="true" />
+</head>
+<body>
+    <div class="app-layout">
+        <aside class="app-sidebar">
+            <div class="app-logo">
+                WebFlex
+            </div>
+
+            <nav class="app-menu">
+                <a class="app-menu-item" href="/">메인</a>
+                <a class="app-menu-item" href="/device/dvc1000">디바이스 관리</a>
+                <a class="app-menu-item" href="/opc/opc1000">OPC 수집 관리</a>
+            </nav>
+        </aside>
+
+        <section class="app-main">
+            <header class="app-header">
+                <div class="app-header-left">
+                    <button id="btnMenu" class="btn-menu" type="button">☰</button>
+                    <span>@ViewData["Title"]</span>
+                </div>
+
+                <div class="app-header-right">
+                    <a class="btn-logout" href="/auth/logout">로그아웃</a>
+                </div>
+            </header>
+
+            <main class="app-content">
+                @RenderBody()
+            </main>
+        </section>
+    </div>
+
+    <script src="~/1.0.0/js/app.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
