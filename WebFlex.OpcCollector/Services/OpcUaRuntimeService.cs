@@ -12,6 +12,7 @@ public class OpcUaRuntimeService {
     private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
+    public DateTime LastStatusUpdatedAt { get; set; } = DateTime.MinValue;
 
     public OpcUaRuntimeService(
         OpcUaSessionFactory sessionFactory,
@@ -77,10 +78,16 @@ public class OpcUaRuntimeService {
                 .Where(x => !string.IsNullOrWhiteSpace(x))
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
+            var removedCount = 0;
             foreach (var existingNodeId in runtime.Items.Keys.ToList()) {
                 if (!targetNodeIds.Contains(existingNodeId)) {
                     RemoveMonitoredItem(runtime, existingNodeId);
+                    removedCount++;
                 }
+            }
+
+            if (removedCount > 0) {
+                await runtime.Subscription.ApplyChangesAsync();
             }
 
             var addedCount = 0;
@@ -156,13 +163,16 @@ public class OpcUaRuntimeService {
             LastConnectionOkTime = DateTime.UtcNow
         };
 
+        // KeepAlive 등록 — 세션 끊김 즉시 감지
+        session.KeepAlive += (s, e) => OnSessionKeepAlive(runtime, s, e);
+
         _devices[target.DeviceId] = runtime;
 
         await _runtimeStatusService.UpsertConnectedAsync(
-    target.DeviceId,
-    target.EndpointUrl,
-    0,
-    cancellationToken);
+            target.DeviceId,
+            target.EndpointUrl,
+            0,
+            cancellationToken);
 
         _logger.LogInformation(
             "OPC 디바이스 연결 생성 | Device={DeviceName} | Endpoint={EndpointUrl}",
@@ -172,58 +182,28 @@ public class OpcUaRuntimeService {
         return runtime;
     }
 
-    private async Task ReadInitialValueAsync(
-        OpcDeviceRuntime runtime,
-        OpcCollectTargetTagDto tag,
-        CancellationToken cancellationToken) {
+    private void OnSessionKeepAlive(
+    OpcDeviceRuntime runtime,
+    ISession session,
+    KeepAliveEventArgs e) {
+        if (ServiceResult.IsGood(e.Status)) {
+            runtime.LastConnectionOkTime = DateTime.UtcNow;
+            return;
+        }
+
+        // KeepAlive 실패 — 세션 끊김으로 판단
+        _logger.LogWarning(
+            "OPC KeepAlive 실패 | Device={DeviceName} | Endpoint={EndpointUrl} | Status={Status}",
+            runtime.DeviceName,
+            runtime.EndpointUrl,
+            e.Status);
+
+        // 세션을 끊긴 상태로 마킹 — 다음 Reload 틱에서 재연결
+        // Session.Connected = false로 만들어서 GetOrCreateRuntimeAsync가 재연결하게 함
         try {
-            var nodeId = NodeId.Parse(tag.NodeId);
-            var value = await runtime.Session.ReadValueAsync(nodeId);
-
-            var nowUtc = DateTime.UtcNow;
-
-            // Bad여도 CurrentValues에 넣음 — 구독 후 정상값으로 업데이트됨
-            runtime.CurrentValues[tag.NodeId] = new OpcCurrentRuntimeValue {
-                EndpointUrl = runtime.EndpointUrl,
-                NodeId = tag.NodeId,
-                Value = value.Value?.ToString(),
-                Status = value.StatusCode.ToString(),
-                SourceTimestamp = value.SourceTimestamp == DateTime.MinValue
-                    ? null
-                    : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
-                ReceivedAt = nowUtc,
-                SaveToDatabase = tag.SaveToDatabase
-            };
-
-            if (StatusCode.IsGood(value.StatusCode)) {
-                runtime.LastConnectionOkTime = nowUtc;
-            } else {
-                // Bad는 오류가 아니라 정상 상황 — 채널 오프라인 등
-                _logger.LogDebug(
-                    "OPC 초기값 Bad | Device={DeviceName} | NodeId={NodeId} | Status={Status}",
-                    runtime.DeviceName,
-                    tag.NodeId,
-                    value.StatusCode);
-            }
-        } catch (Exception ex) {
-            // ReadValueAsync가 Bad 상태를 예외로 던지는 경우 — CurrentValues에 Bad로 넣어둠
-            _logger.LogDebug(
-                "OPC 초기값 읽기 예외 | Device={DeviceName} | NodeId={NodeId} | {Message}",
-                runtime.DeviceName,
-                tag.NodeId,
-                ex.Message);
-
-            var nowUtc = DateTime.UtcNow;
-
-            runtime.CurrentValues[tag.NodeId] = new OpcCurrentRuntimeValue {
-                EndpointUrl = runtime.EndpointUrl,
-                NodeId = tag.NodeId,
-                Value = null,
-                Status = "Bad",
-                SourceTimestamp = null,
-                ReceivedAt = nowUtc,
-                SaveToDatabase = tag.SaveToDatabase
-            };
+            session.Close();
+        } catch {
+            // 이미 끊긴 세션이므로 무시
         }
     }
 
@@ -255,8 +235,11 @@ public class OpcUaRuntimeService {
             DiscardOldest = true
         };
 
-        item.Notification += (monitoredItem, e) =>
-            OnMonitoredItemNotification(runtime, monitoredItem, e);
+        MonitoredItemNotificationEventHandler handler =
+            (monitoredItem, e) => OnMonitoredItemNotification(runtime, monitoredItem, e);
+
+        item.Notification += handler;
+        runtime.ItemHandlers[tag.NodeId] = handler;
 
         return true;
     }
@@ -267,10 +250,13 @@ public class OpcUaRuntimeService {
 
         runtime.Tags.TryRemove(nodeId, out _);
 
+        // 보관해둔 핸들러 인스턴스로 정확히 제거
+        if (runtime.ItemHandlers.TryRemove(nodeId, out var handler)) {
+            item.Notification -= handler;
+        }
+
         try {
             runtime.Subscription.RemoveItem(item);
-            item.Notification -= (monitoredItem, e) =>
-                OnMonitoredItemNotification(runtime, monitoredItem, e);
         } catch (Exception ex) {
             _logger.LogError(
                 ex,
@@ -308,20 +294,25 @@ public class OpcUaRuntimeService {
                 SaveToDatabase = saveToDatabase
             };
 
-            _ = Task.Run(async () => {
-                try {
-                    await _runtimeStatusService.UpsertReceivedAsync(
-                        runtime.DeviceId,
-                        runtime.EndpointUrl,
-                        runtime.Items.Count);
-                } catch (Exception ex) {
-                    _logger.LogError(
-                        ex,
-                        "OPC 수신 상태 저장 실패 | Device={DeviceName} | Endpoint={EndpointUrl}",
-                        runtime.DeviceName,
-                        runtime.EndpointUrl);
-                }
-            });
+            var now = DateTime.UtcNow;
+            if ((now - runtime.LastStatusUpdatedAt).TotalSeconds >= 30) {
+                runtime.LastStatusUpdatedAt = now;
+
+                _ = Task.Run(async () => {
+                    try {
+                        await _runtimeStatusService.UpsertReceivedAsync(
+                            runtime.DeviceId,
+                            runtime.EndpointUrl,
+                            runtime.Items.Count);
+                    } catch (Exception ex) {
+                        _logger.LogError(
+                            ex,
+                            "OPC 수신 상태 저장 실패 | Device={DeviceName} | Endpoint={EndpointUrl}",
+                            runtime.DeviceName,
+                            runtime.EndpointUrl);
+                    }
+                });
+            }
 
         }
     }

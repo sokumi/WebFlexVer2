@@ -20,6 +20,9 @@ public class OpcDeviceRuntime {
     public ConcurrentDictionary<string, MonitoredItem> Items { get; } =
         new(StringComparer.OrdinalIgnoreCase);
 
+    public ConcurrentDictionary<string, MonitoredItemNotificationEventHandler> ItemHandlers { get; } =
+        new(StringComparer.OrdinalIgnoreCase);
+
     public ConcurrentDictionary<string, OpcCollectTargetTagDto> Tags { get; } =
         new(StringComparer.OrdinalIgnoreCase);
 
@@ -28,9 +31,10 @@ public class OpcDeviceRuntime {
 
     public SemaphoreSlim SyncLock { get; } = new(1, 1);
 
-    public DateTime LastConnectionCheckTime { get; set; } = DateTime.MinValue;
 
     public DateTime LastConnectionOkTime { get; set; } = DateTime.MinValue;
+
+    public DateTime LastStatusUpdatedAt { get; set; } = DateTime.MinValue;
 
     public bool IsConnected => Session != null && Session.Connected;
 }
