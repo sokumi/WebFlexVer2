@@ -7,8 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Scripts\src\ts\types\global.ts" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Include="Scripts\src\ts\framework\page.ts" />
-    <Content Include="Scripts\src\ts\types\global.d.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1010.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1000.ts" />
     <Content Include="webpack.config.js" />
@@ -32,6 +35,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <TypeScriptCompile Include="Scripts\src\ts\types\global.ts" />
   </ItemGroup>
 
 </Project>

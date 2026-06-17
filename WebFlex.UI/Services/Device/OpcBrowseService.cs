@@ -1,13 +1,16 @@
 ﻿using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
+using System.ComponentModel;
 using WebFlex.Shared.Entities.Opc;
 using WebFlex.UI.DTO.Device;
 
 namespace WebFlex.UI.Services.Device;
 
 public class OpcBrowseService {
-    public async Task<List<DeviceNodeDto>> BrowseAsync(OpcDevice device, CancellationToken cancellationToken = default) {
+    public async Task<List<DeviceNodeDto>> BrowseAsync(
+    OpcDevice device,
+    CancellationToken cancellationToken = default) {
         var result = new List<DeviceNodeDto>();
 
         var config = await CreateConfigAsync();
@@ -15,14 +18,12 @@ public class OpcBrowseService {
         var selectedEndpoint = CoreClientUtils.SelectEndpoint(
             config,
             device.EndpointUrl,
-            device.UseSecurity
-        );
+            device.UseSecurity);
 
         var endpoint = new ConfiguredEndpoint(
             null,
             selectedEndpoint,
-            EndpointConfiguration.Create(config)
-        );
+            EndpointConfiguration.Create(config));
 
         var userIdentity = device.UseAnonymous || string.IsNullOrWhiteSpace(device.UserName)
             ? new UserIdentity(new AnonymousIdentityToken())
@@ -31,7 +32,7 @@ public class OpcBrowseService {
                 Password = System.Text.Encoding.UTF8.GetBytes(device.Password ?? "")
             });
 
-        using var session = await Session.Create(
+        var session = await Session.Create(
             config,
             endpoint,
             false,
@@ -39,14 +40,24 @@ public class OpcBrowseService {
             $"WebFlexBrowse-{device.DeviceCode}",
             60000,
             userIdentity,
-            Array.Empty<string>()
-        );
+            Array.Empty<string>());
 
-        await BrowseNodeAsync(session, ObjectIds.ObjectsFolder, "", result, cancellationToken);
+        try {
+            await BrowseNodeAsync(
+                session,
+                ObjectIds.ObjectsFolder,
+                "",
+                result,
+                new HashSet<string>(),
+                cancellationToken);
 
-        session.Close();
+            Console.WriteLine($"Browse End Count = {result.Count}");
 
-        return result;
+            return result;
+        } finally {
+            await session.CloseAsync();
+            session.Dispose();
+        }
     }
 
     private static async Task<ApplicationConfiguration> CreateConfigAsync() {
@@ -125,7 +136,14 @@ public class OpcBrowseService {
         NodeId nodeId,
         string parentNodeId,
         List<DeviceNodeDto> result,
+        HashSet<string> visited,
         CancellationToken cancellationToken) {
+        var nodeKey = nodeId.ToString();
+
+        if (!visited.Add(nodeKey)) {
+            return;
+        }
+
         var browser = new Browser(session) {
             BrowseDirection = BrowseDirection.Forward,
             NodeClassMask = (int)(NodeClass.Object | NodeClass.Variable),
@@ -140,7 +158,10 @@ public class OpcBrowseService {
                 return;
             }
 
-            var childNodeId = ExpandedNodeId.ToNodeId(reference.NodeId, session.NamespaceUris);
+            var childNodeId =
+                ExpandedNodeId.ToNodeId(
+                    reference.NodeId,
+                    session.NamespaceUris);
 
             if (childNodeId == null) {
                 continue;
@@ -154,17 +175,26 @@ public class OpcBrowseService {
                 DisplayName = reference.DisplayName.Text,
                 BrowseName = reference.BrowseName.Name,
                 NodeClass = reference.NodeClass.ToString(),
-                HasChildren = reference.NodeClass == NodeClass.Object
-            };
+                HasChildren = reference.NodeClass == NodeClass.Object,
 
-            if (reference.NodeClass == NodeClass.Variable) {
-                dto.DataType = await ReadDataTypeAsync(session, childNodeId);
-            }
+                // 일단 비움
+                DataType = ""
+            };
 
             result.Add(dto);
 
+            if (result.Count % 100 == 0) {
+                Console.WriteLine($"Browse Count : {result.Count}");
+            }
+
             if (reference.NodeClass == NodeClass.Object) {
-                await BrowseNodeAsync(session, childNodeId, childIdText, result, cancellationToken);
+                await BrowseNodeAsync(
+                    session,
+                    childNodeId,
+                    childIdText,
+                    result,
+                    visited,
+                    cancellationToken);
             }
         }
     }
