@@ -108,15 +108,7 @@ public class OpcUaRuntimeService {
 
             if (addedCount > 0) {
                 await runtime.Subscription.ApplyChangesAsync();
-
-                foreach (var item in runtime.Items.Values) {
-                    _logger.LogInformation(
-                        "OPC 구독 상태 | Device={DeviceName} | NodeId={NodeId} | Created={Created} | Status={Status}",
-                        runtime.DeviceName,
-                        item.DisplayName,
-                        item.Created,
-                        item.Status?.Error);
-                }
+                 
             }
 
             _logger.LogInformation(
@@ -204,13 +196,7 @@ public class OpcUaRuntimeService {
             };
 
             runtime.LastConnectionOkTime = nowUtc;
-
-            _logger.LogInformation(
-                "OPC 초기값 읽기 | Device={DeviceName} | NodeId={NodeId} | Value={Value} | Status={Status}",
-                runtime.DeviceName,
-                tag.NodeId,
-                value.Value,
-                value.StatusCode);
+             
         } catch (Exception ex) {
             _logger.LogError(
                 ex,
@@ -315,13 +301,7 @@ public class OpcUaRuntimeService {
                         runtime.EndpointUrl);
                 }
             });
-
-            _logger.LogInformation(
-                "OPC 값 갱신 | Device={DeviceName} | NodeId={NodeId} | Value={Value} | Status={Status}",
-                runtime.DeviceName,
-                nodeIdText,
-                value.Value,
-                value.StatusCode);
+             
         }
     }
 
@@ -333,14 +313,14 @@ public class OpcUaRuntimeService {
 
         try {
             try {
-                runtime.Subscription.Delete(true);
+                await runtime.Subscription.DeleteAsync(true);
                 runtime.Subscription.Dispose();
             } catch {
                 // ignore
             }
 
             try {
-                runtime.Session.Close();
+                await runtime.Session.CloseAsync();
                 runtime.Session.Dispose();
             } catch {
                 // ignore
@@ -389,13 +369,7 @@ public class OpcUaRuntimeService {
                 count++;
             }
         }
-
-        if (count > 0) {
-            _logger.LogInformation(
-                "현재값 Snapshot DB 큐 적재 | Count={Count} | Time={Time:o}",
-                count,
-                snapshotTime);
-        }
+         
 
         return count;
     }

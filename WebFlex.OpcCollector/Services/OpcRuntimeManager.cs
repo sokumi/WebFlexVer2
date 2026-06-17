@@ -10,6 +10,7 @@ public class OpcRuntimeManager {
     private readonly OpcCollectorOptions _options;
     private readonly ILogger<OpcRuntimeManager> _logger;
     private DateTime _lastSaveAt = DateTime.MinValue;
+    private DateTime _lastWriterLogAt = DateTime.MinValue;
 
     private DateTime _lastReloadAt = DateTime.MinValue;
 
@@ -75,6 +76,13 @@ public class OpcRuntimeManager {
     }
 
     private void LogWriterStatus() {
+        var now = DateTime.UtcNow;
+
+        if ((now - _lastWriterLogAt).TotalSeconds < 30)
+            return;
+
+        _lastWriterLogAt = now;
+
         _logger.LogInformation(
             "DB Writer 상태 | Queue={QueueCount} | Enqueued={Enqueued} | Inserted={Inserted}",
             _timescaleDbWriter.QueueCount,

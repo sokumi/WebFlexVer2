@@ -14,6 +14,7 @@ public class TimescaleDbWriter : IDisposable {
     private readonly OpcCollectorOptions _options;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _workerTask;
+    private DateTime _lastInsertLogAt = DateTime.MinValue;
 
     private long _totalEnqueuedCount;
     private long _totalInsertedCount;
@@ -81,11 +82,14 @@ public class TimescaleDbWriter : IDisposable {
 
             var elapsedMs = (DateTime.UtcNow - startedAt).TotalMilliseconds;
 
-            _logger.LogInformation(
-                "Timescale 저장 완료 | Count={Count} | QueueRemain={QueueRemain} | ElapsedMs={ElapsedMs}",
-                batch.Count,
-                _queue.Count,
-                elapsedMs);
+            if ((DateTime.UtcNow - _lastInsertLogAt).TotalSeconds >= 30) {
+                _lastInsertLogAt = DateTime.UtcNow;
+
+                _logger.LogInformation(
+                    "Timescale 상태 | QueueRemain={QueueRemain} | TotalInserted={Inserted}",
+                    _queue.Count,
+                    TotalInsertedCount);
+            }
         } catch (Exception ex) {
             _logger.LogError(
                 ex,

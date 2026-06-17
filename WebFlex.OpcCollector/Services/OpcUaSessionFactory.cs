@@ -7,12 +7,6 @@ using WebFlex.Shared.Dtos.Opc;
 namespace WebFlex.OpcCollector.Services;
 
 public class OpcUaSessionFactory {
-    private readonly ILogger<OpcUaSessionFactory> _logger;
-
-    public OpcUaSessionFactory(ILogger<OpcUaSessionFactory> logger) {
-        _logger = logger;
-    }
-
     public async Task<Session> CreateSessionAsync(
         OpcCollectTargetDto target,
         CancellationToken cancellationToken = default) {
@@ -97,19 +91,13 @@ public class OpcUaSessionFactory {
                 $"Certificate validation failed. Code={eventArgs.Error.Code}, Info={eventArgs.Error.AdditionalInfo}");
         };
 
+#pragma warning disable CS0618
         var selectedEndpoint = CoreClientUtils.SelectEndpoint(
             config,
             endpointUrl,
             target.UseSecurity
         );
-
-        _logger.LogInformation(
-            "OPC Endpoint 선택 | Device={DeviceName} | RequestUrl={RequestUrl} | SelectedUrl={SelectedUrl} | SecurityMode={SecurityMode} | SecurityPolicy={SecurityPolicy}",
-            target.DeviceName,
-            endpointUrl,
-            selectedEndpoint.EndpointUrl,
-            selectedEndpoint.SecurityMode,
-            selectedEndpoint.SecurityPolicyUri);
+#pragma warning restore CS0618
 
         var endpointConfiguration = EndpointConfiguration.Create(config);
 
@@ -132,6 +120,7 @@ public class OpcUaSessionFactory {
             );
         }
 
+#pragma warning disable CS0618
         var session = await Session.Create(
             config,
             endpoint,
@@ -142,12 +131,7 @@ public class OpcUaSessionFactory {
             userIdentity,
             Array.Empty<string>()
         );
-
-        _logger.LogInformation(
-            "OPC Session 생성 완료 | Device={DeviceName} | Endpoint={EndpointUrl} | Connected={Connected}",
-            target.DeviceName,
-            endpointUrl,
-            session.Connected);
+#pragma warning restore CS0618
 
         return session;
     }

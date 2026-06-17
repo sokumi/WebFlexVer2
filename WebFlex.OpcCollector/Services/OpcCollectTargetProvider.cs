@@ -67,11 +67,7 @@ public class OpcCollectTargetProvider {
             })
             .Where(x => x.Tags.Count > 0)
             .ToList();
-
-        _logger.LogInformation(
-            "수집 대상 조회 완료 | DeviceCount={DeviceCount} | TagCount={TagCount}",
-            targets.Count,
-            targets.Sum(x => x.Tags.Count));
+         
 
         return targets;
     }
