@@ -1,9 +1,12 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.System;
 
 public class SMenu : BaseEntity {
-    public long? ParentMenuId { get; set; }
+    [Column("mnu_id")]
+    public new string Id { get; set; }
+    public string? ParentMenuId { get; set; }
 
     public SMenu? ParentMenu { get; set; }
 

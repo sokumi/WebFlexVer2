@@ -5,10 +5,13 @@ export default class {
     nodes: any[] = [];
     treeNodes: any[] = [];
     selectedNodes: any[] = [];
-    selectedDeviceId = 0;
+    selectedDeviceId = "";
 
     init(): void {
-        console.log("DVC1010 INIT");
+        $("#btnTagSelectAll").on("click", this.btnTagSelectAll_onClick);
+        $("#btnTagClearSelect").on("click", this.btnTagClearSelect_onClick);
+        $("#btnTagDelete").on("click", this.btnTagDelete_onClick);
+        $("#chkTagAll").on("change", this.chkTagAll_onChange);
 
         $("#btnBrowse").on("click", this.btnBrowse_onClick);
         $("#btnSelectAll").on("click", this.btnSelectAll_onClick);
@@ -24,7 +27,7 @@ export default class {
 
     async loadDevices(): Promise<void> {
         try {
-            const res = await api.get({ url: "/device/list" });
+            const res = await api.get({ url: "/device/manage/list" });
 
             this.devices = res.data ?? [];
 
@@ -43,7 +46,7 @@ export default class {
     }
 
     selDevice_onChange = (): void => {
-        this.selectedDeviceId = Number($("#selDevice").val() ?? 0);
+        this.selectedDeviceId = String($("#selDevice").val() ?? "");
 
         this.nodes = [];
         this.treeNodes = [];
@@ -52,7 +55,7 @@ export default class {
         this.renderNodes();
         this.renderSelectedNodes();
 
-        if (this.selectedDeviceId > 0) {
+        if (this.selectedDeviceId.length > 0) {
             this.loadTags();
         }
     };
@@ -67,7 +70,7 @@ export default class {
             const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
 
             const res = await api.get({
-                url: `/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
+                url: `/device/tag/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
             });
 
             if (!res.success) {
@@ -123,7 +126,7 @@ export default class {
 
         try {
             const res = await api.post({
-                url: "/device/tag-save",
+                url: "/device/tag/insert",
                 data: {
                     deviceId: this.selectedDeviceId,
                     nodes
@@ -156,7 +159,7 @@ export default class {
 
         try {
             const res = await api.get({
-                url: `/device/tag-list?deviceId=${this.selectedDeviceId}`
+                url: `/device/tag/list?deviceId=${this.selectedDeviceId}`
             });
 
             this.renderTags(res.data ?? []);
@@ -278,16 +281,68 @@ export default class {
 
         for (const tag of tags) {
             const $tr = $(`
-                <tr>
-                    <td>${tag.tagCode}</td>
-                    <td>${tag.displayName}</td>
-                    <td>${tag.nodeId}</td>
-                    <td>${tag.isCollectEnabled ? "Y" : "N"}</td>
-                    <td>${tag.saveToDatabase ? "Y" : "N"}</td>
-                </tr>
-            `);
+            <tr>
+                <td><input type="checkbox" class="chk-tag" data-id="${tag.id}" /></td>
+                <td>${tag.tagCode}</td>
+                <td>${tag.displayName}</td>
+                <td>${tag.nodeId}</td>
+                <td>${tag.isCollectEnabled ? "Y" : "N"}</td>
+                <td>${tag.saveToDatabase ? "Y" : "N"}</td>
+            </tr>
+        `);
 
             $body.append($tr);
         }
+
+        $body.find(".chk-tag").on("change", () => {
+            const total = $body.find(".chk-tag").length;
+            const checked = $body.find(".chk-tag:checked").length;
+            $("#chkTagAll").prop("checked", total > 0 && total === checked);
+        });
     }
+
+    chkTagAll_onChange = (): void => {
+        const checked = $("#chkTagAll").prop("checked") === true;
+        $("#tagBody .chk-tag").prop("checked", checked);
+    };
+
+    btnTagSelectAll_onClick = (): void => {
+        $("#chkTagAll").prop("checked", true);
+        $("#tagBody .chk-tag").prop("checked", true);
+    };
+
+    btnTagClearSelect_onClick = (): void => {
+        $("#chkTagAll").prop("checked", false);
+        $("#tagBody .chk-tag").prop("checked", false);
+    };
+
+    btnTagDelete_onClick = async (): Promise<void> => {
+        const ids = $("#tagBody .chk-tag:checked")
+            .map((_, el) => String($(el).data("id")))
+            .get();
+
+        if (ids.length === 0) {
+            alert("삭제할 태그를 선택하세요.");
+            return;
+        }
+
+        if (!confirm(`${ids.length}개의 태그를 삭제하시겠습니까?`)) return;
+
+        try {
+            const res = await api.post({
+                url: "/device/tag/delete",
+                data: { ids }
+            });
+
+            if (!res.success) {
+                alert(res.message ?? "삭제에 실패했습니다.");
+                return;
+            }
+
+            alert(res.message ?? "삭제되었습니다.");
+            await this.loadTags();
+        } catch (e) {
+            alert(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
+        }
+    };
 }

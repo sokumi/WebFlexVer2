@@ -1,6 +1,5 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
@@ -16,8 +15,7 @@ namespace WebFlex.UI.Migrations
                 name: "opc_collect_option",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<string>(type: "text", nullable: false),
                     option_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     option_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     reload_interval_seconds = table.Column<int>(type: "integer", nullable: false),
@@ -42,8 +40,7 @@ namespace WebFlex.UI.Migrations
                 name: "opc_major_group",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<string>(type: "text", nullable: false),
                     major_group_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     major_group_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     sort_order = table.Column<int>(type: "integer", nullable: false),
@@ -61,9 +58,8 @@ namespace WebFlex.UI.Migrations
                 name: "s_menu",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    parent_menu_id = table.Column<long>(type: "bigint", nullable: true),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    parent_menu_id = table.Column<string>(type: "text", nullable: true),
                     menu_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     menu_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     controller_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
@@ -91,8 +87,7 @@ namespace WebFlex.UI.Migrations
                 name: "s_role",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<string>(type: "text", nullable: false),
                     role_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     role_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     description = table.Column<string>(type: "text", nullable: true),
@@ -109,8 +104,7 @@ namespace WebFlex.UI.Migrations
                 name: "s_user",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    id = table.Column<string>(type: "text", nullable: false),
                     user_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     user_name = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     password_hash = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: true),
@@ -131,9 +125,8 @@ namespace WebFlex.UI.Migrations
                 name: "opc_group",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    opc_major_group_id = table.Column<long>(type: "bigint", nullable: true),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    opc_major_group_id = table.Column<string>(type: "text", nullable: true),
                     group_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     group_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     sort_order = table.Column<int>(type: "integer", nullable: false),
@@ -157,10 +150,9 @@ namespace WebFlex.UI.Migrations
                 name: "s_role_menu",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    s_role_id = table.Column<long>(type: "bigint", nullable: false),
-                    s_menu_id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    s_role_id = table.Column<string>(type: "text", nullable: false),
+                    s_menu_id = table.Column<string>(type: "text", nullable: false),
                     can_read = table.Column<bool>(type: "boolean", nullable: false),
                     can_create = table.Column<bool>(type: "boolean", nullable: false),
                     can_update = table.Column<bool>(type: "boolean", nullable: false),
@@ -191,10 +183,9 @@ namespace WebFlex.UI.Migrations
                 name: "s_user_role",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    s_user_id = table.Column<long>(type: "bigint", nullable: false),
-                    s_role_id = table.Column<long>(type: "bigint", nullable: false),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    s_user_id = table.Column<string>(type: "text", nullable: false),
+                    s_role_id = table.Column<string>(type: "text", nullable: false),
                     is_enabled = table.Column<bool>(type: "boolean", nullable: false),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true)
@@ -220,9 +211,8 @@ namespace WebFlex.UI.Migrations
                 name: "opc_device",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    opc_group_id = table.Column<long>(type: "bigint", nullable: true),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    opc_group_id = table.Column<string>(type: "text", nullable: true),
                     device_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     device_name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     device_address = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
@@ -260,9 +250,8 @@ namespace WebFlex.UI.Migrations
                 name: "opc_collect_runtime_status",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    opc_device_id = table.Column<long>(type: "bigint", nullable: true),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    opc_device_id = table.Column<string>(type: "text", nullable: true),
                     endpoint_url = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),
                     is_connected = table.Column<bool>(type: "boolean", nullable: false),
                     subscribed_count = table.Column<int>(type: "integer", nullable: false),
@@ -290,10 +279,9 @@ namespace WebFlex.UI.Migrations
                 name: "opc_tag",
                 columns: table => new
                 {
-                    id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    opc_device_id = table.Column<long>(type: "bigint", nullable: false),
-                    opc_group_id = table.Column<long>(type: "bigint", nullable: true),
+                    id = table.Column<string>(type: "text", nullable: false),
+                    opc_device_id = table.Column<string>(type: "text", nullable: false),
+                    opc_group_id = table.Column<string>(type: "text", nullable: true),
                     tag_code = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     node_id = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     display_name = table.Column<string>(type: "character varying(300)", maxLength: 300, nullable: false),

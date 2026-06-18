@@ -1,8 +1,11 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.Opc;
 
 public class OpcCollectOption : BaseEntity {
+    [Column("clop_id")]
+    public new string Id { get; set; }
     public string OptionCode { get; set; } = "DEFAULT";
 
     public string OptionName { get; set; } = "기본 수집 옵션";

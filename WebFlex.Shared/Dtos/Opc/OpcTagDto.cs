@@ -1,11 +1,11 @@
 ﻿namespace WebFlex.Shared.Dtos.Opc;
 
 public class OpcTagDto {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
-    public long OpcDeviceId { get; set; }
+    public string OpcDeviceId { get; set; }
 
-    public long? OpcGroupId { get; set; }
+    public string? OpcGroupId { get; set; }
 
     public string TagCode { get; set; } = "";
 

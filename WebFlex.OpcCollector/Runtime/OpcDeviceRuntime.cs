@@ -5,7 +5,7 @@ using WebFlex.Shared.Dtos.Opc;
 namespace WebFlex.OpcCollector.Runtime;
 
 public class OpcDeviceRuntime {
-    public long DeviceId { get; set; }
+    public string DeviceId { get; set; }
 
     public string DeviceCode { get; set; } = "";
 

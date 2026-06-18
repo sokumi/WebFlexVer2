@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.UI.DTO.Device;
 
 public class DeviceTagSaveRequest {
-    public long DeviceId { get; set; }
+    public string DeviceId { get; set; }
     public List<DeviceTagNodeRequest> Nodes { get; set; } = [];
 }
 

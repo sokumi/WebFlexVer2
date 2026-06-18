@@ -36,12 +36,12 @@ __webpack_require__.r(__webpack_exports__);
 class Page {
     constructor() {
         this.devices = [];
-        this.selectedDeviceId = 0;
+        this.selectedDeviceId = "";
         this.isLogAutoRefresh = false;
         this.isSelectedDeviceAutoRefresh = false;
         this.selDevice_onChange = () => {
             var _a;
-            this.selectedDeviceId = Number((_a = $("#selDevice").val()) !== null && _a !== void 0 ? _a : 0);
+            this.selectedDeviceId = String((_a = $("#selDevice").val()) !== null && _a !== void 0 ? _a : "");
         };
     }
     init() {
@@ -64,7 +64,7 @@ class Page {
     async loadDevices() {
         var _a;
         try {
-            const res = await this.get("/device/list");
+            const res = await this.get("/device/manage/list");
             this.devices = (_a = res.data) !== null && _a !== void 0 ? _a : [];
             const $selDevice = $("#selDevice");
             $selDevice.empty();
@@ -86,8 +86,10 @@ class Page {
     }
     async postSelectedDevice(url) {
         const deviceId = this.selectedDeviceId;
-        if (deviceId == null)
+        if (!deviceId) {
+            alert("디바이스를 선택하세요.");
             return;
+        }
         await this.post(`${url}?deviceId=${deviceId}`);
         await this.loadSelectedDeviceStatus();
     }
@@ -148,7 +150,7 @@ class Page {
             this.setTextWithFlash("#lblTotalEnqueued", data.totalEnqueued);
             this.setTextWithFlash("#lblTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSubscriptionStopped", data.subscriptionStopped ? "중지" : "동작");
-            this.setTextWithFlash("#lblDbSaveStopped", data.dbSaveStopped ? "중지" : "동작");
+            //this.setTextWithFlash("#lblDbSaveStopped", data.dbSaveStopped ? "중지" : "동작");
         }
         catch (e) {
             console.error(e);
@@ -174,7 +176,7 @@ class Page {
             this.setTextWithFlash("#lblSelectedTotalEnqueued", data.totalEnqueued);
             this.setTextWithFlash("#lblSelectedTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSelectedSubscriptionStopped", runtime.subscriptionStopped ? "중지" : "동작");
-            this.setTextWithFlash("#lblSelectedDbSaveStopped", runtime.dbSaveStopped ? "중지" : "동작");
+            //this.setTextWithFlash("#lblSelectedDbSaveStopped", runtime.dbSaveStopped ? "중지" : "동작");
         }
         catch (e) {
             console.error(e);

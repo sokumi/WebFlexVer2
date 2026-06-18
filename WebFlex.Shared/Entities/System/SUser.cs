@@ -1,8 +1,11 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.System;
 
 public class SUser : BaseEntity {
+    [Column("user_id")]
+    public new string Id { get; set; }
     public string UserId { get; set; } = "";
 
     public string UserName { get; set; } = "";

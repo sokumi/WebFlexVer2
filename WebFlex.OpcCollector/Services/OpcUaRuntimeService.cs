@@ -7,9 +7,9 @@ using WebFlex.Shared.Dtos.Opc;
 namespace WebFlex.OpcCollector.Services;
 
 public class OpcUaRuntimeService {
-    private readonly ConcurrentDictionary<long, OpcDeviceRuntime> _devices = new();
-    private readonly ConcurrentDictionary<long, bool> _deviceSubscriptionStopped = new();
-    private readonly ConcurrentDictionary<long, bool> _deviceDbSaveStopped = new();
+    private readonly ConcurrentDictionary<string, OpcDeviceRuntime> _devices = new();
+    private readonly ConcurrentDictionary<string, bool> _deviceSubscriptionStopped = new();
+    private readonly ConcurrentDictionary<string, bool> _deviceDbSaveStopped = new();
 
     private readonly OpcUaSessionFactory _sessionFactory;
     private readonly TimescaleDbWriter _timescaleDbWriter;
@@ -59,7 +59,7 @@ public class OpcUaRuntimeService {
         }
     }
 
-    public async Task StopDeviceSubscriptionAsync(long deviceId) {
+    public async Task StopDeviceSubscriptionAsync(string deviceId) {
         _deviceSubscriptionStopped[deviceId] = true;
         await RemoveDeviceAsync(deviceId);
     }
@@ -71,7 +71,7 @@ public class OpcUaRuntimeService {
         await SyncDeviceAsync(target, cancellationToken);
     }
 
-    public object GetDeviceStatus(long deviceId) {
+    public object GetDeviceStatus(string deviceId) {
         _devices.TryGetValue(deviceId, out var runtime);
 
         return new {
@@ -351,7 +351,7 @@ public class OpcUaRuntimeService {
         }
     }
 
-    private async Task RemoveDeviceAsync(long deviceId) {
+    private async Task RemoveDeviceAsync(string deviceId) {
         if (!_devices.TryRemove(deviceId, out var runtime))
             return;
 

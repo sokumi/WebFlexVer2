@@ -87,16 +87,16 @@ __webpack_require__.r(__webpack_exports__);
         this.nodes = [];
         this.treeNodes = [];
         this.selectedNodes = [];
-        this.selectedDeviceId = 0;
+        this.selectedDeviceId = "";
         this.selDevice_onChange = () => {
             var _a;
-            this.selectedDeviceId = Number((_a = $("#selDevice").val()) !== null && _a !== void 0 ? _a : 0);
+            this.selectedDeviceId = String((_a = $("#selDevice").val()) !== null && _a !== void 0 ? _a : "");
             this.nodes = [];
             this.treeNodes = [];
             this.selectedNodes = [];
             this.renderNodes();
             this.renderSelectedNodes();
-            if (this.selectedDeviceId > 0) {
+            if (this.selectedDeviceId.length > 0) {
                 this.loadTags();
             }
         };
@@ -109,7 +109,7 @@ __webpack_require__.r(__webpack_exports__);
             try {
                 const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
                 const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                    url: `/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
+                    url: `/device/tag/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
                 });
                 if (!res.success) {
                     alert((_a = res.message) !== null && _a !== void 0 ? _a : "노드 조회에 실패했습니다.");
@@ -157,7 +157,7 @@ __webpack_require__.r(__webpack_exports__);
             }
             try {
                 const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
-                    url: "/device/tag-save",
+                    url: "/device/tag/insert",
                     data: {
                         deviceId: this.selectedDeviceId,
                         nodes
@@ -180,9 +180,51 @@ __webpack_require__.r(__webpack_exports__);
         this.btnSearch_onClick = () => {
             this.loadTags();
         };
+        this.chkTagAll_onChange = () => {
+            const checked = $("#chkTagAll").prop("checked") === true;
+            $("#tagBody .chk-tag").prop("checked", checked);
+        };
+        this.btnTagSelectAll_onClick = () => {
+            $("#chkTagAll").prop("checked", true);
+            $("#tagBody .chk-tag").prop("checked", true);
+        };
+        this.btnTagClearSelect_onClick = () => {
+            $("#chkTagAll").prop("checked", false);
+            $("#tagBody .chk-tag").prop("checked", false);
+        };
+        this.btnTagDelete_onClick = async () => {
+            var _a, _b;
+            const ids = $("#tagBody .chk-tag:checked")
+                .map((_, el) => String($(el).data("id")))
+                .get();
+            if (ids.length === 0) {
+                alert("삭제할 태그를 선택하세요.");
+                return;
+            }
+            if (!confirm(`${ids.length}개의 태그를 삭제하시겠습니까?`))
+                return;
+            try {
+                const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
+                    url: "/device/tag/delete",
+                    data: { ids }
+                });
+                if (!res.success) {
+                    alert((_a = res.message) !== null && _a !== void 0 ? _a : "삭제에 실패했습니다.");
+                    return;
+                }
+                alert((_b = res.message) !== null && _b !== void 0 ? _b : "삭제되었습니다.");
+                await this.loadTags();
+            }
+            catch (e) {
+                alert(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
+            }
+        };
     }
     init() {
-        console.log("DVC1010 INIT");
+        $("#btnTagSelectAll").on("click", this.btnTagSelectAll_onClick);
+        $("#btnTagClearSelect").on("click", this.btnTagClearSelect_onClick);
+        $("#btnTagDelete").on("click", this.btnTagDelete_onClick);
+        $("#chkTagAll").on("change", this.chkTagAll_onChange);
         $("#btnBrowse").on("click", this.btnBrowse_onClick);
         $("#btnSelectAll").on("click", this.btnSelectAll_onClick);
         $("#btnClearSelect").on("click", this.btnClearSelect_onClick);
@@ -194,7 +236,7 @@ __webpack_require__.r(__webpack_exports__);
     async loadDevices() {
         var _a;
         try {
-            const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/device/list" });
+            const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/device/manage/list" });
             this.devices = (_a = res.data) !== null && _a !== void 0 ? _a : [];
             const $selDevice = $("#selDevice");
             $selDevice.empty();
@@ -213,7 +255,7 @@ __webpack_require__.r(__webpack_exports__);
             return;
         try {
             const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: `/device/tag-list?deviceId=${this.selectedDeviceId}`
+                url: `/device/tag/list?deviceId=${this.selectedDeviceId}`
             });
             this.renderTags((_a = res.data) !== null && _a !== void 0 ? _a : []);
         }
@@ -316,16 +358,22 @@ __webpack_require__.r(__webpack_exports__);
         $body.empty();
         for (const tag of tags) {
             const $tr = $(`
-                <tr>
-                    <td>${tag.tagCode}</td>
-                    <td>${tag.displayName}</td>
-                    <td>${tag.nodeId}</td>
-                    <td>${tag.isCollectEnabled ? "Y" : "N"}</td>
-                    <td>${tag.saveToDatabase ? "Y" : "N"}</td>
-                </tr>
-            `);
+            <tr>
+                <td><input type="checkbox" class="chk-tag" data-id="${tag.id}" /></td>
+                <td>${tag.tagCode}</td>
+                <td>${tag.displayName}</td>
+                <td>${tag.nodeId}</td>
+                <td>${tag.isCollectEnabled ? "Y" : "N"}</td>
+                <td>${tag.saveToDatabase ? "Y" : "N"}</td>
+            </tr>
+        `);
             $body.append($tr);
         }
+        $body.find(".chk-tag").on("change", () => {
+            const total = $body.find(".chk-tag").length;
+            const checked = $body.find(".chk-tag:checked").length;
+            $("#chkTagAll").prop("checked", total > 0 && total === checked);
+        });
     }
 });
 __webpack_require__.dn(__WEBPACK_DEFAULT_EXPORT__);

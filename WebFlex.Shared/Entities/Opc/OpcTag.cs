@@ -1,13 +1,16 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.Opc;
 
 public class OpcTag : BaseEntity {
-    public long OpcDeviceId { get; set; }
+    [Column("tag_id")]
+    public new string Id { get; set; }
+    public string OpcDeviceId { get; set; }
 
     public OpcDevice? Device { get; set; }
 
-    public long? OpcGroupId { get; set; }
+    public string? OpcGroupId { get; set; }
 
     public OpcGroup? Group { get; set; }
 

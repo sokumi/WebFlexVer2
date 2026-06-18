@@ -16,7 +16,7 @@ public class OpcRuntimeStatusService {
     }
 
     public async Task UpsertConnectedAsync(
-        long deviceId,
+        string deviceId,
         string endpointUrl,
         int subscribedCount,
         CancellationToken cancellationToken = default) {
@@ -29,6 +29,7 @@ public class OpcRuntimeStatusService {
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
+                Id = deviceId,
                 OpcDeviceId = deviceId,
                 EndpointUrl = endpointUrl,
                 CreatedAt = nowUtc,
@@ -50,7 +51,7 @@ public class OpcRuntimeStatusService {
     }
 
     public async Task UpsertReceivedAsync(
-        long deviceId,
+        string deviceId,
         string endpointUrl,
         int subscribedCount,
         CancellationToken cancellationToken = default) {
@@ -63,6 +64,7 @@ public class OpcRuntimeStatusService {
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
+                Id = deviceId,
                 OpcDeviceId = deviceId,
                 EndpointUrl = endpointUrl,
                 CreatedAt = nowUtc,
@@ -84,7 +86,7 @@ public class OpcRuntimeStatusService {
     }
 
     public async Task UpsertDisconnectedAsync(
-        long deviceId,
+        string deviceId,
         string endpointUrl,
         string? errorMessage = null,
         CancellationToken cancellationToken = default) {
@@ -97,6 +99,7 @@ public class OpcRuntimeStatusService {
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
+                Id = deviceId,
                 OpcDeviceId = deviceId,
                 EndpointUrl = endpointUrl,
                 CreatedAt = nowUtc,
@@ -118,7 +121,7 @@ public class OpcRuntimeStatusService {
     }
 
     public async Task UpsertErrorAsync(
-        long deviceId,
+        string deviceId,
         string endpointUrl,
         string errorMessage,
         CancellationToken cancellationToken = default) {
@@ -131,6 +134,7 @@ public class OpcRuntimeStatusService {
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
+                Id = deviceId,
                 OpcDeviceId = deviceId,
                 EndpointUrl = endpointUrl,
                 CreatedAt = nowUtc,

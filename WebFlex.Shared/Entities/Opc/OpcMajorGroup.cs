@@ -1,8 +1,11 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.Opc;
 
 public class OpcMajorGroup : BaseEntity {
+    [Column("magpid")]
+    public new string Id { get; set; }
     public string MajorGroupCode { get; set; } = "";
 
     public string MajorGroupName { get; set; } = "";

@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.Shared.Entities;
 
 public abstract class BaseEntity {
-    public long Id { get; set; }
+    public virtual string Id { get; set; }
 
     public bool IsEnabled { get; set; } = true;
 

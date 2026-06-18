@@ -1,9 +1,9 @@
 ﻿namespace WebFlex.Shared.Dtos.Opc;
 
 public class OpcDeviceDto {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
-    public long? OpcGroupId { get; set; }
+    public string? OpcGroupId { get; set; }
 
     public string DeviceCode { get; set; } = "";
 

@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.UI.DTO.Device;
 
 public class DeviceSaveRequest {
-    public long? Id { get; set; }
+    public string? Id { get; set; }
 
     public string DeviceName { get; set; } = "";
     public string DeviceAddress { get; set; } = "";

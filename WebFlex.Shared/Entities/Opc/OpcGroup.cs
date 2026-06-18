@@ -1,9 +1,12 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.Opc;
 
 public class OpcGroup : BaseEntity {
-    public long? OpcMajorGroupId { get; set; }
+    [Column("group_id")]
+    public new string Id { get; set; }
+    public string? OpcMajorGroupId { get; set; }
 
     public OpcMajorGroup? MajorGroup { get; set; }
 

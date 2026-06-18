@@ -106,7 +106,7 @@ public class OpcRuntimeManager {
         _logger.LogInformation("전체 OPC 구독 재시작 완료");
     }
 
-    public async Task StopDeviceSubscriptionAsync(long deviceId, CancellationToken cancellationToken) {
+    public async Task StopDeviceSubscriptionAsync(string deviceId, CancellationToken cancellationToken) {
         _logger.LogWarning("선택 디바이스 구독 중지 요청 | DeviceId={DeviceId}", deviceId);
 
         await _opcUaRuntimeService.StopDeviceSubscriptionAsync(deviceId);
@@ -114,7 +114,7 @@ public class OpcRuntimeManager {
         _logger.LogInformation("선택 디바이스 구독 중지 완료 | DeviceId={DeviceId}", deviceId);
     }
 
-    public async Task StartDeviceSubscriptionAsync(long deviceId, CancellationToken cancellationToken) {
+    public async Task StartDeviceSubscriptionAsync(string deviceId, CancellationToken cancellationToken) {
         _logger.LogWarning("선택 디바이스 구독 재시작 요청 | DeviceId={DeviceId}", deviceId);
 
         var targets = await _targetProvider.GetCollectTargetsAsync(cancellationToken);
@@ -128,7 +128,7 @@ public class OpcRuntimeManager {
         await _opcUaRuntimeService.StartDeviceSubscriptionAsync(target, cancellationToken);
 
         _logger.LogInformation("선택 디바이스 구독 재시작 완료 | DeviceId={DeviceId}", deviceId);
-    } 
+    }
 
     public object GetStatus() {
         return new {
@@ -143,7 +143,7 @@ public class OpcRuntimeManager {
     }
 
     public async Task<object> GetDeviceStatusAsync(
-        long deviceId,
+        string deviceId,
         CancellationToken cancellationToken) {
         var targets = await _targetProvider.GetCollectTargetsAsync(cancellationToken);
         var target = targets.FirstOrDefault(x => x.DeviceId == deviceId);

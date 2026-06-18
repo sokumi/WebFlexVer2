@@ -23,7 +23,7 @@ public class OpcCollectorProxyController : Controller {
     }
 
     [HttpGet]
-    public Task<IActionResult> DeviceStatus(long deviceId, CancellationToken cancellationToken) {
+    public Task<IActionResult> DeviceStatus(string deviceId, CancellationToken cancellationToken) {
         return ForwardAsync(HttpMethod.Get, $"api/opc-collector-manage/device/{deviceId}/status", cancellationToken);
     }
 
@@ -33,12 +33,12 @@ public class OpcCollectorProxyController : Controller {
     } 
 
     [HttpPost]
-    public Task<IActionResult> StopDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+    public Task<IActionResult> StopDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/stop", cancellationToken);
     }
 
     [HttpPost]
-    public Task<IActionResult> StartDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+    public Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/start", cancellationToken);
     }  
 

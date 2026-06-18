@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.UI.DTO.Device;
 
 public class DeviceDto {
-    public long Id { get; set; }
+    public string Id { get; set; }
 
     public string DeviceCode { get; set; } = "";
     public string DeviceName { get; set; } = "";

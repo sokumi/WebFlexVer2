@@ -96,7 +96,7 @@ __webpack_require__.r(__webpack_exports__);
             const data = this.getFormData();
             try {
                 const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
-                    url: "/device/save",
+                    url: "/device/manage/insert",
                     data
                 });
                 if (!res.success) {
@@ -121,7 +121,7 @@ __webpack_require__.r(__webpack_exports__);
                 return;
             try {
                 const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
-                    url: "/device/delete",
+                    url: "/device/manage/delete",
                     data: this.selectedId
                 });
                 if (!res.success) {
@@ -169,7 +169,7 @@ __webpack_require__.r(__webpack_exports__);
     async load() {
         var _a;
         try {
-            const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/device/list" });
+            const res = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/device/manage/list" });
             this.rows = (_a = res.data) !== null && _a !== void 0 ? _a : [];
             this.renderGrid();
         }

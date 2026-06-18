@@ -1,8 +1,11 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.System;
 
 public class SRole : BaseEntity {
+    [Column("role_id")]
+    public new string Id { get; set; }
     public string RoleCode { get; set; } = "";
 
     public string RoleName { get; set; } = "";

@@ -27,7 +27,7 @@ export default class {
 
         try {
             const res = await api.post({
-                url: "/device/save",
+                url: "/device/manage/insert",
                 data
             });
 
@@ -54,7 +54,7 @@ export default class {
 
         try {
             const res = await api.post({
-                url: "/device/delete",
+                url: "/device/manage/delete",
                 data: this.selectedId
             });
 
@@ -73,7 +73,7 @@ export default class {
 
     async load(): Promise<void> {
         try {
-            const res = await api.get({ url: "/device/list" });
+            const res = await api.get({ url: "/device/manage/list" });
 
             this.rows = res.data ?? [];
             this.renderGrid();

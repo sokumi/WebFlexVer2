@@ -12,7 +12,7 @@ using WebFlex.UI.Data;
 namespace WebFlex.UI.Migrations
 {
     [DbContext(typeof(WebFlexDbContext))]
-    [Migration("20260616075340_model_001")]
+    [Migration("20260618072318_model_001")]
     partial class model_001
     {
         /// <inheritdoc />
@@ -27,12 +27,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcCollectOption", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("AutoReconnect")
                         .HasColumnType("boolean")
@@ -104,12 +101,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcCollectRuntimeStatus", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -145,8 +139,8 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_received_at");
 
-                    b.Property<long?>("OpcDeviceId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("OpcDeviceId")
+                        .HasColumnType("text")
                         .HasColumnName("opc_device_id");
 
                     b.Property<DateTime>("StatusUpdatedAt")
@@ -173,12 +167,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcDevice", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -226,8 +217,8 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_enabled");
 
-                    b.Property<long?>("OpcGroupId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("OpcGroupId")
+                        .HasColumnType("text")
                         .HasColumnName("opc_group_id");
 
                     b.Property<string>("Password")
@@ -297,12 +288,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcGroup", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -328,8 +316,8 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_enabled");
 
-                    b.Property<long?>("OpcMajorGroupId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("OpcMajorGroupId")
+                        .HasColumnType("text")
                         .HasColumnName("opc_major_group_id");
 
                     b.Property<int>("SortOrder")
@@ -352,12 +340,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcMajorGroup", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -401,12 +386,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.Opc.OpcTag", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -446,12 +428,13 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("character varying(500)")
                         .HasColumnName("node_id");
 
-                    b.Property<long>("OpcDeviceId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("OpcDeviceId")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("opc_device_id");
 
-                    b.Property<long?>("OpcGroupId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("OpcGroupId")
+                        .HasColumnType("text")
                         .HasColumnName("opc_group_id");
 
                     b.Property<int?>("QueueSize")
@@ -498,12 +481,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.System.SMenu", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<string>("ActionName")
                         .HasMaxLength(100)
@@ -540,8 +520,8 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("menu_name");
 
-                    b.Property<long?>("ParentMenuId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("ParentMenuId")
+                        .HasColumnType("text")
                         .HasColumnName("parent_menu_id");
 
                     b.Property<bool>("ShowInMenu")
@@ -573,12 +553,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.System.SRole", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -618,12 +595,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.System.SRoleMenu", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<bool>("CanCreate")
                         .HasColumnType("boolean")
@@ -653,12 +627,14 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_enabled");
 
-                    b.Property<long>("SMenuId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("SMenuId")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("s_menu_id");
 
-                    b.Property<long>("SRoleId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("SRoleId")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("s_role_id");
 
                     b.Property<DateTime?>("UpdatedAt")
@@ -677,12 +653,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.System.SUser", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -741,12 +714,9 @@ namespace WebFlex.UI.Migrations
 
             modelBuilder.Entity("WebFlex.Shared.Entities.System.SUserRole", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint")
+                    b.Property<string>("Id")
+                        .HasColumnType("text")
                         .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -756,12 +726,14 @@ namespace WebFlex.UI.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("is_enabled");
 
-                    b.Property<long>("SRoleId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("SRoleId")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("s_role_id");
 
-                    b.Property<long>("SUserId")
-                        .HasColumnType("bigint")
+                    b.Property<string>("SUserId")
+                        .IsRequired()
+                        .HasColumnType("text")
                         .HasColumnName("s_user_id");
 
                     b.Property<DateTime?>("UpdatedAt")

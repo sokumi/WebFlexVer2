@@ -1,9 +1,12 @@
-﻿using WebFlex.Shared.Entities;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using WebFlex.Shared.Entities;
 
 namespace WebFlex.Shared.Entities.Opc;
 
 public class OpcCollectRuntimeStatus : BaseEntity {
-    public long? OpcDeviceId { get; set; }
+    [Column("clrs_id")]
+    public new string Id { get; set; }
+    public string? OpcDeviceId { get; set; }
 
     public OpcDevice? Device { get; set; }
 

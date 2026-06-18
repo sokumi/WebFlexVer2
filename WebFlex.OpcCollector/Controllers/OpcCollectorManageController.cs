@@ -26,7 +26,7 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpGet("device/{deviceId:long}/status")]
-    public async Task<IActionResult> DeviceStatus(long deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> DeviceStatus(string deviceId, CancellationToken cancellationToken) {
         return Ok(await _runtimeManager.GetDeviceStatusAsync(deviceId, cancellationToken));
     }
 
@@ -36,13 +36,13 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpPost("device/{deviceId:long}/subscription/stop")]
-    public async Task<IActionResult> StopDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> StopDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StopDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 중지 요청 완료" });
     }
 
     [HttpPost("device/{deviceId:long}/subscription/start")]
-    public async Task<IActionResult> StartDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
     }

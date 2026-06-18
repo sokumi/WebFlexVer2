@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.Shared.Dtos.Opc;
 
 public class OpcCollectTargetDto {
-    public long DeviceId { get; set; }
+    public string DeviceId { get; set; }
 
     public string DeviceCode { get; set; } = "";
 
@@ -35,7 +35,7 @@ public class OpcCollectTargetDto {
 }
 
 public class OpcCollectTargetTagDto {
-    public long TagId { get; set; }
+    public string TagId { get; set; }
 
     public string TagCode { get; set; } = "";
 
