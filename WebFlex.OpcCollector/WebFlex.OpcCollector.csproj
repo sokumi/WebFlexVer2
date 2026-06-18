@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -24,7 +28,4 @@
     <ProjectReference Include="..\WebFlex.Shared\WebFlex.Shared.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Worker\" />
-  </ItemGroup>
 </Project>

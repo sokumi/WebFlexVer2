@@ -1,14 +1,18 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.OpcCollector;
 using WebFlex.OpcCollector.Data;
+using WebFlex.OpcCollector.Logging;
 using WebFlex.OpcCollector.Options;
 using WebFlex.OpcCollector.Services;
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddWindowsService(options => {
+builder.Host.UseWindowsService(options => {
     options.ServiceName = "WebFlex OPC Collector";
 });
+
+builder.Logging.AddProvider(new MemoryLoggerProvider());
 
 builder.Services.Configure<OpcCollectorOptions>(
     builder.Configuration.GetSection("OpcCollector"));
@@ -25,5 +29,10 @@ builder.Services.AddSingleton<OpcRuntimeManager>();
 
 builder.Services.AddHostedService<Worker>();
 
-var host = builder.Build();
-host.Run();
+builder.Services.AddControllers();
+
+var app = builder.Build();
+
+app.MapControllers();
+
+app.Run();

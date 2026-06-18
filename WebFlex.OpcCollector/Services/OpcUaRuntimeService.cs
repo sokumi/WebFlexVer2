@@ -12,7 +12,9 @@ public class OpcUaRuntimeService {
     private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
-    public DateTime LastStatusUpdatedAt { get; set; } = DateTime.MinValue;
+    public int DeviceCount => _devices.Count;
+
+    public int SubscribedCount => _devices.Values.Sum(x => x.Items.Count);
 
     public OpcUaRuntimeService(
         OpcUaSessionFactory sessionFactory,
@@ -45,6 +47,13 @@ public class OpcUaRuntimeService {
         foreach (var runtime in _devices.Values.ToList()) {
             await RemoveDeviceAsync(runtime.DeviceId);
         }
+    }
+
+    public async Task RestartDeviceAsync(
+    OpcCollectTargetDto target,
+    CancellationToken cancellationToken) {
+        await RemoveDeviceAsync(target.DeviceId);
+        await SyncDeviceAsync(target, cancellationToken);
     }
 
     private async Task SyncDeviceAsync(

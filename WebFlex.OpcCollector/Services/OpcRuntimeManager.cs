@@ -9,10 +9,13 @@ public class OpcRuntimeManager {
     private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly OpcCollectorOptions _options;
     private readonly ILogger<OpcRuntimeManager> _logger;
+
     private DateTime _lastSaveAt = DateTime.MinValue;
     private DateTime _lastWriterLogAt = DateTime.MinValue;
-
     private DateTime _lastReloadAt = DateTime.MinValue;
+
+    private volatile bool _subscriptionStopped;
+    private volatile bool _dbSaveStopped;
 
     public OpcRuntimeManager(
         OpcCollectTargetProvider targetProvider,
@@ -34,25 +37,32 @@ public class OpcRuntimeManager {
     }
 
     public async Task TickAsync(CancellationToken cancellationToken) {
+        if (_subscriptionStopped) {
+            LogWriterStatus();
+            return;
+        }
+
         var nowUtc = DateTime.UtcNow;
 
         if ((nowUtc - _lastReloadAt).TotalSeconds >= _options.ReloadIntervalSeconds) {
             await ReloadTargetsAsync(cancellationToken);
         }
 
-        var nowSecond = new DateTime(
-            nowUtc.Year, nowUtc.Month, nowUtc.Day,
-            nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
-            DateTimeKind.Utc);
+        if (!_dbSaveStopped) {
+            var nowSecond = new DateTime(
+                nowUtc.Year, nowUtc.Month, nowUtc.Day,
+                nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
+                DateTimeKind.Utc);
 
-        if (nowSecond != _lastSaveAt) {
-            var count = _opcUaRuntimeService.EnqueueCurrentValuesSnapshot();
-            _lastSaveAt = nowSecond;
+            if (nowSecond != _lastSaveAt) {
+                var count = _opcUaRuntimeService.EnqueueCurrentValuesSnapshot();
+                _lastSaveAt = nowSecond;
 
-            if (count > 0) {
-                _logger.LogInformation(
-                    "현재값 Snapshot 저장 요청 | Count={Count}",
-                    count);
+                if (count > 0) {
+                    _logger.LogInformation(
+                        "현재값 Snapshot 저장 요청 | Count={Count}",
+                        count);
+                }
             }
         }
 
@@ -65,6 +75,71 @@ public class OpcRuntimeManager {
         await _opcUaRuntimeService.StopAllAsync();
 
         _logger.LogInformation("OPC Runtime Manager stopped.");
+    }
+
+    public async Task RestartDeviceAsync(long deviceId, CancellationToken cancellationToken) {
+        _logger.LogWarning("OPC 디바이스 재구독 요청 | DeviceId={DeviceId}", deviceId);
+
+        var targets = await _targetProvider.GetCollectTargetsAsync(cancellationToken);
+        var target = targets.FirstOrDefault(x => x.DeviceId == deviceId);
+
+        if (target == null) {
+            _logger.LogWarning("OPC 디바이스 재구독 실패 - 대상 없음 | DeviceId={DeviceId}", deviceId);
+            return;
+        }
+
+        await _opcUaRuntimeService.RestartDeviceAsync(target, cancellationToken);
+
+        _logger.LogInformation("OPC 디바이스 재구독 완료 | DeviceId={DeviceId}", deviceId);
+    }
+
+    public async Task RestartAllDevicesAsync(CancellationToken cancellationToken) {
+        _logger.LogWarning("전체 OPC 디바이스 재구독 요청");
+
+        await _opcUaRuntimeService.StopAllAsync();
+        await ReloadTargetsAsync(cancellationToken);
+
+        _logger.LogInformation("전체 OPC 디바이스 재구독 완료");
+    }
+
+    public async Task StopSubscriptionAsync(CancellationToken cancellationToken) {
+        _logger.LogWarning("OPC 구독 중지 요청");
+
+        _subscriptionStopped = true;
+        await _opcUaRuntimeService.StopAllAsync();
+
+        _logger.LogInformation("OPC 구독 중지 완료");
+    }
+
+    public async Task StartSubscriptionAsync(CancellationToken cancellationToken) {
+        _logger.LogWarning("OPC 구독 재시작 요청");
+
+        _subscriptionStopped = false;
+        await ReloadTargetsAsync(cancellationToken);
+
+        _logger.LogInformation("OPC 구독 재시작 완료");
+    }
+
+    public void StopDbSave() {
+        _dbSaveStopped = true;
+        _logger.LogWarning("DB 저장 중지");
+    }
+
+    public void StartDbSave() {
+        _dbSaveStopped = false;
+        _logger.LogWarning("DB 저장 재시작");
+    }
+
+    public object GetStatus() {
+        return new {
+            subscriptionStopped = _subscriptionStopped,
+            dbSaveStopped = _dbSaveStopped,
+            deviceCount = _opcUaRuntimeService.DeviceCount,
+            subscribedCount = _opcUaRuntimeService.SubscribedCount,
+            queueCount = _timescaleDbWriter.QueueCount,
+            totalEnqueued = _timescaleDbWriter.TotalEnqueuedCount,
+            totalInserted = _timescaleDbWriter.TotalInsertedCount
+        };
     }
 
     private async Task ReloadTargetsAsync(CancellationToken cancellationToken) {
