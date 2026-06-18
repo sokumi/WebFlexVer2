@@ -1,40 +1,14 @@
-﻿type DeviceRow = {
-    id: number;
-    deviceCode: string;
-    deviceName: string;
-    deviceAddress: string;
-    port: number;
-    endpointUrl: string;
-    deviceType: string;
-    isCollectEnabled: boolean;
-    useSecurity: boolean;
-    securityPolicy?: string;
-    securityMode?: string;
-    useAnonymous: boolean;
-    userName?: string;
-    password?: string;
-    publishingIntervalMs: number;
-    samplingIntervalMs: number;
-    queueSize: number;
-    sortOrder: number;
-    description?: string;
-    isEnabled: boolean;
-};
-
-type ApiResponse<T> = {
-    success: boolean;
-    message?: string;
-    data?: T;
-};
+﻿import { api } from "../../framework/common";
 
 export default class {
-    rows: DeviceRow[] = [];
+    rows: any[] = [];
     selectedId = 0;
 
     init(): void {
         $("#btnNew").on("click", this.btnNew_onClick);
         $("#btnSave").on("click", this.btnSave_onClick);
         $("#btnDelete").on("click", this.btnDelete_onClick);
+
         $("#btnSearch").on("click", this.btnSearch_onClick);
 
         this.load();
@@ -52,7 +26,10 @@ export default class {
         const data = this.getFormData();
 
         try {
-            const res = await this.post<ApiResponse<boolean>>("/device/save", data);
+            const res = await api.post({
+                url: "/device/save",
+                data
+            });
 
             if (!res.success) {
                 alert(res.message ?? "저장에 실패했습니다.");
@@ -73,12 +50,13 @@ export default class {
             return;
         }
 
-        if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) {
-            return;
-        }
+        if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) return;
 
         try {
-            const res = await this.post<ApiResponse<boolean>>("/device/delete", this.selectedId);
+            const res = await api.post({
+                url: "/device/delete",
+                data: this.selectedId
+            });
 
             if (!res.success) {
                 alert(res.message ?? "삭제에 실패했습니다.");
@@ -95,7 +73,7 @@ export default class {
 
     async load(): Promise<void> {
         try {
-            const res = await this.get<ApiResponse<DeviceRow[]>>("/device/list");
+            const res = await api.get({ url: "/device/list" });
 
             this.rows = res.data ?? [];
             this.renderGrid();
@@ -126,7 +104,7 @@ export default class {
         }
     }
 
-    grid1_onClick = (row: DeviceRow): void => {
+    grid1_onClick = (row: any): void => {
         this.selectedId = row.id;
 
         $("#hidId").val(row.id);
@@ -192,23 +170,5 @@ export default class {
             sortOrder: Number($("#txtSortOrder").val() ?? 0),
             description: String($("#txtDescription").val() ?? "")
         };
-    }
-
-    async get<T>(url: string): Promise<T> {
-        return await $.ajax({
-            url,
-            method: "GET",
-            dataType: "json"
-        }) as T;
-    }
-
-    async post<T>(url: string, data: unknown): Promise<T> {
-        return await $.ajax({
-            url,
-            method: "POST",
-            data: JSON.stringify(data),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json"
-        }) as T;
     }
 }

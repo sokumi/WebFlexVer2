@@ -1,48 +1,10 @@
-﻿type ApiResponse<T> = {
-    success: boolean;
-    message?: string;
-    data?: T;
-};
-
-type DeviceRow = {
-    id: number;
-    deviceCode: string;
-    deviceName: string;
-    deviceType: string;
-};
-
-type DeviceNode = {
-    nodeId: string;
-    parentNodeId: string;
-    displayName: string;
-    browseName: string;
-    nodeClass: string;
-    dataType: string;
-    hasChildren: boolean;
-    description: string;
-    accessLevel: string;
-    engineeringUnit: string;
-};
-
-type TreeNode = DeviceNode & {
-    children: TreeNode[];
-};
-
-type DeviceTag = {
-    id: number;
-    tagCode: string;
-    nodeId: string;
-    displayName: string;
-    dataType?: string;
-    isCollectEnabled: boolean;
-    saveToDatabase: boolean;
-};
+﻿import { api } from "../../framework/common";
 
 export default class {
-    devices: DeviceRow[] = [];
-    nodes: DeviceNode[] = [];
-    treeNodes: TreeNode[] = [];
-    selectedNodes: DeviceNode[] = [];
+    devices: any[] = [];
+    nodes: any[] = [];
+    treeNodes: any[] = [];
+    selectedNodes: any[] = [];
     selectedDeviceId = 0;
 
     init(): void {
@@ -52,7 +14,9 @@ export default class {
         $("#btnSelectAll").on("click", this.btnSelectAll_onClick);
         $("#btnClearSelect").on("click", this.btnClearSelect_onClick);
         $("#btnSave").on("click", this.btnSave_onClick);
+
         $("#btnSearch").on("click", this.btnSearch_onClick);
+
         $("#selDevice").on("change", this.selDevice_onChange);
 
         this.loadDevices();
@@ -60,7 +24,7 @@ export default class {
 
     async loadDevices(): Promise<void> {
         try {
-            const res = await this.get<ApiResponse<DeviceRow[]>>("/device/list");
+            const res = await api.get({ url: "/device/list" });
 
             this.devices = res.data ?? [];
 
@@ -102,9 +66,9 @@ export default class {
         try {
             const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
 
-            const res = await this.get<ApiResponse<DeviceNode[]>>(
-                `/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
-            );
+            const res = await api.get({
+                url: `/device/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
+            });
 
             if (!res.success) {
                 alert(res.message ?? "노드 조회에 실패했습니다.");
@@ -124,14 +88,12 @@ export default class {
 
     btnSelectAll_onClick = (): void => {
         this.selectedNodes = this.nodes.filter(x => x.nodeClass === "Variable");
-
         this.renderNodes();
         this.renderSelectedNodes();
     };
 
     btnClearSelect_onClick = (): void => {
         this.selectedNodes = [];
-
         this.renderNodes();
         this.renderSelectedNodes();
     };
@@ -160,9 +122,12 @@ export default class {
         }
 
         try {
-            const res = await this.post<ApiResponse<boolean>>("/device/tag-save", {
-                deviceId: this.selectedDeviceId,
-                nodes
+            const res = await api.post({
+                url: "/device/tag-save",
+                data: {
+                    deviceId: this.selectedDeviceId,
+                    nodes
+                }
             });
 
             if (!res.success) {
@@ -187,14 +152,12 @@ export default class {
     };
 
     async loadTags(): Promise<void> {
-        if (!this.selectedDeviceId) {
-            return;
-        }
+        if (!this.selectedDeviceId) return;
 
         try {
-            const res = await this.get<ApiResponse<DeviceTag[]>>(
-                `/device/tag-list?deviceId=${this.selectedDeviceId}`
-            );
+            const res = await api.get({
+                url: `/device/tag-list?deviceId=${this.selectedDeviceId}`
+            });
 
             this.renderTags(res.data ?? []);
         } catch (e) {
@@ -202,17 +165,14 @@ export default class {
         }
     }
 
-    buildTree(nodes: DeviceNode[]): TreeNode[] {
-        const map = new Map<string, TreeNode>();
+    buildTree(nodes: any[]): any[] {
+        const map = new Map<string, any>();
 
         for (const node of nodes) {
-            map.set(node.nodeId, {
-                ...node,
-                children: []
-            });
+            map.set(node.nodeId, { ...node, children: [] });
         }
 
-        const roots: TreeNode[] = [];
+        const roots: any[] = [];
 
         for (const node of map.values()) {
             if (node.parentNodeId && map.has(node.parentNodeId)) {
@@ -234,7 +194,7 @@ export default class {
         }
     }
 
-    createNodeElement(node: TreeNode, depth: number): JQuery<HTMLElement> {
+    createNodeElement(node: any, depth: number): JQuery<HTMLElement> {
         const isVariable = node.nodeClass === "Variable";
         const checked = this.selectedNodes.some(x => x.nodeId === node.nodeId);
         const padding = depth * 18;
@@ -251,13 +211,13 @@ export default class {
             const descText = node.description ? ` — ${node.description}` : "";
 
             const $label = $(`
-    <label>
-        <input type="checkbox" ${checked ? "checked" : ""} />
-        <span>${node.displayName}${euText}</span>
-        <small>${node.nodeId}</small>
-        <span class="node-meta">${node.dataType}${descText} · ${node.accessLevel}</span>
-    </label>
-`);
+                <label>
+                    <input type="checkbox" ${checked ? "checked" : ""} />
+                    <span>${node.displayName}${euText}</span>
+                    <small>${node.nodeId}</small>
+                    <span class="node-meta">${node.dataType}${descText} · ${node.accessLevel}</span>
+                </label>
+            `);
 
             $label.find("input").on("change", (e) => {
                 const checked = $(e.currentTarget).prop("checked") === true;
@@ -283,7 +243,7 @@ export default class {
         return $wrapper;
     }
 
-    toggleNode(node: DeviceNode, checked: boolean): void {
+    toggleNode(node: any, checked: boolean): void {
         if (checked) {
             if (!this.selectedNodes.some(x => x.nodeId === node.nodeId)) {
                 this.selectedNodes.push(node);
@@ -312,7 +272,7 @@ export default class {
         }
     }
 
-    renderTags(tags: DeviceTag[]): void {
+    renderTags(tags: any[]): void {
         const $body = $("#tagBody");
         $body.empty();
 
@@ -329,23 +289,5 @@ export default class {
 
             $body.append($tr);
         }
-    }
-
-    async get<T>(url: string): Promise<T> {
-        return await $.ajax({
-            url,
-            method: "GET",
-            dataType: "json"
-        }) as T;
-    }
-
-    async post<T>(url: string, data: unknown): Promise<T> {
-        return await $.ajax({
-            url,
-            method: "POST",
-            data: JSON.stringify(data),
-            contentType: "application/json; charset=utf-8",
-            dataType: "json"
-        }) as T;
     }
 }

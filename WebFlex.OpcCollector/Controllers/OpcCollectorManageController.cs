@@ -33,7 +33,7 @@ public class OpcCollectorManageController : ControllerBase {
     [HttpGet("logs")]
     public IActionResult Logs(int count = 100) {
         return Ok(MemoryLogStore.GetLatest(count));
-    } 
+    }
 
     [HttpPost("device/{deviceId:long}/subscription/stop")]
     public async Task<IActionResult> StopDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
@@ -45,7 +45,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
-    }  
+    }
 
     [HttpPost("devices/restart")]
     public async Task<IActionResult> RestartAllDevices(CancellationToken cancellationToken) {
@@ -63,7 +63,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartSubscription(CancellationToken cancellationToken) {
         await _runtimeManager.StartSubscriptionAsync(cancellationToken);
         return Ok(new { success = true, message = "전체 디바이스 구독 재시작 요청 완료" });
-    }  
+    }
 
     [HttpPost("restart-process")]
     public IActionResult RestartProcess() {

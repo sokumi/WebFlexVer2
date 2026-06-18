@@ -31,7 +31,7 @@ const instance: AxiosInstance = axios.create({
 instance.interceptors.response.use(
     response => response,
     error => {
-        const message = error.response?.data?.message
+        const message = error.message
             ?? error.response?.statusText
             ?? error.message
             ?? "알 수 없는 오류";
