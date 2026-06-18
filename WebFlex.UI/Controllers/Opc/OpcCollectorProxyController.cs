@@ -19,47 +19,47 @@ public class OpcCollectorProxyController : Controller {
 
     [HttpGet]
     public Task<IActionResult> Status(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Get, "api/opc-collector/status", cancellationToken);
+        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage/status", cancellationToken);
+    }
+
+    [HttpGet]
+    public Task<IActionResult> DeviceStatus(long deviceId, CancellationToken cancellationToken) {
+        return ForwardAsync(HttpMethod.Get, $"api/opc-collector-manage/device/{deviceId}/status", cancellationToken);
     }
 
     [HttpGet]
     public Task<IActionResult> Logs(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Get, "api/opc-collector/logs?count=100", cancellationToken);
+        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage/logs?count=100", cancellationToken);
+    } 
+
+    [HttpPost]
+    public Task<IActionResult> StopDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/stop", cancellationToken);
     }
 
     [HttpPost]
-    public Task<IActionResult> RestartDevice(long deviceId, CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, $"api/opc-collector/device/{deviceId}/restart", cancellationToken);
-    }
+    public Task<IActionResult> StartDeviceSubscription(long deviceId, CancellationToken cancellationToken) {
+        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/start", cancellationToken);
+    }  
 
     [HttpPost]
     public Task<IActionResult> RestartAllDevices(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/devices/restart", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/devices/restart", cancellationToken);
     }
 
     [HttpPost]
     public Task<IActionResult> StopSubscription(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/subscription/stop", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/subscription/stop", cancellationToken);
     }
 
     [HttpPost]
     public Task<IActionResult> StartSubscription(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/subscription/start", cancellationToken);
-    }
-
-    [HttpPost]
-    public Task<IActionResult> StopDbSave(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/db-save/stop", cancellationToken);
-    }
-
-    [HttpPost]
-    public Task<IActionResult> StartDbSave(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/db-save/start", cancellationToken);
-    }
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/subscription/start", cancellationToken);
+    }  
 
     [HttpPost]
     public Task<IActionResult> RestartProcess(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector/restart-process", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/restart-process", cancellationToken);
     }
 
     private async Task<IActionResult> ForwardAsync(

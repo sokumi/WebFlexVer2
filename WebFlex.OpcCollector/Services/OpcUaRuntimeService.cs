@@ -8,10 +8,16 @@ namespace WebFlex.OpcCollector.Services;
 
 public class OpcUaRuntimeService {
     private readonly ConcurrentDictionary<long, OpcDeviceRuntime> _devices = new();
+    private readonly ConcurrentDictionary<long, bool> _deviceSubscriptionStopped = new();
+    private readonly ConcurrentDictionary<long, bool> _deviceDbSaveStopped = new();
+
     private readonly OpcUaSessionFactory _sessionFactory;
     private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
+
+    public DateTime LastStatusUpdatedAt { get; set; } = DateTime.MinValue;
+
     public int DeviceCount => _devices.Count;
 
     public int SubscribedCount => _devices.Values.Sum(x => x.Items.Count);
@@ -39,6 +45,10 @@ public class OpcUaRuntimeService {
         }
 
         foreach (var target in targets) {
+            if (_deviceSubscriptionStopped.ContainsKey(target.DeviceId)) {
+                continue;
+            }
+
             await SyncDeviceAsync(target, cancellationToken);
         }
     }
@@ -49,11 +59,29 @@ public class OpcUaRuntimeService {
         }
     }
 
-    public async Task RestartDeviceAsync(
-    OpcCollectTargetDto target,
-    CancellationToken cancellationToken) {
-        await RemoveDeviceAsync(target.DeviceId);
+    public async Task StopDeviceSubscriptionAsync(long deviceId) {
+        _deviceSubscriptionStopped[deviceId] = true;
+        await RemoveDeviceAsync(deviceId);
+    }
+
+    public async Task StartDeviceSubscriptionAsync(
+        OpcCollectTargetDto target,
+        CancellationToken cancellationToken) {
+        _deviceSubscriptionStopped.TryRemove(target.DeviceId, out _);
         await SyncDeviceAsync(target, cancellationToken);
+    }
+
+    public object GetDeviceStatus(long deviceId) {
+        _devices.TryGetValue(deviceId, out var runtime);
+
+        return new {
+            deviceId,
+            connected = runtime?.Session?.Connected ?? false,
+            subscribedCount = runtime?.Items.Count ?? 0,
+            currentValueCount = runtime?.CurrentValues.Count ?? 0,
+            subscriptionStopped = _deviceSubscriptionStopped.ContainsKey(deviceId),
+            dbSaveStopped = _deviceDbSaveStopped.ContainsKey(deviceId)
+        };
     }
 
     private async Task SyncDeviceAsync(
@@ -88,6 +116,7 @@ public class OpcUaRuntimeService {
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             var removedCount = 0;
+
             foreach (var existingNodeId in runtime.Items.Keys.ToList()) {
                 if (!targetNodeIds.Contains(existingNodeId)) {
                     RemoveMonitoredItem(runtime, existingNodeId);
@@ -114,7 +143,6 @@ public class OpcUaRuntimeService {
                     continue;
                 }
 
-                // 초기값 읽기 제거 — 구독 후 KEPServer가 값을 바로 밀어줌
                 runtime.Subscription.AddItem(item);
                 runtime.Items[tag.NodeId] = item;
                 runtime.Tags[tag.NodeId] = tag;
@@ -123,7 +151,6 @@ public class OpcUaRuntimeService {
 
             if (addedCount > 0) {
                 await runtime.Subscription.ApplyChangesAsync();
-
             }
 
             _logger.LogInformation(
@@ -172,7 +199,6 @@ public class OpcUaRuntimeService {
             LastConnectionOkTime = DateTime.UtcNow
         };
 
-        // KeepAlive 등록 — 세션 끊김 즉시 감지
         session.KeepAlive += (s, e) => OnSessionKeepAlive(runtime, s, e);
 
         _devices[target.DeviceId] = runtime;
@@ -192,27 +218,23 @@ public class OpcUaRuntimeService {
     }
 
     private void OnSessionKeepAlive(
-    OpcDeviceRuntime runtime,
-    ISession session,
-    KeepAliveEventArgs e) {
+        OpcDeviceRuntime runtime,
+        ISession session,
+        KeepAliveEventArgs e) {
         if (ServiceResult.IsGood(e.Status)) {
             runtime.LastConnectionOkTime = DateTime.UtcNow;
             return;
         }
 
-        // KeepAlive 실패 — 세션 끊김으로 판단
         _logger.LogWarning(
             "OPC KeepAlive 실패 | Device={DeviceName} | Endpoint={EndpointUrl} | Status={Status}",
             runtime.DeviceName,
             runtime.EndpointUrl,
             e.Status);
 
-        // 세션을 끊긴 상태로 마킹 — 다음 Reload 틱에서 재연결
-        // Session.Connected = false로 만들어서 GetOrCreateRuntimeAsync가 재연결하게 함
         try {
             session.Close();
         } catch {
-            // 이미 끊긴 세션이므로 무시
         }
     }
 
@@ -259,7 +281,6 @@ public class OpcUaRuntimeService {
 
         runtime.Tags.TryRemove(nodeId, out _);
 
-        // 보관해둔 핸들러 인스턴스로 정확히 제거
         if (runtime.ItemHandlers.TryRemove(nodeId, out var handler)) {
             item.Notification -= handler;
         }
@@ -291,6 +312,10 @@ public class OpcUaRuntimeService {
                 saveToDatabase = tag.SaveToDatabase;
             }
 
+            if (_deviceDbSaveStopped.TryGetValue(runtime.DeviceId, out var dbStopped) && dbStopped) {
+                saveToDatabase = false;
+            }
+
             runtime.CurrentValues[nodeIdText] = new OpcCurrentRuntimeValue {
                 EndpointUrl = runtime.EndpointUrl,
                 NodeId = nodeIdText,
@@ -304,6 +329,7 @@ public class OpcUaRuntimeService {
             };
 
             var now = DateTime.UtcNow;
+
             if ((now - runtime.LastStatusUpdatedAt).TotalSeconds >= 30) {
                 runtime.LastStatusUpdatedAt = now;
 
@@ -322,7 +348,6 @@ public class OpcUaRuntimeService {
                     }
                 });
             }
-
         }
     }
 
@@ -337,14 +362,12 @@ public class OpcUaRuntimeService {
                 await runtime.Subscription.DeleteAsync(true);
                 runtime.Subscription.Dispose();
             } catch {
-                // ignore
             }
 
             try {
                 await runtime.Session.CloseAsync();
                 runtime.Session.Dispose();
             } catch {
-                // ignore
             }
 
             runtime.Items.Clear();
@@ -390,7 +413,6 @@ public class OpcUaRuntimeService {
                 count++;
             }
         }
-
 
         return count;
     }

@@ -35,29 +35,61 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 class Page {
     constructor() {
-        this.timerId = null;
+        this.devices = [];
+        this.selectedDeviceId = 0;
+        this.isLogAutoRefresh = false;
+        this.isSelectedDeviceAutoRefresh = false;
+        this.selDevice_onChange = () => {
+            var _a;
+            this.selectedDeviceId = Number((_a = $("#selDevice").val()) !== null && _a !== void 0 ? _a : 0);
+        };
     }
     init() {
-        $("#btnRestartDevice").on("click", () => this.restartDevice());
-        $("#btnRestartAllDevices").on("click", () => this.post("/api/opc-collector/RestartAllDevices"));
+        $("#selDevice").on("change", this.selDevice_onChange);
         $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector/StopSubscription"));
         $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector/StartSubscription"));
-        $("#btnStopDbSave").on("click", () => this.post("/api/opc-collector/StopDbSave"));
-        $("#btnStartDbSave").on("click", () => this.post("/api/opc-collector/StartDbSave"));
         $("#btnRestartProcess").on("click", () => this.restartProcess());
         $("#btnRefresh").on("click", () => this.refresh());
+        $("#btnLoadDeviceStatus").on("click", () => this.startSelectedDeviceAutoRefresh());
+        $("#btnStopDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector/StopDeviceSubscription"));
+        $("#btnStartDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector/StartDeviceSubscription"));
+        $("#btnClearLogs").on("click", () => this.clearLogs());
+        $("#btnLoadLogs").on("click", () => this.startLogAutoRefresh());
         this.refresh();
-        this.timerId = window.setInterval(() => {
+        this.loadDevices();
+        window.setInterval(() => {
             this.refresh();
         }, 3000);
     }
-    async restartDevice() {
-        const deviceId = Number($("#txtDeviceId").val());
-        if (!deviceId || deviceId <= 0) {
-            alert("DeviceId를 입력해줘.");
-            return;
+    async loadDevices() {
+        var _a;
+        try {
+            const res = await this.get("/device/list");
+            this.devices = (_a = res.data) !== null && _a !== void 0 ? _a : [];
+            const $selDevice = $("#selDevice");
+            $selDevice.empty();
+            $selDevice.append(`<option value="">디바이스 선택</option>`);
+            for (const device of this.devices) {
+                $selDevice.append(`<option value="${device.id}">${device.deviceName} (${device.deviceType})</option>`);
+            }
         }
-        await this.post(`/api/opc-collector/RestartDevice?deviceId=${deviceId}`);
+        catch (e) {
+            alert(e instanceof Error ? e.message : "디바이스 조회 중 오류가 발생했습니다.");
+        }
+    }
+    async get(url) {
+        return await $.ajax({
+            url,
+            method: "GET",
+            dataType: "json"
+        });
+    }
+    async postSelectedDevice(url) {
+        const deviceId = this.selectedDeviceId;
+        if (deviceId == null)
+            return;
+        await this.post(`${url}?deviceId=${deviceId}`);
+        await this.loadSelectedDeviceStatus();
     }
     async restartProcess() {
         if (!confirm("OPC Collector 전체를 재가동할까요?")) {
@@ -81,30 +113,72 @@ class Page {
         }
     }
     async refresh() {
-        await Promise.all([
-            this.loadStatus(),
-            this.loadLogs()
-        ]);
+        await this.loadStatus();
+        if (this.isSelectedDeviceAutoRefresh) {
+            await this.loadSelectedDeviceStatus(false);
+        }
+        if (this.isLogAutoRefresh) {
+            await this.loadLogs();
+        }
+    }
+    async startSelectedDeviceAutoRefresh() {
+        const deviceId = this.selectedDeviceId;
+        if (deviceId == null)
+            return;
+        this.isSelectedDeviceAutoRefresh = true;
+        await this.loadSelectedDeviceStatus(false);
+    }
+    async startLogAutoRefresh() {
+        this.isLogAutoRefresh = true;
+        await this.loadLogs();
+    }
+    clearLogs() {
+        $("#logBox").empty();
     }
     async loadStatus() {
-        var _a, _b, _c, _d, _e;
         try {
             const response = await fetch("/api/opc-collector/Status");
             if (!response.ok) {
                 throw new Error(await response.text());
             }
             const data = await response.json();
-            $("#lblDeviceCount").text((_a = data.deviceCount) !== null && _a !== void 0 ? _a : "-");
-            $("#lblSubscribedCount").text((_b = data.subscribedCount) !== null && _b !== void 0 ? _b : "-");
-            $("#lblQueueCount").text((_c = data.queueCount) !== null && _c !== void 0 ? _c : "-");
-            $("#lblTotalEnqueued").text((_d = data.totalEnqueued) !== null && _d !== void 0 ? _d : "-");
-            $("#lblTotalInserted").text((_e = data.totalInserted) !== null && _e !== void 0 ? _e : "-");
-            $("#lblSubscriptionStopped").text(data.subscriptionStopped ? "중지" : "동작");
-            $("#lblDbSaveStopped").text(data.dbSaveStopped ? "중지" : "동작");
+            this.setTextWithFlash("#lblDeviceCount", data.deviceCount);
+            this.setTextWithFlash("#lblSubscribedCount", data.subscribedCount);
+            this.setTextWithFlash("#lblQueueCount", data.queueCount);
+            this.setTextWithFlash("#lblTotalEnqueued", data.totalEnqueued);
+            this.setTextWithFlash("#lblTotalInserted", data.totalInserted);
+            this.setTextWithFlash("#lblSubscriptionStopped", data.subscriptionStopped ? "중지" : "동작");
+            this.setTextWithFlash("#lblDbSaveStopped", data.dbSaveStopped ? "중지" : "동작");
         }
         catch (e) {
             console.error(e);
             $("#lblDeviceCount").text("연결 실패");
+        }
+    }
+    async loadSelectedDeviceStatus(showAlert = true) {
+        var _a;
+        const deviceId = this.selectedDeviceId;
+        try {
+            const response = await fetch(`/api/opc-collector/DeviceStatus?deviceId=${deviceId}`);
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+            const data = await response.json();
+            const runtime = (_a = data.runtimeStatus) !== null && _a !== void 0 ? _a : {};
+            this.setTextWithFlash("#lblSelectedDeviceId", data.deviceId);
+            this.setTextWithFlash("#lblSelectedDeviceName", data.deviceName || "-");
+            this.setTextWithFlash("#lblSelectedTagCount", data.tagCount);
+            this.setTextWithFlash("#lblSelectedSubscribedCount", runtime.subscribedCount);
+            this.setTextWithFlash("#lblSelectedCurrentValueCount", runtime.currentValueCount);
+            this.setTextWithFlash("#lblSelectedQueueCount", data.queueCount);
+            this.setTextWithFlash("#lblSelectedTotalEnqueued", data.totalEnqueued);
+            this.setTextWithFlash("#lblSelectedTotalInserted", data.totalInserted);
+            this.setTextWithFlash("#lblSelectedSubscriptionStopped", runtime.subscriptionStopped ? "중지" : "동작");
+            this.setTextWithFlash("#lblSelectedDbSaveStopped", runtime.dbSaveStopped ? "중지" : "동작");
+        }
+        catch (e) {
+            console.error(e);
+            $("#lblSelectedDeviceName").text("조회 실패");
         }
     }
     async loadLogs() {
@@ -141,6 +215,22 @@ class Page {
             .replace(/>/g, "&gt;")
             .replace(/\"/g, "&quot;")
             .replace(/'/g, "&#039;");
+    }
+    setTextWithFlash(selector, value) {
+        const $el = $(selector);
+        const newText = value == null || value === "" ? "-" : String(value);
+        const oldText = $el.text();
+        if (oldText === newText) {
+            return;
+        }
+        $el.text(newText);
+        $el.removeClass("value-flash");
+        // 같은 값이 빠르게 바뀔 때도 애니메이션 재시작되게 처리
+        void $el[0].offsetWidth;
+        $el.addClass("value-flash");
+        window.setTimeout(() => {
+            $el.removeClass("value-flash");
+        }, 700);
     }
 }
 

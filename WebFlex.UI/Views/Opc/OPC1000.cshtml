@@ -3,59 +3,66 @@
 }
 
 <div class="page-device page-opc-control">
-    <section class="page-toolbar">
-        <input id="txtDeviceId" class="opc-device-id" type="number" placeholder="DeviceId" />
-
-        <button id="btnRestartDevice" class="btn-basic" type="button">선택 디바이스 재구독</button>
-        <button id="btnRestartAllDevices" class="btn-basic" type="button">전체 디바이스 재구독</button>
-        <button id="btnStopSubscription" class="btn-basic" type="button">구독 중지</button>
-        <button id="btnStartSubscription" class="btn-basic" type="button">구독 재시작</button>
-        <button id="btnStopDbSave" class="btn-basic" type="button">DB 저장 중지</button>
-        <button id="btnStartDbSave" class="btn-basic" type="button">DB 저장 재시작</button>
-        <button id="btnRestartProcess" class="btn-basic danger" type="button">전체 재가동</button>
+    <section class="page-toolbar opc-toolbar-line"> 
+        <button id="btnStopSubscription" class="btn-basic" type="button">전체 디바이스 구독 중지</button>
+        <button id="btnStartSubscription" class="btn-basic" type="button">전체 디바이스 구독 재시작</button> 
+        <button id="btnRestartProcess" class="btn-basic danger" type="button">전체 재가동(X)</button>
         <button id="btnRefresh" class="btn-basic" type="button">새로고침</button>
+    </section>
+
+    <section class="page-toolbar opc-toolbar-line">
+        <select id="selDevice">
+            <option value="">디바이스 선택</option>
+        </select>
+        <button id="btnLoadDeviceStatus" class="btn-basic" type="button">선택 디바이스 상태 조회</button> 
+        <button id="btnStopDeviceSubscription" class="btn-basic" type="button">선택 디바이스 구독 중지</button>
+        <button id="btnStartDeviceSubscription" class="btn-basic" type="button">선택 디바이스 구독 재시작</button> 
     </section>
 
     <section class="opc-status-panel">
         <div class="opc-status-card">
-            <div class="opc-status-title">Collector 상태</div>
+            <div class="opc-status-title">전체 Collector 상태</div>
 
             <table class="basic-grid">
                 <tbody>
-                    <tr>
-                        <th>디바이스 수</th>
-                        <td id="lblDeviceCount">-</td>
-                    </tr>
-                    <tr>
-                        <th>구독 태그 수</th>
-                        <td id="lblSubscribedCount">-</td>
-                    </tr>
-                    <tr>
-                        <th>Queue</th>
-                        <td id="lblQueueCount">-</td>
-                    </tr>
-                    <tr>
-                        <th>Enqueued</th>
-                        <td id="lblTotalEnqueued">-</td>
-                    </tr>
-                    <tr>
-                        <th>Inserted</th>
-                        <td id="lblTotalInserted">-</td>
-                    </tr>
-                    <tr>
-                        <th>구독 중지 상태</th>
-                        <td id="lblSubscriptionStopped">-</td>
-                    </tr>
-                    <tr>
-                        <th>DB 저장 중지 상태</th>
-                        <td id="lblDbSaveStopped">-</td>
-                    </tr>
+                    <tr><th>디바이스 수</th><td id="lblDeviceCount">-</td></tr>
+                    <tr><th>구독 태그 수</th><td id="lblSubscribedCount">-</td></tr>
+                    <tr><th>Queue</th><td id="lblQueueCount">-</td></tr>
+                    <tr><th>Enqueued</th><td id="lblTotalEnqueued">-</td></tr>
+                    <tr><th>Inserted</th><td id="lblTotalInserted">-</td></tr>
+                    <tr><th>구독 중지 상태</th><td id="lblSubscriptionStopped">-</td></tr>
+                    <tr><th>DB 저장 중지 상태</th><td id="lblDbSaveStopped">-</td></tr>
+                </tbody>
+            </table>
+
+            <div class="opc-status-title device-title">선택 디바이스 상태</div>
+
+            <table class="basic-grid">
+                <tbody>
+                    <tr><th>DeviceId</th><td id="lblSelectedDeviceId">-</td></tr>
+                    <tr><th>디바이스명</th><td id="lblSelectedDeviceName">-</td></tr>
+                    <tr><th>태그 수</th><td id="lblSelectedTagCount">-</td></tr>
+                    <tr><th>구독 태그 수</th><td id="lblSelectedSubscribedCount">-</td></tr>
+                    <tr><th>현재값 수</th><td id="lblSelectedCurrentValueCount">-</td></tr>
+                    <tr><th>Queue</th><td id="lblSelectedQueueCount">-</td></tr>
+                    <tr><th>Enqueued</th><td id="lblSelectedTotalEnqueued">-</td></tr>
+                    <tr><th>Inserted</th><td id="lblSelectedTotalInserted">-</td></tr>
+                    <tr><th>구독 상태</th><td id="lblSelectedSubscriptionStopped">-</td></tr>
+                    <tr><th>DB 저장 상태</th><td id="lblSelectedDbSaveStopped">-</td></tr>
                 </tbody>
             </table>
         </div>
 
         <div class="opc-log-card">
-            <div class="opc-status-title">실행 로그</div>
+            <div class="opc-log-header">
+                <div class="opc-status-title">실행 로그</div>
+
+                <div class="opc-log-buttons">
+                    <button id="btnClearLogs" class="btn-basic" type="button">로그 지우기</button>
+                    <button id="btnLoadLogs" class="btn-basic" type="button">로그 불러오기</button>
+                </div>
+            </div>
+
             <div id="logBox" class="opc-log-box"></div>
         </div>
     </section>

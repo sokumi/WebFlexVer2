@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Scripts\src\ts\framework\common.ts" />
     <None Remove="Scripts\src\ts\types\global.ts" />
   </ItemGroup>
 
@@ -45,6 +46,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="Scripts\src\ts\framework\common.ts" />
     <TypeScriptCompile Include="Scripts\src\ts\types\global.ts" />
   </ItemGroup>
 
