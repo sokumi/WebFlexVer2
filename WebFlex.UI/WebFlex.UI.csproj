@@ -12,13 +12,10 @@
 
   <ItemGroup>
     <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\views\opc\opc1000.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1010.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1000.ts" />
     <Content Include="webpack.config.js" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\WebFlex.OpcCollector\WebFlex.OpcCollector.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,6 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.1">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -35,6 +33,15 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Npgsql" Version="8.0.1" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.0" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" Version="1.5.378.145" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.378.145" />
+    <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" Version="1.5.378.145" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WebFlex.Shared\WebFlex.Shared.csproj" />
   </ItemGroup>
 
   <ItemGroup>

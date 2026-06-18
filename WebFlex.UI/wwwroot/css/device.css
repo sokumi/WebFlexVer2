@@ -139,3 +139,73 @@
     color: #888;
     margin-left: 4px;
 }
+
+.page-opc-control .page-toolbar {
+    flex-wrap: wrap;
+}
+
+.opc-device-id {
+    width: 120px;
+    padding: 6px 8px;
+    box-sizing: border-box;
+}
+
+.btn-basic.danger {
+    background: #d9534f;
+    color: #ffffff;
+    border-color: #d43f3a;
+}
+
+.opc-status-panel {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 12px;
+}
+
+.opc-status-card,
+.opc-log-card {
+    border: 1px solid #dddddd;
+    background: #ffffff;
+    padding: 10px;
+}
+
+.opc-status-title {
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.opc-log-box {
+    height: 520px;
+    overflow: auto;
+    border: 1px solid #dddddd;
+    background: #111111;
+    color: #eeeeee;
+    padding: 8px;
+    font-family: Consolas, monospace;
+    font-size: 12px;
+}
+
+.opc-log-row {
+    display: grid;
+    grid-template-columns: 180px 90px 1fr;
+    gap: 8px;
+    padding: 3px 0;
+    border-bottom: 1px solid #333333;
+}
+
+.opc-log-time {
+    color: #b7d7ff;
+}
+
+.opc-log-level {
+    color: #ffd27f;
+}
+
+.opc-log-message {
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.opc-log-empty {
+    color: #aaaaaa;
+}
