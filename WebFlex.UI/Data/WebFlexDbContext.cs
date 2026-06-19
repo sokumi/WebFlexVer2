@@ -21,6 +21,7 @@ public class WebFlexDbContext : DbContext {
     public DbSet<SUserRole> SUserRoles => Set<SUserRole>();
     public DbSet<SMenu> SMenus => Set<SMenu>();
     public DbSet<SRoleMenu> SRoleMenus => Set<SRoleMenu>();
+    public DbSet<OpcClientOption> OpcClientOptions => Set<OpcClientOption>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
@@ -30,6 +31,24 @@ public class WebFlexDbContext : DbContext {
     }
 
     private static void ConfigureOpc(ModelBuilder modelBuilder) {
+        modelBuilder.Entity<OpcClientOption>(entity => {
+            entity.ToTable("opc_client_option");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.OptionCode).HasColumnName("option_code").HasMaxLength(100).IsRequired();
+            entity.Property(x => x.OptionName).HasColumnName("option_name").HasMaxLength(200).IsRequired();
+            entity.Property(x => x.OptionJson).HasColumnName("option_json").IsRequired();
+            entity.Property(x => x.ConfiguredOptionNames).HasColumnName("configured_option_names");
+            entity.Property(x => x.Description).HasColumnName("description");
+            entity.Property(x => x.IsEnabled).HasColumnName("is_enabled");
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at");
+            entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            entity.HasIndex(x => x.OptionCode).IsUnique();
+        });
+
         modelBuilder.Entity<OpcMajorGroup>(entity => {
             entity.ToTable("opc_major_group");
 

@@ -7,9 +7,9 @@ using WebFlex.Shared.Dtos.Opc;
 namespace WebFlex.OpcCollector.Services;
 
 public class OpcUaSessionFactory {
-    private readonly OpcCollectorOptionState _optionState;
+    private readonly OpcClientOptionState _optionState;
 
-    public OpcUaSessionFactory(OpcCollectorOptionState optionState) {
+    public OpcUaSessionFactory(OpcClientOptionState optionState) {
         _optionState = optionState;
     }
 
@@ -18,48 +18,51 @@ public class OpcUaSessionFactory {
         CancellationToken cancellationToken = default) {
         var options = _optionState.Current;
         var endpointUrl = target.EndpointUrl;
-        var pkiRoot = options.CertificateStoreRootPath;
 
         var config = new ApplicationConfiguration {
-            ApplicationName = "WebFlexOpcCollector",
-            ApplicationUri = Utils.Format(
-                "urn:{0}:WebFlexOpcCollector",
-                System.Net.Dns.GetHostName()),
-            ProductUri = "WebFlexOpcCollector",
+            ApplicationName = options.ApplicationName,
+            ApplicationUri = options.ApplicationUri,
+            ProductUri = options.ProductUri,
             ApplicationType = ApplicationType.Client,
 
             SecurityConfiguration = new SecurityConfiguration {
                 ApplicationCertificate = new CertificateIdentifier {
-                    StoreType = "Directory",
-                    StorePath = $"{pkiRoot}/own",
-                    SubjectName = "WebFlexOpcCollector"
+                    StoreType = options.ApplicationCertificateStoreType,
+                    StorePath = options.ApplicationCertificateStorePath,
+                    SubjectName = options.ApplicationCertificateSubjectName,
+                    Thumbprint = string.IsNullOrWhiteSpace(options.ApplicationCertificateThumbprint)
+                        ? null
+                        : options.ApplicationCertificateThumbprint
                 },
 
                 TrustedIssuerCertificates = new CertificateTrustList {
-                    StoreType = "Directory",
-                    StorePath = $"{pkiRoot}/issuer"
+                    StoreType = options.TrustedIssuerCertificatesStoreType,
+                    StorePath = options.TrustedIssuerCertificatesStorePath
                 },
 
                 TrustedPeerCertificates = new CertificateTrustList {
-                    StoreType = "Directory",
-                    StorePath = $"{pkiRoot}/trusted"
+                    StoreType = options.TrustedPeerCertificatesStoreType,
+                    StorePath = options.TrustedPeerCertificatesStorePath
                 },
 
                 RejectedCertificateStore = new CertificateTrustList {
-                    StoreType = "Directory",
-                    StorePath = $"{pkiRoot}/rejected"
+                    StoreType = options.RejectedCertificateStoreType,
+                    StorePath = options.RejectedCertificateStorePath
                 },
 
                 AutoAcceptUntrustedCertificates = options.AutoAcceptUntrustedCertificates,
                 RejectSHA1SignedCertificates = options.RejectSHA1SignedCertificates,
+                RejectUnknownRevocationStatus = options.RejectUnknownRevocationStatus,
                 MinimumCertificateKeySize = (ushort)options.MinimumCertificateKeySize,
-                SuppressNonceValidationErrors = options.SuppressNonceValidationErrors
+                AddAppCertToTrustedStore = options.AddAppCertToTrustedStore,
+                SuppressNonceValidationErrors = options.SuppressNonceValidationErrors,
+                SendCertificateChain = options.SendCertificateChain
             },
 
             TransportConfigurations = new TransportConfigurationCollection(),
 
             TransportQuotas = new TransportQuotas {
-                OperationTimeout = options.OperationTimeoutMilliseconds,
+                OperationTimeout = options.OperationTimeout,
                 MaxStringLength = options.MaxStringLength,
                 MaxByteStringLength = options.MaxByteStringLength,
                 MaxArrayLength = options.MaxArrayLength,
@@ -70,17 +73,14 @@ public class OpcUaSessionFactory {
             },
 
             ClientConfiguration = new ClientConfiguration {
-                DefaultSessionTimeout = options.DefaultSessionTimeoutMilliseconds,
-                MinSubscriptionLifetime = options.MinSubscriptionLifetimeMilliseconds
+                DefaultSessionTimeout = options.DefaultSessionTimeout,
+                MinSubscriptionLifetime = options.MinSubscriptionLifetime
             },
 
             DisableHiResClock = options.DisableHiResClock
         };
 
-        Directory.CreateDirectory($"{pkiRoot}/own");
-        Directory.CreateDirectory($"{pkiRoot}/issuer");
-        Directory.CreateDirectory($"{pkiRoot}/trusted");
-        Directory.CreateDirectory($"{pkiRoot}/rejected");
+        CreateCertificateDirectories(options);
 
         await config.ValidateAsync(ApplicationType.Client);
 
@@ -104,7 +104,7 @@ public class OpcUaSessionFactory {
         var selectedEndpoint = CoreClientUtils.SelectEndpoint(
             config,
             endpointUrl,
-            target.UseSecurity
+            target.UseSecurity || options.UseSecurity
         );
 #pragma warning restore CS0618
 
@@ -118,30 +118,65 @@ public class OpcUaSessionFactory {
 
         UserIdentity userIdentity;
 
-        if (target.UseAnonymous || string.IsNullOrWhiteSpace(target.UserName)) {
+        var useAnonymous =
+            target.UseAnonymous ||
+            options.IdentityType.Equals("Anonymous", StringComparison.OrdinalIgnoreCase);
+
+        if (useAnonymous || string.IsNullOrWhiteSpace(target.UserName)) {
             userIdentity = new UserIdentity(new AnonymousIdentityToken());
         } else {
             userIdentity = new UserIdentity(
                 new UserNameIdentityToken {
-                    UserName = target.UserName,
-                    Password = Encoding.UTF8.GetBytes(target.Password ?? "")
+                    UserName = string.IsNullOrWhiteSpace(target.UserName) ? options.UserName : target.UserName,
+                    Password = Encoding.UTF8.GetBytes(
+                        string.IsNullOrWhiteSpace(target.Password) ? options.Password : target.Password)
                 }
             );
         }
+
+        var preferredLocales = ParseCsv(options.PreferredLocales);
 
 #pragma warning disable CS0618
         var session = await Session.Create(
             config,
             endpoint,
-            false,
-            false,
-            $"WebFlexOpcCollector-{target.DeviceCode}",
-            (uint)options.DefaultSessionTimeoutMilliseconds,
+            options.UpdateBeforeConnect,
+            options.CheckDomain,
+            string.IsNullOrWhiteSpace(options.SessionName)
+                ? $"WebFlexOpcCollector-{target.DeviceCode}"
+                : options.SessionName,
+            (uint)Math.Max(1, options.SessionTimeout),
             userIdentity,
-            Array.Empty<string>()
+            preferredLocales
         );
 #pragma warning restore CS0618
 
         return session;
+    }
+
+    private static void CreateCertificateDirectories(OpcClientOptionDto options) {
+        CreateDirectoryIfDirectoryStore(options.ApplicationCertificateStoreType, options.ApplicationCertificateStorePath);
+        CreateDirectoryIfDirectoryStore(options.TrustedIssuerCertificatesStoreType, options.TrustedIssuerCertificatesStorePath);
+        CreateDirectoryIfDirectoryStore(options.TrustedPeerCertificatesStoreType, options.TrustedPeerCertificatesStorePath);
+        CreateDirectoryIfDirectoryStore(options.RejectedCertificateStoreType, options.RejectedCertificateStorePath);
+    }
+
+    private static void CreateDirectoryIfDirectoryStore(string storeType, string storePath) {
+        if (!storeType.Equals("Directory", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (string.IsNullOrWhiteSpace(storePath))
+            return;
+
+        Directory.CreateDirectory(storePath);
+    }
+
+    private static string[] ParseCsv(string value) {
+        if (string.IsNullOrWhiteSpace(value))
+            return Array.Empty<string>();
+
+        return value
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToArray();
     }
 }

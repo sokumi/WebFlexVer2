@@ -14,9 +14,26 @@ public class WebFlexConfigDbContext : DbContext {
     public DbSet<OpcTag> OpcTags => Set<OpcTag>();
     public DbSet<OpcCollectOption> OpcCollectOptions => Set<OpcCollectOption>();
     public DbSet<OpcCollectRuntimeStatus> OpcCollectRuntimeStatuses => Set<OpcCollectRuntimeStatus>();
+    public DbSet<OpcClientOption> OpcClientOptions => Set<OpcClientOption>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<OpcClientOption>(entity => {
+            entity.ToTable("opc_client_option");
+
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.OptionCode).HasColumnName("option_code");
+            entity.Property(x => x.OptionName).HasColumnName("option_name");
+            entity.Property(x => x.OptionJson).HasColumnName("option_json");
+            entity.Property(x => x.ConfiguredOptionNames).HasColumnName("configured_option_names");
+            entity.Property(x => x.Description).HasColumnName("description");
+            entity.Property(x => x.IsEnabled).HasColumnName("is_enabled");
+            entity.Property(x => x.CreatedAt).HasColumnName("created_at");
+            entity.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+        });
 
         modelBuilder.Entity<OpcMajorGroup>(entity => {
             entity.ToTable("opc_major_group");

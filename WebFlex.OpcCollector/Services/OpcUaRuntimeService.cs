@@ -16,6 +16,8 @@ public class OpcUaRuntimeService {
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
 
+    private readonly OpcClientOptionState _optionState;
+
     public DateTime LastStatusUpdatedAt { get; set; } = DateTime.MinValue;
 
     public int DeviceCount => _devices.Count;
@@ -26,10 +28,12 @@ public class OpcUaRuntimeService {
         OpcUaSessionFactory sessionFactory,
         TimescaleDbWriter timescaleDbWriter,
         OpcRuntimeStatusService runtimeStatusService,
+        OpcClientOptionState optionState,
         ILogger<OpcUaRuntimeService> logger) {
         _sessionFactory = sessionFactory;
         _timescaleDbWriter = timescaleDbWriter;
         _runtimeStatusService = runtimeStatusService;
+        _optionState = optionState;
         _logger = logger;
     }
 
@@ -178,12 +182,17 @@ public class OpcUaRuntimeService {
 
         var session = await _sessionFactory.CreateSessionAsync(target, cancellationToken);
 
+        var options = _optionState.Current;
+
         var subscription = new Subscription(session.DefaultSubscription) {
-            PublishingInterval = target.PublishingIntervalMs,
-            KeepAliveCount = uint.MaxValue,
-            LifetimeCount = uint.MaxValue,
-            MaxNotificationsPerPublish = uint.MaxValue,
-            Priority = 100
+            PublishingInterval = target.PublishingIntervalMs > 0
+                ? target.PublishingIntervalMs
+                : options.PublishingInterval,
+            KeepAliveCount = options.KeepAliveCount,
+            LifetimeCount = options.LifetimeCount,
+            MaxNotificationsPerPublish = options.MaxNotificationsPerPublish,
+            PublishingEnabled = options.PublishingEnabled,
+            Priority = options.Priority
         };
 
         session.AddSubscription(subscription);
@@ -257,14 +266,27 @@ public class OpcUaRuntimeService {
             return false;
         }
 
+        var options = _optionState.Current;
+
         item = new MonitoredItem(runtime.Subscription.DefaultItem) {
             StartNodeId = nodeId,
-            AttributeId = Attributes.Value,
+            AttributeId = ResolveAttributeId(options.AttributeId),
             DisplayName = tag.NodeId,
-            SamplingInterval = tag.SamplingIntervalMs,
-            QueueSize = (uint)Math.Max(1, tag.QueueSize),
-            DiscardOldest = true
+            MonitoringMode = ResolveMonitoringMode(options.MonitoringMode),
+            SamplingInterval = tag.SamplingIntervalMs > 0
+                ? tag.SamplingIntervalMs
+                : options.SamplingInterval,
+            QueueSize = tag.QueueSize > 0
+                ? (uint)tag.QueueSize
+                : options.QueueSize,
+            DiscardOldest = options.DiscardOldest
         };
+
+        var filter = CreateDataChangeFilter(options);
+
+        if (filter != null) {
+            item.Filter = filter;
+        }
 
         MonitoredItemNotificationEventHandler handler =
             (monitoredItem, e) => OnMonitoredItemNotification(runtime, monitoredItem, e);
@@ -273,6 +295,49 @@ public class OpcUaRuntimeService {
         runtime.ItemHandlers[tag.NodeId] = handler;
 
         return true;
+    }
+
+    private static uint ResolveAttributeId(string value) {
+        return value switch {
+            "DisplayName" => Attributes.DisplayName,
+            "Description" => Attributes.Description,
+            "DataType" => Attributes.DataType,
+            "NodeClass" => Attributes.NodeClass,
+            "BrowseName" => Attributes.BrowseName,
+            _ => Attributes.Value
+        };
+    }
+
+    private static MonitoringMode ResolveMonitoringMode(string value) {
+        return value switch {
+            "Sampling" => MonitoringMode.Sampling,
+            "Disabled" => MonitoringMode.Disabled,
+            _ => MonitoringMode.Reporting
+        };
+    }
+
+    private static DataChangeFilter? CreateDataChangeFilter(OpcClientOptionDto options) {
+        var trigger = options.DataChangeTrigger switch {
+            "Status" => DataChangeTrigger.Status,
+            "StatusValueTimestamp" => DataChangeTrigger.StatusValueTimestamp,
+            _ => DataChangeTrigger.StatusValue
+        };
+
+        var deadbandType = options.DeadbandType switch {
+            "Absolute" => (uint)DeadbandType.Absolute,
+            "Percent" => (uint)DeadbandType.Percent,
+            _ => (uint)DeadbandType.None
+        };
+
+        if (deadbandType == (uint)DeadbandType.None && trigger == DataChangeTrigger.StatusValue) {
+            return null;
+        }
+
+        return new DataChangeFilter {
+            Trigger = trigger,
+            DeadbandType = deadbandType,
+            DeadbandValue = options.DeadbandValue
+        };
     }
 
     private void RemoveMonitoredItem(OpcDeviceRuntime runtime, string nodeId) {

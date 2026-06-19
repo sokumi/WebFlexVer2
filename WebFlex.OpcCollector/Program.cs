@@ -23,6 +23,7 @@ builder.Services.AddDbContextFactory<WebFlexConfigDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexDb")));
 
 builder.Services.AddSingleton<OpcCollectTargetProvider>();
+builder.Services.AddSingleton<OpcClientOptionState>();
 builder.Services.AddSingleton<TimescaleDbWriter>();
 builder.Services.AddSingleton<OpcUaSessionFactory>();
 builder.Services.AddSingleton<OpcUaRuntimeService>();
@@ -34,6 +35,8 @@ builder.Services.AddHostedService<Worker>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+await app.Services.GetRequiredService<OpcClientOptionState>().LoadAsync();
 
 app.MapControllers();
 
