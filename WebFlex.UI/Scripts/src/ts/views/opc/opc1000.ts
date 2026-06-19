@@ -27,20 +27,19 @@ export default class Page {
     init(): void {
         $("#selDevice").on("change", this.selDevice_onChange);
 
-        $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector-manage/StopSubscription"));
-        $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector-manage/StartSubscription"));
+        $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector/subscription/stop"));
+        $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector/subscription/start"));
         $("#btnRestartProcess").on("click", () => this.restartProcess());
         $("#btnRefresh").on("click", () => this.refresh());
 
         $("#btnLoadDeviceStatus").on("click", () => this.startSelectedDeviceAutoRefresh());
-        $("#btnStopDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector-manage/StopDeviceSubscription"));
-        $("#btnStartDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector-manage/StartDeviceSubscription"));
+        $("#btnStopDeviceSubscription").on("click", () => this.postSelectedDevice("stop"));
+        $("#btnStartDeviceSubscription").on("click", () => this.postSelectedDevice("start"));
 
         $("#btnClearLogs").on("click", () => this.clearLogs());
         $("#btnLoadLogs").on("click", () => this.startLogAutoRefresh());
 
         this.refresh();
-
         this.loadDevices();
 
         window.setInterval(() => {
@@ -60,7 +59,7 @@ export default class Page {
 
             for (const device of this.devices) {
                 $selDevice.append(
-                    `<option value="${device.id}">${device.deviceName} (${device.deviceType})</option>`
+                    `<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`
                 );
             }
         } catch (e) {
@@ -80,7 +79,7 @@ export default class Page {
         this.selectedDeviceId = String($("#selDevice").val() ?? "");
     };
 
-    async postSelectedDevice(url: string): Promise<void> {
+    async postSelectedDevice(action: "stop" | "start"): Promise<void> {
         const deviceId = this.selectedDeviceId;
 
         if (!deviceId) {
@@ -88,8 +87,10 @@ export default class Page {
             return;
         }
 
-        await this.post(`${url}?deviceId=${deviceId}`);
-        await this.loadSelectedDeviceStatus();
+        const encodedDeviceId = encodeURIComponent(deviceId);
+
+        await this.post(`/api/opc-collector/device/${encodedDeviceId}/subscription/${action}`);
+        await this.loadSelectedDeviceStatus(false);
     }
 
     async restartProcess(): Promise<void> {
@@ -97,7 +98,7 @@ export default class Page {
             return;
         }
 
-        await this.post("/api/opc-collector-manage/RestartProcess");
+        await this.post("/api/opc-collector/restart-process");
     }
 
     async post(url: string): Promise<void> {
@@ -132,7 +133,7 @@ export default class Page {
 
     async loadDeviceSummary(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector-manage/DeviceSummary");
+            const response = await fetch("/api/opc-collector/device-summary");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -142,11 +143,11 @@ export default class Page {
 
             const html = rows
                 .map(x => `
-                <tr>
-                    <td>${this.escapeHtml(x.deviceName ?? "-")}</td>
-                    <td>${this.escapeHtml(x.subscriptionStatus ?? "-")}</td>
-                </tr>
-            `)
+                    <tr>
+                        <td>${this.escapeHtml(x.deviceName ?? "-")}</td>
+                        <td>${this.escapeHtml(x.subscriptionStatus ?? "-")}</td>
+                    </tr>
+                `)
                 .join("");
 
             $("#deviceSummaryBody").html(
@@ -161,10 +162,12 @@ export default class Page {
     }
 
     async startSelectedDeviceAutoRefresh(): Promise<void> {
-        const deviceId = this.selectedDeviceId
+        const deviceId = this.selectedDeviceId;
 
-        if (deviceId == null)
+        if (!deviceId) {
+            alert("디바이스를 선택하세요.");
             return;
+        }
 
         this.isSelectedDeviceAutoRefresh = true;
         await this.loadSelectedDeviceStatus(false);
@@ -181,7 +184,7 @@ export default class Page {
 
     async loadStatus(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector-manage/Status");
+            const response = await fetch("/api/opc-collector/status");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -195,7 +198,6 @@ export default class Page {
             this.setTextWithFlash("#lblTotalEnqueued", data.totalEnqueued);
             this.setTextWithFlash("#lblTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSubscriptionStopped", data.subscriptionStopped ? "중지" : "동작");
-            //this.setTextWithFlash("#lblDbSaveStopped", data.dbSaveStopped ? "중지" : "동작");
         } catch (e) {
             console.error(e);
             $("#lblDeviceCount").text("연결 실패");
@@ -205,8 +207,16 @@ export default class Page {
     async loadSelectedDeviceStatus(showAlert: boolean = true): Promise<void> {
         const deviceId = this.selectedDeviceId;
 
+        if (!deviceId) {
+            if (showAlert) {
+                alert("디바이스를 선택하세요.");
+            }
+            return;
+        }
+
         try {
-            const response = await fetch(`/api/opc-collector-manage/DeviceStatus?deviceId=${deviceId}`);
+            const encodedDeviceId = encodeURIComponent(deviceId);
+            const response = await fetch(`/api/opc-collector/device/${encodedDeviceId}/status`);
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -224,7 +234,6 @@ export default class Page {
             this.setTextWithFlash("#lblSelectedTotalEnqueued", data.totalEnqueued);
             this.setTextWithFlash("#lblSelectedTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSelectedSubscriptionStopped", runtime.subscriptionStopped ? "중지" : "동작");
-            //this.setTextWithFlash("#lblSelectedDbSaveStopped", runtime.dbSaveStopped ? "중지" : "동작");
         } catch (e) {
             console.error(e);
             $("#lblSelectedDeviceName").text("조회 실패");
@@ -233,7 +242,7 @@ export default class Page {
 
     async loadLogs(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector-manage/Logs");
+            const response = await fetch("/api/opc-collector/logs");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -284,7 +293,6 @@ export default class Page {
 
         $el.removeClass("value-flash");
 
-        // 같은 값이 빠르게 바뀔 때도 애니메이션 재시작되게 처리
         void ($el[0] as HTMLElement).offsetWidth;
 
         $el.addClass("value-flash");

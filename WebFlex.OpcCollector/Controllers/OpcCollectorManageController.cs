@@ -5,7 +5,7 @@ using WebFlex.OpcCollector.Services;
 namespace WebFlex.OpcCollector.Controllers;
 
 [ApiController]
-[Route("api/opc-collector-manage-manage")]
+[Route("api/opc-collector-manage")]
 public class OpcCollectorManageController : ControllerBase {
     private readonly OpcRuntimeManager _runtimeManager;
     private readonly IHostApplicationLifetime _lifetime;
@@ -26,7 +26,9 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpGet("device/{deviceId}/status")]
-    public async Task<IActionResult> DeviceStatus(string deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> DeviceStatus(
+        string deviceId,
+        CancellationToken cancellationToken) {
         return Ok(await _runtimeManager.GetDeviceStatusAsync(deviceId, cancellationToken));
     }
 
@@ -36,13 +38,17 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpPost("device/{deviceId}/subscription/stop")]
-    public async Task<IActionResult> StopDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> StopDeviceSubscription(
+        string deviceId,
+        CancellationToken cancellationToken) {
         await _runtimeManager.StopDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 중지 요청 완료" });
     }
 
     [HttpPost("device/{deviceId}/subscription/start")]
-    public async Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
+    public async Task<IActionResult> StartDeviceSubscription(
+        string deviceId,
+        CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
     }
@@ -78,12 +84,8 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpGet("device-summary")]
-    public async Task<IActionResult> DeviceSummary(
-    CancellationToken cancellationToken) {
-        var data = await _runtimeManager.GetDeviceSummaryAsync(
-            cancellationToken);
-
+    public async Task<IActionResult> DeviceSummary(CancellationToken cancellationToken) {
+        var data = await _runtimeManager.GetDeviceSummaryAsync(cancellationToken);
         return Ok(data);
     }
-
 }
