@@ -43,6 +43,7 @@ class Page {
         this.buffer = 12;
         this.renderRequested = false;
         this.flashKeys = new Set();
+        this.renderTimer = null;
     }
     init() {
         $("#currentValueScroll").on("scroll", () => {
@@ -141,15 +142,31 @@ class Page {
         $("#lblUpdateCount").text(String(this.updateCount));
         this.requestRender();
     }
+    //private requestRender(): void {
+    //    if (this.renderRequested) {
+    //        return;
+    //    }
+    //    this.renderRequested = true;
+    //    window.requestAnimationFrame(() => {
+    //        this.renderRequested = false;
+    //        this.renderVisibleRows();
+    //    });
+    //}
     requestRender() {
-        if (this.renderRequested) {
+        if (this.renderTimer != null) {
             return;
         }
-        this.renderRequested = true;
-        window.requestAnimationFrame(() => {
-            this.renderRequested = false;
-            this.renderVisibleRows();
-        });
+        this.renderTimer = window.setTimeout(() => {
+            this.renderTimer = null;
+            if (this.renderRequested) {
+                return;
+            }
+            this.renderRequested = true;
+            window.requestAnimationFrame(() => {
+                this.renderRequested = false;
+                this.renderVisibleRows();
+            });
+        }, 100);
     }
     renderVisibleRows() {
         const scrollEl = document.getElementById("currentValueScroll");

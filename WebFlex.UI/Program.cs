@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using WebFlex.UI.Services.CurrentValue;
 using WebFlex.UI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -15,7 +16,10 @@ builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));
 
 builder.Services.AddScoped<WebFlex.UI.Services.Device.OpcBrowseService>();
- 
+
+builder.Services.AddSingleton<CurrentValueNotifyService>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<CurrentValueNotifyService>());
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddControllersWithViews();

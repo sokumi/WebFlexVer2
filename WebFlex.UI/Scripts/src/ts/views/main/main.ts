@@ -21,6 +21,8 @@ export default class Page {
     private renderRequested = false;
     private flashKeys = new Set<string>();
 
+    private renderTimer: number | null = null;
+
     init(): void {
         $("#currentValueScroll").on("scroll", () => {
             this.requestRender();
@@ -143,17 +145,38 @@ export default class Page {
         this.requestRender();
     }
 
+    //private requestRender(): void {
+    //    if (this.renderRequested) {
+    //        return;
+    //    }
+
+    //    this.renderRequested = true;
+
+    //    window.requestAnimationFrame(() => {
+    //        this.renderRequested = false;
+    //        this.renderVisibleRows();
+    //    });
+    //}
+
     private requestRender(): void {
-        if (this.renderRequested) {
+        if (this.renderTimer != null) {
             return;
         }
 
-        this.renderRequested = true;
+        this.renderTimer = window.setTimeout(() => {
+            this.renderTimer = null;
 
-        window.requestAnimationFrame(() => {
-            this.renderRequested = false;
-            this.renderVisibleRows();
-        });
+            if (this.renderRequested) {
+                return;
+            }
+
+            this.renderRequested = true;
+
+            window.requestAnimationFrame(() => {
+                this.renderRequested = false;
+                this.renderVisibleRows();
+            });
+        }, 100);
     }
 
     private renderVisibleRows(): void {
