@@ -1,0 +1,246 @@
+﻿@{
+    ViewData["Title"] = "OPC 옵션 설정";
+}
+
+<div class="page-device page-opc-options">
+    <section class="page-toolbar">
+        <button id="btnLoad" class="btn-basic" type="button">불러오기</button>
+        <button id="btnSave" class="btn-basic" type="button">저장</button>
+        <button id="btnRestartDevices" class="btn-basic" type="button">전체 재구독</button>
+        <span id="lblStatus">-</span>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Collector 기본 동작</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>EnableAutoReload</th>
+                    <td><input id="enableAutoReload" type="checkbox" /></td>
+                    <td>설정된 주기마다 DB의 디바이스/태그 설정을 자동 재조회할지 여부입니다. UI 저장 이벤트가 누락된 경우를 대비한 fallback입니다.</td>
+                </tr>
+                <tr>
+                    <th>EnableSnapshotSave</th>
+                    <td><input id="enableSnapshotSave" type="checkbox" /></td>
+                    <td>메모리에 보관 중인 CurrentValues 스냅샷을 주기적으로 저장 큐에 넣을지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>EnableTimescaleHistorySave</th>
+                    <td><input id="enableTimescaleHistorySave" type="checkbox" /></td>
+                    <td>timescale 이력 테이블에 데이터를 저장할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>EnableCurrentValueSave</th>
+                    <td><input id="enableCurrentValueSave" type="checkbox" /></td>
+                    <td>currentvalue 최신값 테이블을 upsert할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReloadIntervalSeconds</th>
+                    <td><input id="reloadIntervalSeconds" type="number" /></td>
+                    <td>DB 수집 설정 자동 재조회 주기입니다. 초 단위입니다. 현재 기본값은 3600초입니다.</td>
+                </tr>
+                <tr>
+                    <th>SaveIntervalMilliseconds</th>
+                    <td><input id="saveIntervalMilliseconds" type="number" /></td>
+                    <td>스냅샷 저장 기준 주기입니다. 현재 코드는 초 변경 기준으로 저장하므로 참고용 옵션입니다.</td>
+                </tr>
+                <tr>
+                    <th>FlushIntervalMilliseconds</th>
+                    <td><input id="flushIntervalMilliseconds" type="number" /></td>
+                    <td>저장 큐를 DB로 flush하는 주기입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxBatchSize</th>
+                    <td><input id="maxBatchSize" type="number" /></td>
+                    <td>한 번의 flush에서 큐에서 꺼내 저장할 최대 건수입니다.</td>
+                </tr>
+                <tr>
+                    <th>WriterLogIntervalSeconds</th>
+                    <td><input id="writerLogIntervalSeconds" type="number" /></td>
+                    <td>DB Writer 상태 로그 출력 주기입니다. 초 단위입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Subscription 기본값</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>DefaultPublishingIntervalMs</th>
+                    <td><input id="defaultPublishingIntervalMs" type="number" /></td>
+                    <td>디바이스 설정값이 없을 때 사용할 기본 PublishingInterval입니다. 재구독 시 적용됩니다.</td>
+                </tr>
+                <tr>
+                    <th>DefaultSamplingIntervalMs</th>
+                    <td><input id="defaultSamplingIntervalMs" type="number" /></td>
+                    <td>태그 설정값이 없을 때 사용할 기본 SamplingInterval입니다.</td>
+                </tr>
+                <tr>
+                    <th>DefaultQueueSize</th>
+                    <td><input id="defaultQueueSize" type="number" /></td>
+                    <td>태그 설정값이 없을 때 사용할 기본 QueueSize입니다.</td>
+                </tr>
+                <tr>
+                    <th>SubscriptionKeepAliveCount</th>
+                    <td><input id="subscriptionKeepAliveCount" type="number" /></td>
+                    <td>OPC UA Subscription KeepAliveCount입니다. -1이면 uint.MaxValue로 처리합니다. 재구독 시 적용됩니다.</td>
+                </tr>
+                <tr>
+                    <th>SubscriptionLifetimeCount</th>
+                    <td><input id="subscriptionLifetimeCount" type="number" /></td>
+                    <td>OPC UA Subscription LifetimeCount입니다. -1이면 uint.MaxValue로 처리합니다. 재구독 시 적용됩니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxNotificationsPerPublish</th>
+                    <td><input id="maxNotificationsPerPublish" type="number" /></td>
+                    <td>Publish 응답 하나에 포함될 최대 notification 수입니다. -1이면 uint.MaxValue로 처리합니다.</td>
+                </tr>
+                <tr>
+                    <th>SubscriptionPriority</th>
+                    <td><input id="subscriptionPriority" type="number" /></td>
+                    <td>Subscription 우선순위입니다. 0~255 범위입니다.</td>
+                </tr>
+                <tr>
+                    <th>DiscardOldest</th>
+                    <td><input id="discardOldest" type="checkbox" /></td>
+                    <td>Queue가 찼을 때 오래된 값을 버릴지 여부입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Security / Certificate</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>AutoAcceptUntrustedCertificates</th>
+                    <td><input id="autoAcceptUntrustedCertificates" type="checkbox" /></td>
+                    <td>신뢰되지 않은 OPC UA 서버 인증서를 자동 수락할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>RejectSHA1SignedCertificates</th>
+                    <td><input id="rejectSHA1SignedCertificates" type="checkbox" /></td>
+                    <td>SHA1 서명 인증서를 거부할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>MinimumCertificateKeySize</th>
+                    <td><input id="minimumCertificateKeySize" type="number" /></td>
+                    <td>허용할 최소 인증서 키 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>SuppressNonceValidationErrors</th>
+                    <td><input id="suppressNonceValidationErrors" type="checkbox" /></td>
+                    <td>Nonce 검증 오류를 억제할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>CertificateStoreRootPath</th>
+                    <td><input id="certificateStoreRootPath" type="text" /></td>
+                    <td>인증서 저장소 루트 경로입니다. 기본값은 pki입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Transport / Session</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>OperationTimeoutMilliseconds</th>
+                    <td><input id="operationTimeoutMilliseconds" type="number" /></td>
+                    <td>OPC UA 요청 작업 타임아웃입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>DefaultSessionTimeoutMilliseconds</th>
+                    <td><input id="defaultSessionTimeoutMilliseconds" type="number" /></td>
+                    <td>기본 세션 타임아웃입니다. -1이면 제한 없음에 가깝게 처리합니다.</td>
+                </tr>
+                <tr>
+                    <th>MinSubscriptionLifetimeMilliseconds</th>
+                    <td><input id="minSubscriptionLifetimeMilliseconds" type="number" /></td>
+                    <td>최소 Subscription Lifetime 설정입니다. -1이면 제한 없음에 가깝게 처리합니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxStringLength</th>
+                    <td><input id="maxStringLength" type="number" /></td>
+                    <td>수신 가능한 최대 문자열 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxByteStringLength</th>
+                    <td><input id="maxByteStringLength" type="number" /></td>
+                    <td>수신 가능한 최대 ByteString 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxArrayLength</th>
+                    <td><input id="maxArrayLength" type="number" /></td>
+                    <td>수신 가능한 최대 배열 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxMessageSize</th>
+                    <td><input id="maxMessageSize" type="number" /></td>
+                    <td>수신 가능한 최대 메시지 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxBufferSize</th>
+                    <td><input id="maxBufferSize" type="number" /></td>
+                    <td>수신 가능한 최대 버퍼 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>ChannelLifetime</th>
+                    <td><input id="channelLifetime" type="number" /></td>
+                    <td>SecureChannel lifetime입니다. -1이면 제한 없음에 가깝게 처리합니다.</td>
+                </tr>
+                <tr>
+                    <th>SecurityTokenLifetime</th>
+                    <td><input id="securityTokenLifetime" type="number" /></td>
+                    <td>SecurityToken lifetime입니다. -1이면 제한 없음에 가깝게 처리합니다.</td>
+                </tr>
+                <tr>
+                    <th>DisableHiResClock</th>
+                    <td><input id="disableHiResClock" type="checkbox" /></td>
+                    <td>고해상도 타이머 사용 여부입니다. 기존 코드에서는 true였습니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>디바이스 기본 인증값</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>DefaultUseSecurity</th>
+                    <td><input id="defaultUseSecurity" type="checkbox" /></td>
+                    <td>신규 디바이스 기본 보안 사용 여부입니다. 현재 수집 중인 디바이스에는 직접 적용되지 않습니다.</td>
+                </tr>
+                <tr>
+                    <th>DefaultUseAnonymous</th>
+                    <td><input id="defaultUseAnonymous" type="checkbox" /></td>
+                    <td>신규 디바이스 기본 Anonymous 로그인 여부입니다. 현재 수집 중인 디바이스에는 직접 적용되지 않습니다.</td>
+                </tr>
+                <tr>
+                    <th>DefaultSecurityPolicy</th>
+                    <td><input id="defaultSecurityPolicy" type="text" /></td>
+                    <td>신규 디바이스 기본 SecurityPolicy입니다. 예: None, Basic256Sha256 등.</td>
+                </tr>
+                <tr>
+                    <th>DefaultSecurityMode</th>
+                    <td><input id="defaultSecurityMode" type="text" /></td>
+                    <td>신규 디바이스 기본 SecurityMode입니다. 예: None, Sign, SignAndEncrypt 등.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/opc/opc1020.js" asp-append-version="true"></script>
+}

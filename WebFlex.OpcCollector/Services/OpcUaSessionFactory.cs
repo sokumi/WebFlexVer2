@@ -7,10 +7,18 @@ using WebFlex.Shared.Dtos.Opc;
 namespace WebFlex.OpcCollector.Services;
 
 public class OpcUaSessionFactory {
+    private readonly OpcCollectorOptionState _optionState;
+
+    public OpcUaSessionFactory(OpcCollectorOptionState optionState) {
+        _optionState = optionState;
+    }
+
     public async Task<Session> CreateSessionAsync(
         OpcCollectTargetDto target,
         CancellationToken cancellationToken = default) {
+        var options = _optionState.Current;
         var endpointUrl = target.EndpointUrl;
+        var pkiRoot = options.CertificateStoreRootPath;
 
         var config = new ApplicationConfiguration {
             ApplicationName = "WebFlexOpcCollector",
@@ -23,56 +31,56 @@ public class OpcUaSessionFactory {
             SecurityConfiguration = new SecurityConfiguration {
                 ApplicationCertificate = new CertificateIdentifier {
                     StoreType = "Directory",
-                    StorePath = "pki/own",
+                    StorePath = $"{pkiRoot}/own",
                     SubjectName = "WebFlexOpcCollector"
                 },
 
                 TrustedIssuerCertificates = new CertificateTrustList {
                     StoreType = "Directory",
-                    StorePath = "pki/issuer"
+                    StorePath = $"{pkiRoot}/issuer"
                 },
 
                 TrustedPeerCertificates = new CertificateTrustList {
                     StoreType = "Directory",
-                    StorePath = "pki/trusted"
+                    StorePath = $"{pkiRoot}/trusted"
                 },
 
                 RejectedCertificateStore = new CertificateTrustList {
                     StoreType = "Directory",
-                    StorePath = "pki/rejected"
+                    StorePath = $"{pkiRoot}/rejected"
                 },
 
-                AutoAcceptUntrustedCertificates = true,
-                RejectSHA1SignedCertificates = false,
-                MinimumCertificateKeySize = 1024,
-                SuppressNonceValidationErrors = true
+                AutoAcceptUntrustedCertificates = options.AutoAcceptUntrustedCertificates,
+                RejectSHA1SignedCertificates = options.RejectSHA1SignedCertificates,
+                MinimumCertificateKeySize = (ushort)options.MinimumCertificateKeySize,
+                SuppressNonceValidationErrors = options.SuppressNonceValidationErrors
             },
 
             TransportConfigurations = new TransportConfigurationCollection(),
 
             TransportQuotas = new TransportQuotas {
-                OperationTimeout = 6000000,
-                MaxStringLength = int.MaxValue,
-                MaxByteStringLength = int.MaxValue,
-                MaxArrayLength = 65535,
-                MaxMessageSize = 419430400,
-                MaxBufferSize = 65535,
-                ChannelLifetime = -1,
-                SecurityTokenLifetime = -1
+                OperationTimeout = options.OperationTimeoutMilliseconds,
+                MaxStringLength = options.MaxStringLength,
+                MaxByteStringLength = options.MaxByteStringLength,
+                MaxArrayLength = options.MaxArrayLength,
+                MaxMessageSize = options.MaxMessageSize,
+                MaxBufferSize = options.MaxBufferSize,
+                ChannelLifetime = options.ChannelLifetime,
+                SecurityTokenLifetime = options.SecurityTokenLifetime
             },
 
             ClientConfiguration = new ClientConfiguration {
-                DefaultSessionTimeout = -1,
-                MinSubscriptionLifetime = -1
+                DefaultSessionTimeout = options.DefaultSessionTimeoutMilliseconds,
+                MinSubscriptionLifetime = options.MinSubscriptionLifetimeMilliseconds
             },
 
-            DisableHiResClock = true
+            DisableHiResClock = options.DisableHiResClock
         };
 
-        Directory.CreateDirectory("pki/own");
-        Directory.CreateDirectory("pki/issuer");
-        Directory.CreateDirectory("pki/trusted");
-        Directory.CreateDirectory("pki/rejected");
+        Directory.CreateDirectory($"{pkiRoot}/own");
+        Directory.CreateDirectory($"{pkiRoot}/issuer");
+        Directory.CreateDirectory($"{pkiRoot}/trusted");
+        Directory.CreateDirectory($"{pkiRoot}/rejected");
 
         await config.ValidateAsync(ApplicationType.Client);
 
@@ -82,7 +90,8 @@ public class OpcUaSessionFactory {
                 return;
             }
 
-            if (eventArgs.Error.StatusCode.Code == Opc.Ua.StatusCodes.BadCertificateUntrusted) {
+            if (options.AutoAcceptUntrustedCertificates &&
+                eventArgs.Error.StatusCode.Code == Opc.Ua.StatusCodes.BadCertificateUntrusted) {
                 eventArgs.Accept = true;
                 return;
             }
@@ -127,7 +136,7 @@ public class OpcUaSessionFactory {
             false,
             false,
             $"WebFlexOpcCollector-{target.DeviceCode}",
-            60000,
+            (uint)options.DefaultSessionTimeoutMilliseconds,
             userIdentity,
             Array.Empty<string>()
         );

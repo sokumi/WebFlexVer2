@@ -17,6 +17,8 @@ builder.Logging.AddProvider(new MemoryLoggerProvider());
 builder.Services.Configure<OpcCollectorOptions>(
     builder.Configuration.GetSection("OpcCollector"));
 
+builder.Services.AddSingleton<OpcCollectorOptionState>();
+
 builder.Services.AddDbContextFactory<WebFlexConfigDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexDb")));
 

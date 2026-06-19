@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebFlex.OpcCollector.Logging;
 using WebFlex.OpcCollector.Services;
+using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Controllers;
 
@@ -25,10 +26,23 @@ public class OpcCollectorManageController : ControllerBase {
         return Ok(_runtimeManager.GetStatus());
     }
 
+    [HttpGet("options")]
+    public IActionResult Options() {
+        return Ok(_runtimeManager.GetOptions());
+    }
+
+    [HttpPost("options")]
+    public IActionResult SaveOptions([FromBody] OpcCollectorRuntimeOptionsDto request) {
+        var saved = _runtimeManager.UpdateOptions(request);
+        return Ok(new {
+            success = true,
+            message = "OPC Collector 옵션이 저장되었습니다. 일부 옵션은 신규 세션/재구독 시 적용됩니다.",
+            data = saved
+        });
+    }
+
     [HttpGet("device/{deviceId}/status")]
-    public async Task<IActionResult> DeviceStatus(
-        string deviceId,
-        CancellationToken cancellationToken) {
+    public async Task<IActionResult> DeviceStatus(string deviceId, CancellationToken cancellationToken) {
         return Ok(await _runtimeManager.GetDeviceStatusAsync(deviceId, cancellationToken));
     }
 
@@ -38,17 +52,13 @@ public class OpcCollectorManageController : ControllerBase {
     }
 
     [HttpPost("device/{deviceId}/subscription/stop")]
-    public async Task<IActionResult> StopDeviceSubscription(
-        string deviceId,
-        CancellationToken cancellationToken) {
+    public async Task<IActionResult> StopDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StopDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 중지 요청 완료" });
     }
 
     [HttpPost("device/{deviceId}/subscription/start")]
-    public async Task<IActionResult> StartDeviceSubscription(
-        string deviceId,
-        CancellationToken cancellationToken) {
+    public async Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
     }

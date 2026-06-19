@@ -11,7 +11,7 @@ public class TimescaleDbWriter : IDisposable {
     private readonly ConcurrentQueue<OpcCollectedValue> _queue = new();
     private readonly ILogger<TimescaleDbWriter> _logger;
     private readonly string _connectionString;
-    private readonly OpcCollectorOptions _options;
+    private readonly OpcCollectorOptionState _optionState;
     private readonly CancellationTokenSource _cts = new();
     private readonly Task _workerTask;
     private DateTime _lastInsertLogAt = DateTime.MinValue;
@@ -21,10 +21,10 @@ public class TimescaleDbWriter : IDisposable {
 
     public TimescaleDbWriter(
         IConfiguration configuration,
-        IOptions<OpcCollectorOptions> options,
+        OpcCollectorOptionState optionState,
         ILogger<TimescaleDbWriter> logger) {
         _logger = logger;
-        _options = options.Value;
+        _optionState = optionState;
         _connectionString = configuration.GetConnectionString("WebFlexTsd")
             ?? throw new InvalidOperationException("ConnectionStrings:WebFlexTsd 설정이 없습니다.");
 
@@ -45,7 +45,8 @@ public class TimescaleDbWriter : IDisposable {
     private async Task ProcessQueueAsync() {
         while (!_cts.Token.IsCancellationRequested) {
             try {
-                await Task.Delay(_options.FlushIntervalMilliseconds, _cts.Token);
+                var options = _optionState.Current;
+                await Task.Delay(options.FlushIntervalMilliseconds, _cts.Token);
                 await FlushOnceAsync(_cts.Token);
             } catch (OperationCanceledException) {
                 break;
@@ -64,7 +65,9 @@ public class TimescaleDbWriter : IDisposable {
     private async Task FlushOnceAsync(CancellationToken cancellationToken) {
         var batch = new List<OpcCollectedValue>();
 
-        while (batch.Count < _options.MaxBatchSize &&
+        var options = _optionState.Current;
+
+        while (batch.Count < options.MaxBatchSize &&
                _queue.TryDequeue(out var item)) {
             batch.Add(item);
         }
@@ -75,8 +78,13 @@ public class TimescaleDbWriter : IDisposable {
         var startedAt = DateTime.UtcNow;
 
         try {
-            await BulkInsertTimescaleAsync(batch, cancellationToken);
-            await UpsertCurrentValueAsync(batch, cancellationToken);
+            if (options.EnableTimescaleHistorySave) {
+                await BulkInsertTimescaleAsync(batch, cancellationToken);
+            }
+
+            if (options.EnableCurrentValueSave) {
+                await UpsertCurrentValueAsync(batch, cancellationToken);
+            }
 
             Interlocked.Add(ref _totalInsertedCount, batch.Count);
 

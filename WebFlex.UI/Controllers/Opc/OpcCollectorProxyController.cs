@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http.Json;
 
 namespace WebFlex.UI.Controllers.Opc;
 
@@ -125,6 +126,70 @@ public class OpcCollectorProxyController : ControllerBase {
             var client = _httpClientFactory.CreateClient();
 
             using var request = new HttpRequestMessage(method, url);
+            using var response = await client.SendAsync(request, cancellationToken);
+
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/json";
+
+            return new ContentResult {
+                StatusCode = (int)response.StatusCode,
+                Content = body,
+                ContentType = contentType
+            };
+        } catch (Exception ex) {
+            _logger.LogError(
+                ex,
+                "OPC Collector API 호출 실패 | Method={Method} | Url={Url}",
+                method.Method,
+                url);
+
+            return StatusCode(
+                StatusCodes.Status502BadGateway,
+                "OPC Collector API 호출 중 오류가 발생했습니다.");
+        }
+    }
+
+    [HttpGet("options")]
+    public async Task<IActionResult> Options(CancellationToken cancellationToken) {
+        return await ForwardAsync(
+            HttpMethod.Get,
+            "options",
+            cancellationToken);
+    }
+
+    [HttpPost("options")]
+    public async Task<IActionResult> SaveOptions(
+        [FromBody] object requestBody,
+        CancellationToken cancellationToken) {
+        return await ForwardJsonAsync(
+            HttpMethod.Post,
+            "options",
+            requestBody,
+            cancellationToken);
+    }
+
+    private async Task<IActionResult> ForwardJsonAsync(
+    HttpMethod method,
+    string collectorPath,
+    object requestBody,
+    CancellationToken cancellationToken) {
+        var baseUrl = _configuration["OpcCollector:BaseUrl"];
+
+        if (string.IsNullOrWhiteSpace(baseUrl)) {
+            return StatusCode(
+                StatusCodes.Status500InternalServerError,
+                "OpcCollector:BaseUrl 설정이 없습니다.");
+        }
+
+        var url =
+            $"{baseUrl.TrimEnd('/')}/api/opc-collector-manage/{collectorPath.TrimStart('/')}";
+
+        try {
+            var client = _httpClientFactory.CreateClient();
+
+            using var request = new HttpRequestMessage(method, url);
+            request.Content = JsonContent.Create(requestBody);
+
             using var response = await client.SendAsync(request, cancellationToken);
 
             var body = await response.Content.ReadAsStringAsync(cancellationToken);

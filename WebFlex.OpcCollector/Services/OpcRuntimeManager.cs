@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using WebFlex.OpcCollector.Options;
+using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Services;
 
@@ -8,7 +9,7 @@ public class OpcRuntimeManager {
     private readonly OpcCollectTargetProvider _targetProvider;
     private readonly OpcUaRuntimeService _opcUaRuntimeService;
     private readonly TimescaleDbWriter _timescaleDbWriter;
-    private readonly OpcCollectorOptions _options;
+    private readonly OpcCollectorOptionState _optionState;
     private readonly ILogger<OpcRuntimeManager> _logger;
 
     private DateTime _lastSaveAt = DateTime.MinValue;
@@ -22,12 +23,12 @@ public class OpcRuntimeManager {
         OpcCollectTargetProvider targetProvider,
         OpcUaRuntimeService opcUaRuntimeService,
         TimescaleDbWriter timescaleDbWriter,
-        IOptions<OpcCollectorOptions> options,
+        OpcCollectorOptionState optionState,
         ILogger<OpcRuntimeManager> logger) {
         _targetProvider = targetProvider;
         _opcUaRuntimeService = opcUaRuntimeService;
         _timescaleDbWriter = timescaleDbWriter;
-        _options = options.Value;
+        _optionState = optionState;
         _logger = logger;
     }
 
@@ -43,13 +44,15 @@ public class OpcRuntimeManager {
             return;
         }
 
+        var options = _optionState.Current;
         var nowUtc = DateTime.UtcNow;
 
-        if ((nowUtc - _lastReloadAt).TotalSeconds >= _options.ReloadIntervalSeconds) {
+        if (options.EnableAutoReload &&
+            (nowUtc - _lastReloadAt).TotalSeconds >= options.ReloadIntervalSeconds) {
             await ReloadTargetsAsync(cancellationToken);
         }
 
-        if (!_dbSaveStopped) {
+        if (options.EnableSnapshotSave && !_dbSaveStopped) {
             var nowSecond = new DateTime(
                 nowUtc.Year, nowUtc.Month, nowUtc.Day,
                 nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
@@ -143,6 +146,22 @@ public class OpcRuntimeManager {
         };
     }
 
+    public OpcCollectorRuntimeOptionsDto GetOptions() {
+        return _optionState.Current;
+    }
+
+    public OpcCollectorRuntimeOptionsDto UpdateOptions(OpcCollectorRuntimeOptionsDto request) {
+        var saved = _optionState.Update(request);
+
+        _logger.LogInformation(
+            "OPC Collector 옵션 변경 | ReloadIntervalSeconds={ReloadIntervalSeconds} | FlushIntervalMilliseconds={FlushIntervalMilliseconds} | MaxBatchSize={MaxBatchSize}",
+            saved.ReloadIntervalSeconds,
+            saved.FlushIntervalMilliseconds,
+            saved.MaxBatchSize);
+
+        return saved;
+    }
+
     public async Task<object> GetDeviceStatusAsync(
         string deviceId,
         CancellationToken cancellationToken) {
@@ -176,9 +195,10 @@ public class OpcRuntimeManager {
     }
 
     private void LogWriterStatus() {
+        var options = _optionState.Current;
         var now = DateTime.UtcNow;
 
-        if ((now - _lastWriterLogAt).TotalSeconds < 30)
+        if ((now - _lastWriterLogAt).TotalSeconds < options.WriterLogIntervalSeconds)
             return;
 
         _lastWriterLogAt = now;

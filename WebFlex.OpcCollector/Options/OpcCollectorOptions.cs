@@ -1,11 +1,6 @@
-﻿namespace WebFlex.OpcCollector.Options;
+﻿using WebFlex.Shared.Dtos.Opc;
 
-public class OpcCollectorOptions {
-    public int ReloadIntervalSeconds { get; set; } = 3600;
+namespace WebFlex.OpcCollector.Options;
 
-    public int SaveIntervalMilliseconds { get; set; } = 1000;
-
-    public int FlushIntervalMilliseconds { get; set; } = 200;
-
-    public int MaxBatchSize { get; set; } = 5000;
+public class OpcCollectorOptions : OpcCollectorRuntimeOptionsDto {
 }
