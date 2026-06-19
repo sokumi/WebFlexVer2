@@ -20,4 +20,11 @@ public class OpcController : Controller {
 
         return View(MVCPath.Opc.OPC1020);
     }
+
+    [HttpGet, ActionName("opc1030"), ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult OPC1030() {
+        ViewData["Title"] = "OPC Client ¿É¼Ç";
+
+        return View(MVCPath.Opc.OPC1030);
+    }
 }

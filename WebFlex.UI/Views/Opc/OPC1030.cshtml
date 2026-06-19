@@ -1,0 +1,598 @@
+﻿@{
+    ViewData["Title"] = "OPC Client 옵션";
+}
+
+<div class="page-device page-opc-client-options">
+    <section class="page-toolbar">
+        <button id="btnLoadDefaults" class="btn-basic" type="button">기본값 불러오기</button>
+        <button id="btnLoadSaved" class="btn-basic" type="button">저장값 불러오기</button>
+        <button id="btnSaveLocal" class="btn-basic" type="button">임시 저장</button>
+        <button id="btnClearLocal" class="btn-basic danger" type="button">임시 저장 삭제</button>
+        <span id="lblStatus">-</span>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>ApplicationConfiguration</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>ApplicationName</th>
+                    <td><input id="applicationName" type="text" /></td>
+                    <td>OPC UA Client 애플리케이션 이름입니다. 인증서 SubjectName과 구분해서 사용할 수 있습니다.</td>
+                </tr>
+                <tr>
+                    <th>ApplicationUri</th>
+                    <td><input id="applicationUri" type="text" /></td>
+                    <td>OPC UA Application URI입니다. 보통 urn:hostname:appName 형태를 사용합니다.</td>
+                </tr>
+                <tr>
+                    <th>ProductUri</th>
+                    <td><input id="productUri" type="text" /></td>
+                    <td>제품 식별 URI입니다.</td>
+                </tr>
+                <tr>
+                    <th>ApplicationType</th>
+                    <td>
+                        <select id="applicationType">
+                            <option value="Client">Client</option>
+                            <option value="Server">Server</option>
+                            <option value="ClientAndServer">ClientAndServer</option>
+                            <option value="DiscoveryServer">DiscoveryServer</option>
+                        </select>
+                    </td>
+                    <td>애플리케이션 타입입니다. Collector는 Client로 사용합니다.</td>
+                </tr>
+                <tr>
+                    <th>DisableHiResClock</th>
+                    <td><input id="disableHiResClock" type="checkbox" /></td>
+                    <td>고해상도 타이머 사용을 비활성화할지 여부입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Application Certificate</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>ApplicationCertificate.StoreType</th>
+                    <td>
+                        <select id="applicationCertificateStoreType">
+                            <option value="Directory">Directory</option>
+                            <option value="X509Store">X509Store</option>
+                        </select>
+                    </td>
+                    <td>Client 애플리케이션 인증서 저장소 타입입니다.</td>
+                </tr>
+                <tr>
+                    <th>ApplicationCertificate.StorePath</th>
+                    <td><input id="applicationCertificateStorePath" type="text" /></td>
+                    <td>Client 애플리케이션 인증서 저장 경로입니다. 예: pki/own</td>
+                </tr>
+                <tr>
+                    <th>ApplicationCertificate.SubjectName</th>
+                    <td><input id="applicationCertificateSubjectName" type="text" /></td>
+                    <td>Client 인증서 SubjectName입니다.</td>
+                </tr>
+                <tr>
+                    <th>ApplicationCertificate.Thumbprint</th>
+                    <td><input id="applicationCertificateThumbprint" type="text" /></td>
+                    <td>특정 인증서를 thumbprint로 지정할 때 사용합니다. 비워두면 SubjectName 기준으로 찾거나 생성합니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Trusted / Issuer / Rejected Certificate Stores</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>TrustedPeerCertificates.StoreType</th>
+                    <td>
+                        <select id="trustedPeerCertificatesStoreType">
+                            <option value="Directory">Directory</option>
+                            <option value="X509Store">X509Store</option>
+                        </select>
+                    </td>
+                    <td>신뢰할 서버 인증서 저장소 타입입니다.</td>
+                </tr>
+                <tr>
+                    <th>TrustedPeerCertificates.StorePath</th>
+                    <td><input id="trustedPeerCertificatesStorePath" type="text" /></td>
+                    <td>신뢰할 서버 인증서 저장 경로입니다. 예: pki/trusted</td>
+                </tr>
+                <tr>
+                    <th>TrustedIssuerCertificates.StoreType</th>
+                    <td>
+                        <select id="trustedIssuerCertificatesStoreType">
+                            <option value="Directory">Directory</option>
+                            <option value="X509Store">X509Store</option>
+                        </select>
+                    </td>
+                    <td>신뢰할 Issuer 인증서 저장소 타입입니다.</td>
+                </tr>
+                <tr>
+                    <th>TrustedIssuerCertificates.StorePath</th>
+                    <td><input id="trustedIssuerCertificatesStorePath" type="text" /></td>
+                    <td>신뢰할 Issuer 인증서 저장 경로입니다. 예: pki/issuer</td>
+                </tr>
+                <tr>
+                    <th>RejectedCertificateStore.StoreType</th>
+                    <td>
+                        <select id="rejectedCertificateStoreType">
+                            <option value="Directory">Directory</option>
+                            <option value="X509Store">X509Store</option>
+                        </select>
+                    </td>
+                    <td>거부된 인증서 저장소 타입입니다.</td>
+                </tr>
+                <tr>
+                    <th>RejectedCertificateStore.StorePath</th>
+                    <td><input id="rejectedCertificateStorePath" type="text" /></td>
+                    <td>거부된 인증서 저장 경로입니다. 예: pki/rejected</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>SecurityConfiguration</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>AutoAcceptUntrustedCertificates</th>
+                    <td><input id="autoAcceptUntrustedCertificates" type="checkbox" /></td>
+                    <td>신뢰되지 않은 서버 인증서를 자동 수락할지 여부입니다. 운영에서는 false 권장입니다.</td>
+                </tr>
+                <tr>
+                    <th>RejectSHA1SignedCertificates</th>
+                    <td><input id="rejectSHA1SignedCertificates" type="checkbox" /></td>
+                    <td>SHA1 서명 인증서를 거부할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>RejectUnknownRevocationStatus</th>
+                    <td><input id="rejectUnknownRevocationStatus" type="checkbox" /></td>
+                    <td>인증서 폐기 상태를 확인할 수 없을 때 거부할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>MinimumCertificateKeySize</th>
+                    <td><input id="minimumCertificateKeySize" type="number" /></td>
+                    <td>허용할 최소 인증서 키 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>AddAppCertToTrustedStore</th>
+                    <td><input id="addAppCertToTrustedStore" type="checkbox" /></td>
+                    <td>애플리케이션 인증서를 Trusted Store에 추가할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>SuppressNonceValidationErrors</th>
+                    <td><input id="suppressNonceValidationErrors" type="checkbox" /></td>
+                    <td>Nonce 검증 오류를 억제할지 여부입니다. 일부 장비 호환성 때문에 true로 두는 경우가 있습니다.</td>
+                </tr>
+                <tr>
+                    <th>SendCertificateChain</th>
+                    <td><input id="sendCertificateChain" type="checkbox" /></td>
+                    <td>인증서 체인을 함께 전송할지 여부입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>TransportQuotas</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>OperationTimeout</th>
+                    <td><input id="operationTimeout" type="number" /></td>
+                    <td>서비스 호출 타임아웃입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxStringLength</th>
+                    <td><input id="maxStringLength" type="number" /></td>
+                    <td>수신 가능한 최대 문자열 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxByteStringLength</th>
+                    <td><input id="maxByteStringLength" type="number" /></td>
+                    <td>수신 가능한 최대 ByteString 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxArrayLength</th>
+                    <td><input id="maxArrayLength" type="number" /></td>
+                    <td>수신 가능한 최대 배열 길이입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxMessageSize</th>
+                    <td><input id="maxMessageSize" type="number" /></td>
+                    <td>수신 가능한 최대 메시지 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxBufferSize</th>
+                    <td><input id="maxBufferSize" type="number" /></td>
+                    <td>수신 가능한 최대 버퍼 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>ChannelLifetime</th>
+                    <td><input id="channelLifetime" type="number" /></td>
+                    <td>SecureChannel lifetime입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>SecurityTokenLifetime</th>
+                    <td><input id="securityTokenLifetime" type="number" /></td>
+                    <td>SecurityToken lifetime입니다. 밀리초 단위입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>ClientConfiguration</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>DefaultSessionTimeout</th>
+                    <td><input id="defaultSessionTimeout" type="number" /></td>
+                    <td>Session.Create 시 사용할 기본 세션 타임아웃입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>MinSubscriptionLifetime</th>
+                    <td><input id="minSubscriptionLifetime" type="number" /></td>
+                    <td>Subscription 최소 lifetime입니다.</td>
+                </tr>
+                <tr>
+                    <th>WellKnownDiscoveryUrls</th>
+                    <td><textarea id="wellKnownDiscoveryUrls" rows="3"></textarea></td>
+                    <td>Discovery URL 목록입니다. 여러 개는 줄바꿈으로 입력합니다.</td>
+                </tr>
+                <tr>
+                    <th>DiscoveryServers</th>
+                    <td><textarea id="discoveryServers" rows="3"></textarea></td>
+                    <td>Discovery 서버 목록입니다. 여러 개는 줄바꿈으로 입력합니다.</td>
+                </tr>
+                <tr>
+                    <th>EndpointCacheFilePath</th>
+                    <td><input id="endpointCacheFilePath" type="text" /></td>
+                    <td>Endpoint cache 파일 경로입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Endpoint Selection</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>EndpointUrl</th>
+                    <td><input id="endpointUrl" type="text" /></td>
+                    <td>접속할 OPC UA 서버 endpoint URL입니다. 예: opc.tcp://127.0.0.1:49320</td>
+                </tr>
+                <tr>
+                    <th>UseSecurity</th>
+                    <td><input id="useSecurity" type="checkbox" /></td>
+                    <td>CoreClientUtils.SelectEndpoint에서 보안 endpoint를 선택할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>SecurityPolicyUri</th>
+                    <td>
+                        <select id="securityPolicyUri">
+                            <option value="">자동 / 선택 안 함</option>
+                            <option value="None">None</option>
+                            <option value="Basic128Rsa15">Basic128Rsa15</option>
+                            <option value="Basic256">Basic256</option>
+                            <option value="Basic256Sha256">Basic256Sha256</option>
+                            <option value="Aes128_Sha256_RsaOaep">Aes128_Sha256_RsaOaep</option>
+                            <option value="Aes256_Sha256_RsaPss">Aes256_Sha256_RsaPss</option>
+                        </select>
+                    </td>
+                    <td>원하는 SecurityPolicy입니다. 실제 적용 시 SecurityPolicies 상수 URI로 변환하면 됩니다.</td>
+                </tr>
+                <tr>
+                    <th>MessageSecurityMode</th>
+                    <td>
+                        <select id="messageSecurityMode">
+                            <option value="">자동 / 선택 안 함</option>
+                            <option value="None">None</option>
+                            <option value="Sign">Sign</option>
+                            <option value="SignAndEncrypt">SignAndEncrypt</option>
+                        </select>
+                    </td>
+                    <td>메시지 보안 모드입니다.</td>
+                </tr>
+                <tr>
+                    <th>TransportProfileUri</th>
+                    <td><input id="transportProfileUri" type="text" /></td>
+                    <td>Transport Profile URI입니다. 일반적으로 opc.tcp 사용 시 비워둬도 됩니다.</td>
+                </tr>
+                <tr>
+                    <th>EndpointSelectionTimeout</th>
+                    <td><input id="endpointSelectionTimeout" type="number" /></td>
+                    <td>Endpoint 조회/선택 시 사용할 타임아웃입니다. 밀리초 단위입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>UserIdentity / Authentication</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>IdentityType</th>
+                    <td>
+                        <select id="identityType">
+                            <option value="Anonymous">Anonymous</option>
+                            <option value="UserName">UserName</option>
+                            <option value="Certificate">Certificate</option>
+                        </select>
+                    </td>
+                    <td>OPC UA 로그인 방식입니다.</td>
+                </tr>
+                <tr>
+                    <th>UserName</th>
+                    <td><input id="userName" type="text" /></td>
+                    <td>UserName 인증을 사용할 때의 사용자명입니다.</td>
+                </tr>
+                <tr>
+                    <th>Password</th>
+                    <td><input id="password" type="password" /></td>
+                    <td>UserName 인증을 사용할 때의 비밀번호입니다. 지금은 UI 임시값일 뿐 실제 저장/전송하지 않습니다.</td>
+                </tr>
+                <tr>
+                    <th>CertificateUser.StoreType</th>
+                    <td>
+                        <select id="certificateUserStoreType">
+                            <option value="Directory">Directory</option>
+                            <option value="X509Store">X509Store</option>
+                        </select>
+                    </td>
+                    <td>Certificate Identity 사용 시 인증서 저장소 타입입니다.</td>
+                </tr>
+                <tr>
+                    <th>CertificateUser.StorePath</th>
+                    <td><input id="certificateUserStorePath" type="text" /></td>
+                    <td>Certificate Identity 사용 시 인증서 저장 경로입니다.</td>
+                </tr>
+                <tr>
+                    <th>CertificateUser.SubjectName</th>
+                    <td><input id="certificateUserSubjectName" type="text" /></td>
+                    <td>Certificate Identity 사용 시 인증서 SubjectName입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Session.Create Options</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>SessionName</th>
+                    <td><input id="sessionName" type="text" /></td>
+                    <td>OPC UA Session 이름입니다.</td>
+                </tr>
+                <tr>
+                    <th>SessionTimeout</th>
+                    <td><input id="sessionTimeout" type="number" /></td>
+                    <td>Session.Create에 전달할 세션 타임아웃입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>UpdateBeforeConnect</th>
+                    <td><input id="updateBeforeConnect" type="checkbox" /></td>
+                    <td>연결 전 endpoint 정보를 업데이트할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>CheckDomain</th>
+                    <td><input id="checkDomain" type="checkbox" /></td>
+                    <td>서버 인증서 도메인 검증 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>PreferredLocales</th>
+                    <td><input id="preferredLocales" type="text" /></td>
+                    <td>선호 locale 목록입니다. 예: ko-KR,en-US</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Subscription Options</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>PublishingInterval</th>
+                    <td><input id="publishingInterval" type="number" /></td>
+                    <td>Subscription PublishingInterval입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>LifetimeCount</th>
+                    <td><input id="lifetimeCount" type="number" /></td>
+                    <td>Subscription LifetimeCount입니다.</td>
+                </tr>
+                <tr>
+                    <th>KeepAliveCount</th>
+                    <td><input id="keepAliveCount" type="number" /></td>
+                    <td>Subscription KeepAliveCount입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxNotificationsPerPublish</th>
+                    <td><input id="maxNotificationsPerPublish" type="number" /></td>
+                    <td>Publish 응답 하나에 포함할 최대 notification 수입니다.</td>
+                </tr>
+                <tr>
+                    <th>PublishingEnabled</th>
+                    <td><input id="publishingEnabled" type="checkbox" /></td>
+                    <td>Publishing 활성화 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>Priority</th>
+                    <td><input id="priority" type="number" /></td>
+                    <td>Subscription 우선순위입니다. 0~255 범위입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>MonitoredItem Options</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>AttributeId</th>
+                    <td>
+                        <select id="attributeId">
+                            <option value="Value">Value</option>
+                            <option value="DisplayName">DisplayName</option>
+                            <option value="Description">Description</option>
+                            <option value="DataType">DataType</option>
+                            <option value="NodeClass">NodeClass</option>
+                            <option value="BrowseName">BrowseName</option>
+                        </select>
+                    </td>
+                    <td>모니터링할 Attribute입니다. 일반 값 수집은 Value입니다.</td>
+                </tr>
+                <tr>
+                    <th>MonitoringMode</th>
+                    <td>
+                        <select id="monitoringMode">
+                            <option value="Reporting">Reporting</option>
+                            <option value="Sampling">Sampling</option>
+                            <option value="Disabled">Disabled</option>
+                        </select>
+                    </td>
+                    <td>MonitoredItem의 MonitoringMode입니다.</td>
+                </tr>
+                <tr>
+                    <th>SamplingInterval</th>
+                    <td><input id="samplingInterval" type="number" /></td>
+                    <td>태그 샘플링 주기입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>QueueSize</th>
+                    <td><input id="queueSize" type="number" /></td>
+                    <td>MonitoredItem QueueSize입니다.</td>
+                </tr>
+                <tr>
+                    <th>DiscardOldest</th>
+                    <td><input id="discardOldest" type="checkbox" /></td>
+                    <td>Queue가 찼을 때 오래된 값을 버릴지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>DeadbandType</th>
+                    <td>
+                        <select id="deadbandType">
+                            <option value="None">None</option>
+                            <option value="Absolute">Absolute</option>
+                            <option value="Percent">Percent</option>
+                        </select>
+                    </td>
+                    <td>DataChangeFilter DeadbandType입니다.</td>
+                </tr>
+                <tr>
+                    <th>DeadbandValue</th>
+                    <td><input id="deadbandValue" type="number" step="0.0001" /></td>
+                    <td>Deadband 값입니다. 변화량 필터링에 사용합니다.</td>
+                </tr>
+                <tr>
+                    <th>DataChangeTrigger</th>
+                    <td>
+                        <select id="dataChangeTrigger">
+                            <option value="StatusValue">StatusValue</option>
+                            <option value="Status">Status</option>
+                            <option value="StatusValueTimestamp">StatusValueTimestamp</option>
+                        </select>
+                    </td>
+                    <td>DataChangeFilter Trigger입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Browse / Read Options</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>BrowseNodeClassMask</th>
+                    <td><input id="browseNodeClassMask" type="text" /></td>
+                    <td>Browse 시 조회할 NodeClass mask입니다. 예: Object,Variable,Method</td>
+                </tr>
+                <tr>
+                    <th>BrowseResultMask</th>
+                    <td><input id="browseResultMask" type="text" /></td>
+                    <td>Browse 결과에 포함할 항목 mask입니다. 예: All</td>
+                </tr>
+                <tr>
+                    <th>BrowseMaxReferencesToReturn</th>
+                    <td><input id="browseMaxReferencesToReturn" type="number" /></td>
+                    <td>Browse 한 번에 반환받을 최대 Reference 수입니다. 0이면 서버 기본값입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReadMaxAge</th>
+                    <td><input id="readMaxAge" type="number" /></td>
+                    <td>Read 요청 시 MaxAge입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReadTimestampsToReturn</th>
+                    <td>
+                        <select id="readTimestampsToReturn">
+                            <option value="Both">Both</option>
+                            <option value="Source">Source</option>
+                            <option value="Server">Server</option>
+                            <option value="Neither">Neither</option>
+                        </select>
+                    </td>
+                    <td>Read 시 반환받을 timestamp 종류입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Reconnect / KeepAlive</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>EnableSessionKeepAlive</th>
+                    <td><input id="enableSessionKeepAlive" type="checkbox" /></td>
+                    <td>Session KeepAlive 이벤트를 사용할지 여부입니다. SDK 설정이라기보다 Client 운용 옵션입니다.</td>
+                </tr>
+                <tr>
+                    <th>KeepAliveInterval</th>
+                    <td><input id="keepAliveInterval" type="number" /></td>
+                    <td>KeepAlive 확인 주기입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReconnectPeriod</th>
+                    <td><input id="reconnectPeriod" type="number" /></td>
+                    <td>연결 끊김 시 재연결 시도 주기입니다. 밀리초 단위입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxReconnectAttempts</th>
+                    <td><input id="maxReconnectAttempts" type="number" /></td>
+                    <td>최대 재연결 시도 횟수입니다. -1이면 무제한으로 해석할 수 있습니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/opc/opc1030.js" asp-append-version="true"></script>
+}

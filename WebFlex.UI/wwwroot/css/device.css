@@ -343,3 +343,12 @@
 .darkmode .currentvalue-table tr:hover td {
     background: #333337;
 }
+
+.page-opc-client-options input[type="text"],
+.page-opc-client-options input[type="number"],
+.page-opc-client-options input[type="password"],
+.page-opc-client-options select,
+.page-opc-client-options textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
