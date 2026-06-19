@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using WebFlex.OpcCollector.Options;
 
 namespace WebFlex.OpcCollector.Services;
@@ -188,4 +189,21 @@ public class OpcRuntimeManager {
             _timescaleDbWriter.TotalEnqueuedCount,
             _timescaleDbWriter.TotalInsertedCount);
     }
+
+    public async Task<object> GetDeviceSummaryAsync(CancellationToken cancellationToken) {
+        var targets = await _targetProvider.GetCollectTargetsAsync(cancellationToken);
+
+        return targets.Select(target => {
+            var runtimeStatus = _opcUaRuntimeService.GetDeviceStatus(target.DeviceId);
+
+            return new {
+                deviceId = target.DeviceId,
+                deviceName = target.DeviceName,
+                subscriptionStatus = runtimeStatus.ToString(),
+                todayInsertedCount = 0
+            };
+        }).ToList();
+    }
+
+
 }

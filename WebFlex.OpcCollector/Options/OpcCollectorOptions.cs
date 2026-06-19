@@ -1,7 +1,7 @@
 ﻿namespace WebFlex.OpcCollector.Options;
 
 public class OpcCollectorOptions {
-    public int ReloadIntervalSeconds { get; set; } = 10;
+    public int ReloadIntervalSeconds { get; set; } = 3600;
 
     public int SaveIntervalMilliseconds { get; set; } = 1000;
 

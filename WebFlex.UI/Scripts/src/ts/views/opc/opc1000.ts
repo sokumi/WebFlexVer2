@@ -11,6 +11,12 @@ type DeviceRow = {
     deviceType: string;
 };
 
+type DeviceSummaryRow = {
+    deviceId: string;
+    deviceName: string;
+    subscriptionStatus: string;
+    todayInsertedCount: number;
+};
 
 export default class Page {
     devices: DeviceRow[] = [];
@@ -21,14 +27,14 @@ export default class Page {
     init(): void {
         $("#selDevice").on("change", this.selDevice_onChange);
 
-        $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector/StopSubscription"));
-        $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector/StartSubscription"));
+        $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector-manage/StopSubscription"));
+        $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector-manage/StartSubscription"));
         $("#btnRestartProcess").on("click", () => this.restartProcess());
         $("#btnRefresh").on("click", () => this.refresh());
 
         $("#btnLoadDeviceStatus").on("click", () => this.startSelectedDeviceAutoRefresh());
-        $("#btnStopDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector/StopDeviceSubscription"));
-        $("#btnStartDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector/StartDeviceSubscription"));
+        $("#btnStopDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector-manage/StopDeviceSubscription"));
+        $("#btnStartDeviceSubscription").on("click", () => this.postSelectedDevice("/api/opc-collector-manage/StartDeviceSubscription"));
 
         $("#btnClearLogs").on("click", () => this.clearLogs());
         $("#btnLoadLogs").on("click", () => this.startLogAutoRefresh());
@@ -91,7 +97,7 @@ export default class Page {
             return;
         }
 
-        await this.post("/api/opc-collector/RestartProcess");
+        await this.post("/api/opc-collector-manage/RestartProcess");
     }
 
     async post(url: string): Promise<void> {
@@ -113,6 +119,7 @@ export default class Page {
 
     async refresh(): Promise<void> {
         await this.loadStatus();
+        await this.loadDeviceSummary();
 
         if (this.isSelectedDeviceAutoRefresh) {
             await this.loadSelectedDeviceStatus(false);
@@ -120,6 +127,36 @@ export default class Page {
 
         if (this.isLogAutoRefresh) {
             await this.loadLogs();
+        }
+    }
+
+    async loadDeviceSummary(): Promise<void> {
+        try {
+            const response = await fetch("/api/opc-collector-manage/DeviceSummary");
+
+            if (!response.ok) {
+                throw new Error(await response.text());
+            }
+
+            const rows = await response.json() as DeviceSummaryRow[];
+
+            const html = rows
+                .map(x => `
+                <tr>
+                    <td>${this.escapeHtml(x.deviceName ?? "-")}</td>
+                    <td>${this.escapeHtml(x.subscriptionStatus ?? "-")}</td>
+                </tr>
+            `)
+                .join("");
+
+            $("#deviceSummaryBody").html(
+                html || `<tr><td colspan="3">조회된 디바이스가 없습니다.</td></tr>`
+            );
+        } catch (e) {
+            console.error(e);
+            $("#deviceSummaryBody").html(
+                `<tr><td colspan="3">조회 실패</td></tr>`
+            );
         }
     }
 
@@ -144,7 +181,7 @@ export default class Page {
 
     async loadStatus(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector/Status");
+            const response = await fetch("/api/opc-collector-manage/Status");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -169,7 +206,7 @@ export default class Page {
         const deviceId = this.selectedDeviceId;
 
         try {
-            const response = await fetch(`/api/opc-collector/DeviceStatus?deviceId=${deviceId}`);
+            const response = await fetch(`/api/opc-collector-manage/DeviceStatus?deviceId=${deviceId}`);
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -196,7 +233,7 @@ export default class Page {
 
     async loadLogs(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector/Logs");
+            const response = await fetch("/api/opc-collector-manage/Logs");
 
             if (!response.ok) {
                 throw new Error(await response.text());

@@ -296,6 +296,7 @@ public class OpcUaRuntimeService {
         }
     }
 
+    // opc 값 처리
     private void OnMonitoredItemNotification(
         OpcDeviceRuntime runtime,
         MonitoredItem item,
@@ -316,6 +317,7 @@ public class OpcUaRuntimeService {
                 saveToDatabase = false;
             }
 
+            // 최신 값 갱신
             runtime.CurrentValues[nodeIdText] = new OpcCurrentRuntimeValue {
                 EndpointUrl = runtime.EndpointUrl,
                 NodeId = nodeIdText,

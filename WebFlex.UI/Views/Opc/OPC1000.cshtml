@@ -3,9 +3,9 @@
 }
 
 <div class="page-device page-opc-control">
-    <section class="page-toolbar opc-toolbar-line"> 
+    <section class="page-toolbar opc-toolbar-line">
         <button id="btnStopSubscription" class="btn-basic" type="button">전체 디바이스 구독 중지</button>
-        <button id="btnStartSubscription" class="btn-basic" type="button">전체 디바이스 구독 재시작</button> 
+        <button id="btnStartSubscription" class="btn-basic" type="button">전체 디바이스 구독 재시작</button>
         <button id="btnRestartProcess" class="btn-basic danger" type="button">전체 재가동(X)</button>
         <button id="btnRefresh" class="btn-basic" type="button">새로고침</button>
     </section>
@@ -14,9 +14,9 @@
         <select id="selDevice">
             <option value="">디바이스 선택</option>
         </select>
-        <button id="btnLoadDeviceStatus" class="btn-basic" type="button">선택 디바이스 상태 조회</button> 
+        <button id="btnLoadDeviceStatus" class="btn-basic" type="button">선택 디바이스 상태 조회</button>
         <button id="btnStopDeviceSubscription" class="btn-basic" type="button">선택 디바이스 구독 중지</button>
-        <button id="btnStartDeviceSubscription" class="btn-basic" type="button">선택 디바이스 구독 재시작</button> 
+        <button id="btnStartDeviceSubscription" class="btn-basic" type="button">선택 디바이스 구독 재시작</button>
     </section>
 
     <section class="opc-status-panel">
@@ -65,6 +65,22 @@
 
             <div id="logBox" class="opc-log-box"></div>
         </div>
+
+        <div class="opc-status-title device-title">디바이스별 수집 상태</div>
+
+        <table class="basic-grid">
+            <thead>
+                <tr>
+                    <th>디바이스명</th>
+                    <th>구독 상태</th>
+                </tr>
+            </thead>
+            <tbody id="deviceSummaryBody">
+                <tr>
+                    <td colspan="3">-</td>
+                </tr>
+            </tbody>
+        </table>
     </section>
 </div>
 

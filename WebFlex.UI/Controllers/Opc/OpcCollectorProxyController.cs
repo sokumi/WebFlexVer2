@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace WebFlex.UI.Controllers.Opc;
 
-[Route("api/opc-collector/[action]")]
+[Route("api/opc-collector-manage/[action]")]
 public class OpcCollectorProxyController : Controller {
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly IConfiguration _configuration;
@@ -19,47 +19,52 @@ public class OpcCollectorProxyController : Controller {
 
     [HttpGet]
     public Task<IActionResult> Status(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage/status", cancellationToken);
+        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage-manage/status", cancellationToken);
     }
 
     [HttpGet]
     public Task<IActionResult> DeviceStatus(string deviceId, CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Get, $"api/opc-collector-manage/device/{deviceId}/status", cancellationToken);
+        return ForwardAsync(HttpMethod.Get, $"api/opc-collector-manage-manage/device/{deviceId}/status", cancellationToken);
     }
 
     [HttpGet]
     public Task<IActionResult> Logs(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage/logs?count=100", cancellationToken);
-    } 
+        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage-manage/logs?count=100", cancellationToken);
+    }
+
+    [HttpGet]
+    public Task<IActionResult> DeviceSummary(CancellationToken cancellationToken) {
+        return ForwardAsync(HttpMethod.Get, "api/opc-collector-manage-manage/device-summary", cancellationToken);
+    }
 
     [HttpPost]
     public Task<IActionResult> StopDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/stop", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage-manage/device/{deviceId}/subscription/stop", cancellationToken);
     }
 
     [HttpPost]
     public Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage/device/{deviceId}/subscription/start", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, $"api/opc-collector-manage-manage/device/{deviceId}/subscription/start", cancellationToken);
     }  
 
     [HttpPost]
     public Task<IActionResult> RestartAllDevices(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/devices/restart", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage-manage/devices/restart", cancellationToken);
     }
 
     [HttpPost]
     public Task<IActionResult> StopSubscription(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/subscription/stop", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage-manage/subscription/stop", cancellationToken);
     }
 
     [HttpPost]
     public Task<IActionResult> StartSubscription(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/subscription/start", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage-manage/subscription/start", cancellationToken);
     }  
 
     [HttpPost]
     public Task<IActionResult> RestartProcess(CancellationToken cancellationToken) {
-        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage/restart-process", cancellationToken);
+        return ForwardAsync(HttpMethod.Post, "api/opc-collector-manage-manage/restart-process", cancellationToken);
     }
 
     private async Task<IActionResult> ForwardAsync(
