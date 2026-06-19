@@ -2,6 +2,62 @@
     ViewData["Title"] = "메인";
 }
 
-<div class="page-main">
-    메인 화면
+<div class="page-main currentvalue-page">
+    <section class="currentvalue-header">
+
+
+        <div class="currentvalue-status" style="display: none;">
+            <span>전체: <b id="lblTotalCount">0</b></span>
+            <span>표시: <b id="lblVisibleCount">0</b></span>
+            <span>수신: <b id="lblUpdateCount">0</b></span>
+            <span>상태: <b id="lblStreamStatus">연결 전</b></span>
+        </div>
+    </section>
+
+    <section class="currentvalue-grid-card">
+        <div class="currentvalue-table-header">
+            <table class="currentvalue-table">
+                <colgroup>
+                    <col style="width: 280px;" />
+                    <col style="width: 420px;" />
+                    <col style="width: 180px;" />
+                    <col style="width: 130px;" />
+                    <col style="width: 190px;" />
+                    <col style="width: 190px;" />
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>NodeId</th>
+                        <th>Value</th>
+                        <th>Status</th>
+                        <th>Source Time</th>
+                        <th>Updated Time</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+
+        <div id="currentValueScroll" class="currentvalue-scroll">
+            <table class="currentvalue-table">
+                <colgroup>
+                    <col style="width: 280px;" />
+                    <col style="width: 420px;" />
+                    <col style="width: 180px;" />
+                    <col style="width: 130px;" />
+                    <col style="width: 190px;" />
+                    <col style="width: 190px;" />
+                </colgroup>
+                <tbody id="currentValueBody">
+                    <tr>
+                        <td colspan="6">데이터를 불러오는 중입니다.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
 </div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/main/main.js" asp-append-version="true"></script>
+}
