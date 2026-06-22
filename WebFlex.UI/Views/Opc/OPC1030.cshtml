@@ -589,6 +589,67 @@
             </tbody>
         </table>
     </section>
+
+    <section class="opc-option-section">
+        <h3>HistoryRead Options</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>HistoryReadMode</th>
+                    <td>
+                        <select id="historyReadMode">
+                            <option value="Raw">Raw</option>
+                            <option value="Modified">Modified</option>
+                        </select>
+                    </td>
+                    <td>HistoryRead 방식입니다. Raw는 원본 이력값, Modified는 수정 이력값 조회입니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryReturnBounds</th>
+                    <td><input id="historyReturnBounds" type="checkbox" /></td>
+                    <td>조회 시작/종료 시점 경계값을 포함할지 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryReadModified</th>
+                    <td><input id="historyReadModified" type="checkbox" /></td>
+                    <td>수정된 History 값을 조회할지 여부입니다. Raw 조회는 false입니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryNumValuesPerNode</th>
+                    <td><input id="historyNumValuesPerNode" type="number" /></td>
+                    <td>노드당 최대 조회 개수입니다. 0이면 서버 기본값 또는 제한 없음에 가깝게 동작합니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryTimestampsToReturn</th>
+                    <td>
+                        <select id="historyTimestampsToReturn">
+                            <option value="Both">Both</option>
+                            <option value="Source">Source</option>
+                            <option value="Server">Server</option>
+                            <option value="Neither">Neither</option>
+                        </select>
+                    </td>
+                    <td>HistoryRead 결과에서 받을 Timestamp 종류입니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryReleaseContinuationPoints</th>
+                    <td><input id="historyReleaseContinuationPoints" type="checkbox" /></td>
+                    <td>ContinuationPoint를 해제할지 여부입니다. 일반 조회는 false입니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryMaxContinuationReads</th>
+                    <td><input id="historyMaxContinuationReads" type="number" /></td>
+                    <td>서버가 ContinuationPoint를 반환할 때 추가 조회를 몇 번까지 반복할지 지정합니다.</td>
+                </tr>
+                <tr>
+                    <th>HistoryDefaultRangeMinutes</th>
+                    <td><input id="historyDefaultRangeMinutes" type="number" /></td>
+                    <td>OPC3000 화면에서 기본 조회 기간으로 사용할 분 단위 값입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
 </div>
 
 @section Scripts {

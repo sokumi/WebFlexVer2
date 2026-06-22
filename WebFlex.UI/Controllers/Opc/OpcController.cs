@@ -27,4 +27,11 @@ public class OpcController : Controller {
 
         return View(MVCPath.Opc.OPC1030);
     }
+
+    [HttpGet, ActionName("opc3000"), ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult OPC3000() {
+        ViewData["Title"] = "OPC History Á¶È¸";
+
+        return View(MVCPath.Opc.OPC3000);
+    }
 }

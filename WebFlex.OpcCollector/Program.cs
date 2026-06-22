@@ -29,6 +29,7 @@ builder.Services.AddSingleton<OpcUaSessionFactory>();
 builder.Services.AddSingleton<OpcUaRuntimeService>();
 builder.Services.AddSingleton<OpcRuntimeStatusService>();
 builder.Services.AddSingleton<OpcRuntimeManager>();
+builder.Services.AddSingleton<OpcHistoryReadService>();
 
 builder.Services.AddHostedService<Worker>();
 

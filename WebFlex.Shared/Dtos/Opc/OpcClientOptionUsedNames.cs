@@ -66,7 +66,16 @@ public static class OpcClientOptionUsedNames {
             "DiscardOldest",
             "DeadbandType",
             "DeadbandValue",
-            "DataChangeTrigger"
+            "DataChangeTrigger",
+
+            "HistoryReadMode",
+            "HistoryReturnBounds",
+            "HistoryReadModified",
+            "HistoryNumValuesPerNode",
+            "HistoryTimestampsToReturn",
+            "HistoryReleaseContinuationPoints",
+            "HistoryMaxContinuationReads",
+            "HistoryDefaultRangeMinutes"
         };
     }
 }

@@ -95,7 +95,16 @@ export default class Page {
         "enableSessionKeepAlive",
         "keepAliveInterval",
         "reconnectPeriod",
-        "maxReconnectAttempts"
+        "maxReconnectAttempts",
+
+        "historyReadMode",
+        "historyReturnBounds",
+        "historyReadModified",
+        "historyNumValuesPerNode",
+        "historyTimestampsToReturn",
+        "historyReleaseContinuationPoints",
+        "historyMaxContinuationReads",
+        "historyDefaultRangeMinutes"
     ];
 
     init(): void {

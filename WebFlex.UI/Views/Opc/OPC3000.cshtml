@@ -1,0 +1,143 @@
+﻿@{
+    ViewData["Title"] = "OPC History 조회";
+}
+
+<div class="page-device page-opc-history">
+    <section class="page-toolbar">
+        <button id="btnSearch" class="btn-basic" type="button">조회</button>
+        <span id="lblStatus">-</span>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>조회 조건</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>EndpointUrl</th>
+                    <td><input id="endpointUrl" type="text" value="opc.tcp://127.0.0.1:49320" /></td>
+                    <td>History 데이터를 조회할 OPC UA 서버 Endpoint입니다.</td>
+                </tr>
+                <tr>
+                    <th>NodeId</th>
+                    <td><input id="nodeId" type="text" /></td>
+                    <td>HistoryRead 대상 NodeId입니다. 예: ns=2;s=Tag1</td>
+                </tr>
+                <tr>
+                    <th>UseSecurity</th>
+                    <td><input id="useSecurity" type="checkbox" /></td>
+                    <td>보안 Endpoint 사용 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>UseAnonymous</th>
+                    <td><input id="useAnonymous" type="checkbox" checked /></td>
+                    <td>Anonymous 로그인 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>UserName</th>
+                    <td><input id="userName" type="text" /></td>
+                    <td>UserName 인증을 사용할 때 입력합니다.</td>
+                </tr>
+                <tr>
+                    <th>Password</th>
+                    <td><input id="password" type="password" /></td>
+                    <td>UserName 인증을 사용할 때 입력합니다.</td>
+                </tr>
+                <tr>
+                    <th>StartTime</th>
+                    <td><input id="startTime" type="datetime-local" /></td>
+                    <td>History 조회 시작 시간입니다.</td>
+                </tr>
+                <tr>
+                    <th>EndTime</th>
+                    <td><input id="endTime" type="datetime-local" /></td>
+                    <td>History 조회 종료 시간입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>HistoryRead 옵션</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>ReadMode</th>
+                    <td>
+                        <select id="readMode">
+                            <option value="Raw">Raw</option>
+                            <option value="Modified">Modified</option>
+                        </select>
+                    </td>
+                    <td>Raw 또는 Modified 이력 조회 방식입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReturnBounds</th>
+                    <td><input id="returnBounds" type="checkbox" checked /></td>
+                    <td>조회 범위 경계값 포함 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReadModified</th>
+                    <td><input id="readModified" type="checkbox" /></td>
+                    <td>수정 이력 조회 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>NumValuesPerNode</th>
+                    <td><input id="numValuesPerNode" type="number" value="0" /></td>
+                    <td>노드당 최대 조회 건수입니다. 0이면 서버 기본값입니다.</td>
+                </tr>
+                <tr>
+                    <th>TimestampsToReturn</th>
+                    <td>
+                        <select id="timestampsToReturn">
+                            <option value="Both">Both</option>
+                            <option value="Source">Source</option>
+                            <option value="Server">Server</option>
+                            <option value="Neither">Neither</option>
+                        </select>
+                    </td>
+                    <td>반환받을 Timestamp 종류입니다.</td>
+                </tr>
+                <tr>
+                    <th>ReleaseContinuationPoints</th>
+                    <td><input id="releaseContinuationPoints" type="checkbox" /></td>
+                    <td>ContinuationPoint 해제 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>MaxContinuationReads</th>
+                    <td><input id="maxContinuationReads" type="number" value="10" /></td>
+                    <td>ContinuationPoint 추가 조회 반복 횟수입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>조회 결과</h3>
+
+        <div>
+            <span>건수: <b id="lblCount">0</b></span>
+        </div>
+
+        <table class="basic-grid">
+            <thead>
+                <tr>
+                    <th>SourceTimestamp</th>
+                    <th>ServerTimestamp</th>
+                    <th>Value</th>
+                    <th>StatusCode</th>
+                </tr>
+            </thead>
+            <tbody id="historyBody">
+                <tr>
+                    <td colspan="4">조회된 데이터가 없습니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/opc/opc3000.js" asp-append-version="true"></script>
+}

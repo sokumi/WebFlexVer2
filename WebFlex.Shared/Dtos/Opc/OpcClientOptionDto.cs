@@ -88,4 +88,13 @@ public class OpcClientOptionDto {
     public int KeepAliveInterval { get; set; } = 5000;
     public int ReconnectPeriod { get; set; } = 10000;
     public int MaxReconnectAttempts { get; set; } = -1;
+
+    public string HistoryReadMode { get; set; } = "Raw";
+    public bool HistoryReturnBounds { get; set; } = true;
+    public bool HistoryReadModified { get; set; } = false;
+    public uint HistoryNumValuesPerNode { get; set; } = 0;
+    public string HistoryTimestampsToReturn { get; set; } = "Both";
+    public bool HistoryReleaseContinuationPoints { get; set; } = false;
+    public int HistoryMaxContinuationReads { get; set; } = 10;
+    public int HistoryDefaultRangeMinutes { get; set; } = 60;
 }
