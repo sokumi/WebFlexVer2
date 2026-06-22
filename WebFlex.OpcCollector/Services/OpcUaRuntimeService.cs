@@ -15,6 +15,7 @@ public class OpcUaRuntimeService {
     private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
+    private readonly CurrentValueWriter _currentValueWriter;
 
     private readonly OpcClientOptionState _optionState;
 
@@ -27,11 +28,13 @@ public class OpcUaRuntimeService {
     public OpcUaRuntimeService(
         OpcUaSessionFactory sessionFactory,
         TimescaleDbWriter timescaleDbWriter,
+        CurrentValueWriter currentValueWriter,
         OpcRuntimeStatusService runtimeStatusService,
         OpcClientOptionState optionState,
         ILogger<OpcUaRuntimeService> logger) {
         _sessionFactory = sessionFactory;
         _timescaleDbWriter = timescaleDbWriter;
+        _currentValueWriter = currentValueWriter;
         _runtimeStatusService = runtimeStatusService;
         _optionState = optionState;
         _logger = logger;
@@ -383,17 +386,31 @@ public class OpcUaRuntimeService {
             }
 
             // 최신 값 갱신
-            runtime.CurrentValues[nodeIdText] = new OpcCurrentRuntimeValue {
+            var currentValue = new OpcCurrentRuntimeValue {
                 EndpointUrl = runtime.EndpointUrl,
                 NodeId = nodeIdText,
                 Value = value.Value?.ToString(),
                 Status = value.StatusCode.ToString(),
                 SourceTimestamp = value.SourceTimestamp == DateTime.MinValue
-                    ? null
-                    : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
+                ? null
+                : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
                 ReceivedAt = nowUtc,
                 SaveToDatabase = saveToDatabase
             };
+
+            runtime.CurrentValues[nodeIdText] = currentValue;
+
+            if (saveToDatabase) {
+                _currentValueWriter.Enqueue(new OpcCollectedValue {
+                    Time = nowUtc,
+                    EndpointUrl = currentValue.EndpointUrl,
+                    NodeId = currentValue.NodeId,
+                    Value = currentValue.Value,
+                    Status = currentValue.Status,
+                    SourceTimestamp = currentValue.SourceTimestamp,
+                    ReceivedAt = currentValue.ReceivedAt
+                });
+            }
 
             var now = DateTime.UtcNow;
 

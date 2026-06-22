@@ -142,7 +142,8 @@ public class OpcRuntimeManager {
             subscribedCount = _opcUaRuntimeService.SubscribedCount,
             queueCount = _timescaleDbWriter.QueueCount,
             totalEnqueued = _timescaleDbWriter.TotalEnqueuedCount,
-            totalInserted = _timescaleDbWriter.TotalInsertedCount
+            totalInserted = _timescaleDbWriter.TotalInsertedCount,
+            totalDroppedRows = _timescaleDbWriter.TotalDroppedRowCount
         };
     }
 
@@ -204,10 +205,11 @@ public class OpcRuntimeManager {
         _lastWriterLogAt = now;
 
         _logger.LogInformation(
-            "DB Writer 상태 | Queue={QueueCount} | Enqueued={Enqueued} | Inserted={Inserted}",
-            _timescaleDbWriter.QueueCount,
-            _timescaleDbWriter.TotalEnqueuedCount,
-            _timescaleDbWriter.TotalInsertedCount);
+          "History Writer 상태 | Queue={QueueCount} | Enqueued={Enqueued} | Inserted={Inserted} | DroppedRows={DroppedRows}",
+          _timescaleDbWriter.QueueCount,
+          _timescaleDbWriter.TotalEnqueuedCount,
+          _timescaleDbWriter.TotalInsertedCount,
+          _timescaleDbWriter.TotalDroppedRowCount);
     }
 
     public async Task<object> GetDeviceSummaryAsync(CancellationToken cancellationToken) {
