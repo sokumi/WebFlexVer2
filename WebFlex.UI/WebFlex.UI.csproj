@@ -14,6 +14,7 @@
   <ItemGroup>
     <Content Include="Scripts\src\ts\framework\page.ts" />
     <Content Include="Scripts\src\ts\views\main\main.ts" />
+    <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc1030.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc1020.ts" />

@@ -361,3 +361,18 @@
 .darkmode .opc-option-used {
     color: #4ade80 !important;
 }
+
+.page-timescale-options input[type="text"],
+.page-timescale-options select,
+.page-timescale-options textarea {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.page-timescale-options .selected-row td {
+    background-color: #e8f5e9 !important;
+}
+
+.darkmode .page-timescale-options .selected-row td {
+    background-color: #14532d !important;
+}

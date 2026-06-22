@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using WebFlex.UI.Services.CurrentValue;
 using WebFlex.UI.Data;
+using WebFlex.UI.Services.Timescale;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -21,6 +22,7 @@ builder.Services.AddSingleton<CurrentValueNotifyService>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<CurrentValueNotifyService>());
 
 builder.Services.AddHttpClient();
+builder.Services.AddScoped<TimescaleOptionService>();
 
 builder.Services.AddControllersWithViews();
 

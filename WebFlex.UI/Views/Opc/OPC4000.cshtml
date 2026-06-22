@@ -1,0 +1,176 @@
+﻿@{
+    ViewData["Title"] = "TimescaleDB 설정";
+}
+
+<div class="page-device page-timescale-options">
+    <section class="page-toolbar">
+        <button id="btnSearch" class="btn-basic" type="button">조회</button>
+        <button id="btnApply" class="btn-basic" type="button">적용</button>
+        <span id="lblStatus">-</span>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>TimescaleDB 테이블 목록</h3>
+
+        <table class="basic-grid">
+            <thead>
+                <tr>
+                    <th>선택</th>
+                    <th>테이블</th>
+                    <th>Hypertable</th>
+                    <th>시간 컬럼</th>
+                    <th>Chunk Interval</th>
+                    <th>Chunk 수</th>
+                    <th>전체 크기</th>
+                    <th>Retention</th>
+                    <th>Compression</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr>
+                    <td colspan="9">조회 버튼을 눌러 주세요.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>선택 테이블 현재 설정</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>SchemaName</th>
+                    <td><input id="schemaName" type="text" readonly /></td>
+                    <td>대상 스키마입니다. 현재는 public 테이블을 조회합니다.</td>
+                </tr>
+                <tr>
+                    <th>TableName</th>
+                    <td><input id="tableName" type="text" readonly /></td>
+                    <td>설정을 적용할 테이블입니다. Hypertable에만 Timescale 옵션을 적용할 수 있습니다.</td>
+                </tr>
+                <tr>
+                    <th>IsHypertable</th>
+                    <td><input id="isHypertable" type="checkbox" disabled /></td>
+                    <td>TimescaleDB hypertable 여부입니다.</td>
+                </tr>
+                <tr>
+                    <th>TimeColumnName</th>
+                    <td><input id="timeColumnName" type="text" readonly /></td>
+                    <td>Hypertable의 시간 기준 컬럼입니다.</td>
+                </tr>
+                <tr>
+                    <th>CurrentChunkTimeInterval</th>
+                    <td><input id="currentChunkTimeInterval" type="text" readonly /></td>
+                    <td>현재 지정된 chunk time interval입니다.</td>
+                </tr>
+                <tr>
+                    <th>TotalSize</th>
+                    <td><input id="totalSize" type="text" readonly /></td>
+                    <td>테이블 전체 크기입니다. 테이블 데이터와 인덱스 크기를 포함합니다.</td>
+                </tr>
+                <tr>
+                    <th>TableSize</th>
+                    <td><input id="tableSize" type="text" readonly /></td>
+                    <td>테이블 데이터 크기입니다.</td>
+                </tr>
+                <tr>
+                    <th>IndexSize</th>
+                    <td><input id="indexSize" type="text" readonly /></td>
+                    <td>인덱스 크기입니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Chunk 옵션</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>ChunkTimeInterval</th>
+                    <td><input id="chunkTimeInterval" type="text" placeholder="예: 1 day, 12 hours, 7 days" /></td>
+                    <td>
+                        chunk 하나가 담당하는 시간 범위입니다.
+                        변경해도 기존 chunk는 바뀌지 않고 새로 생성되는 chunk부터 적용됩니다.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Retention 옵션</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>RetentionEnabled</th>
+                    <td><input id="retentionEnabled" type="checkbox" /></td>
+                    <td>
+                        오래된 chunk 자동 삭제 정책 사용 여부입니다.
+                        이 옵션은 실제 데이터 삭제와 연결되므로 주의해야 합니다.
+                    </td>
+                </tr>
+                <tr>
+                    <th>RetentionDropAfter</th>
+                    <td><input id="retentionDropAfter" type="text" placeholder="예: 7 days, 30 days" /></td>
+                    <td>이 기간보다 오래된 데이터를 자동 삭제합니다.</td>
+                </tr>
+                <tr>
+                    <th>RetentionScheduleInterval</th>
+                    <td><input id="retentionScheduleInterval" type="text" placeholder="예: 1 hour, 1 day" /></td>
+                    <td>retention job 실행 주기입니다. 비워두면 TimescaleDB 기본값을 사용합니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>Compression 옵션</h3>
+
+        <table class="basic-grid">
+            <tbody>
+                <tr>
+                    <th>CompressionEnabled</th>
+                    <td><input id="compressionEnabled" type="checkbox" /></td>
+                    <td>
+                        오래된 chunk 압축 사용 여부입니다.
+                        TimescaleDB 버전에 따라 compression API가 다를 수 있습니다.
+                    </td>
+                </tr>
+                <tr>
+                    <th>CompressionAfter</th>
+                    <td><input id="compressionAfter" type="text" placeholder="예: 1 day, 2 days, 7 days" /></td>
+                    <td>이 기간이 지난 chunk를 자동 압축합니다.</td>
+                </tr>
+                <tr>
+                    <th>CompressionScheduleInterval</th>
+                    <td><input id="compressionScheduleInterval" type="text" placeholder="예: 1 hour, 1 day" /></td>
+                    <td>compression job 실행 주기입니다. 비워두면 TimescaleDB 기본값을 사용합니다.</td>
+                </tr>
+                <tr>
+                    <th>CompressionSegmentBy</th>
+                    <td><input id="compressionSegmentBy" type="text" placeholder="예: endpoint_url,node_id" /></td>
+                    <td>압축 시 같은 그룹으로 묶을 컬럼입니다. 태그별 조회가 많으면 endpoint_url,node_id가 적합합니다.</td>
+                </tr>
+                <tr>
+                    <th>CompressionOrderBy</th>
+                    <td><input id="compressionOrderBy" type="text" placeholder="예: time DESC" /></td>
+                    <td>압축 내부 정렬 기준입니다. 일반적으로 time DESC를 사용합니다.</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section class="opc-option-section">
+        <h3>적용 로그</h3>
+
+        <textarea id="txtLog" rows="8" readonly style="width: 100%; box-sizing: border-box;"></textarea>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/opc/opc4000.js" asp-append-version="true"></script>
+}

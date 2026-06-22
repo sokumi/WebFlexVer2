@@ -34,4 +34,11 @@ public class OpcController : Controller {
 
         return View(MVCPath.Opc.OPC3000);
     }
+
+    [HttpGet, ActionName("opc4000"), ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult OPC4000() {
+        ViewData["Title"] = "TimescaleDB ¼³Á¤";
+
+        return View(MVCPath.Opc.OPC4000);
+    }
 }
