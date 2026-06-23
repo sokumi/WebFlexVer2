@@ -12,10 +12,8 @@ public class OpcUaRuntimeService {
     private readonly ConcurrentDictionary<string, bool> _deviceDbSaveStopped = new();
 
     private readonly OpcUaSessionFactory _sessionFactory;
-    private readonly TimescaleDbWriter _timescaleDbWriter;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
-    private readonly CurrentValueWriter _currentValueWriter;
 
     private readonly OpcClientOptionState _optionState;
 
@@ -27,14 +25,10 @@ public class OpcUaRuntimeService {
 
     public OpcUaRuntimeService(
         OpcUaSessionFactory sessionFactory,
-        TimescaleDbWriter timescaleDbWriter,
-        CurrentValueWriter currentValueWriter,
         OpcRuntimeStatusService runtimeStatusService,
         OpcClientOptionState optionState,
         ILogger<OpcUaRuntimeService> logger) {
         _sessionFactory = sessionFactory;
-        _timescaleDbWriter = timescaleDbWriter;
-        _currentValueWriter = currentValueWriter;
         _runtimeStatusService = runtimeStatusService;
         _optionState = optionState;
         _logger = logger;
@@ -400,18 +394,6 @@ public class OpcUaRuntimeService {
 
             runtime.CurrentValues[nodeIdText] = currentValue;
 
-            if (saveToDatabase) {
-                _currentValueWriter.Enqueue(new OpcCollectedValue {
-                    Time = nowUtc,
-                    EndpointUrl = currentValue.EndpointUrl,
-                    NodeId = currentValue.NodeId,
-                    Value = currentValue.Value,
-                    Status = currentValue.Status,
-                    SourceTimestamp = currentValue.SourceTimestamp,
-                    ReceivedAt = currentValue.ReceivedAt
-                });
-            }
-
             var now = DateTime.UtcNow;
 
             if ((now - runtime.LastStatusUpdatedAt).TotalSeconds >= 30) {
@@ -472,9 +454,8 @@ public class OpcUaRuntimeService {
         }
     }
 
-    public int EnqueueCurrentValuesSnapshot() {
-        var snapshotTime = DateTime.UtcNow;
-        var count = 0;
+    public List<OpcCollectedValue> CreateCurrentValuesSnapshot(DateTime snapshotTimeUtc) {
+        var snapshot = new List<OpcCollectedValue>();
 
         foreach (var runtime in _devices.Values) {
             if (runtime.Session == null || !runtime.Session.Connected)
@@ -484,20 +465,18 @@ public class OpcUaRuntimeService {
                 if (!value.SaveToDatabase)
                     continue;
 
-                _timescaleDbWriter.Enqueue(new OpcCollectedValue {
-                    Time = snapshotTime,
+                snapshot.Add(new OpcCollectedValue {
+                    Time = snapshotTimeUtc,
                     EndpointUrl = value.EndpointUrl,
                     NodeId = value.NodeId,
                     Value = value.Value,
                     Status = value.Status,
                     SourceTimestamp = value.SourceTimestamp,
-                    ReceivedAt = snapshotTime
+                    ReceivedAt = snapshotTimeUtc
                 });
-
-                count++;
             }
         }
 
-        return count;
+        return snapshot;
     }
 }

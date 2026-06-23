@@ -8,7 +8,7 @@ namespace WebFlex.OpcCollector.Services;
 public class OpcRuntimeManager {
     private readonly OpcCollectTargetProvider _targetProvider;
     private readonly OpcUaRuntimeService _opcUaRuntimeService;
-    private readonly TimescaleDbWriter _timescaleDbWriter;
+    private readonly OpcSnapshotPersistenceService _snapshotPersistenceService;
     private readonly OpcCollectorOptionState _optionState;
     private readonly ILogger<OpcRuntimeManager> _logger;
 
@@ -22,12 +22,12 @@ public class OpcRuntimeManager {
     public OpcRuntimeManager(
         OpcCollectTargetProvider targetProvider,
         OpcUaRuntimeService opcUaRuntimeService,
-        TimescaleDbWriter timescaleDbWriter,
+        OpcSnapshotPersistenceService snapshotPersistenceService,
         OpcCollectorOptionState optionState,
         ILogger<OpcRuntimeManager> logger) {
         _targetProvider = targetProvider;
         _opcUaRuntimeService = opcUaRuntimeService;
-        _timescaleDbWriter = timescaleDbWriter;
+        _snapshotPersistenceService = snapshotPersistenceService;
         _optionState = optionState;
         _logger = logger;
     }
@@ -53,19 +53,31 @@ public class OpcRuntimeManager {
         }
 
         if (options.EnableSnapshotSave && !_dbSaveStopped) {
-            var nowSecond = new DateTime(
-                nowUtc.Year, nowUtc.Month, nowUtc.Day,
-                nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
-                DateTimeKind.Utc);
+            var interval = TimeSpan.FromMilliseconds(options.SaveIntervalMilliseconds);
 
-            if (nowSecond != _lastSaveAt) {
-                var count = _opcUaRuntimeService.EnqueueCurrentValuesSnapshot();
-                _lastSaveAt = nowSecond;
+            if (_lastSaveAt == DateTime.MinValue || nowUtc - _lastSaveAt >= interval) {
+                var snapshotTimeUtc = new DateTime(
+                    nowUtc.Year, nowUtc.Month, nowUtc.Day,
+                    nowUtc.Hour, nowUtc.Minute, nowUtc.Second,
+                    DateTimeKind.Utc);
 
-                if (count > 0) {
+                var snapshot = _opcUaRuntimeService.CreateCurrentValuesSnapshot(snapshotTimeUtc);
+                _lastSaveAt = nowUtc;
+
+                if (snapshot.Count > 0) {
+                    var result = await _snapshotPersistenceService.PersistSnapshotAsync(
+                        snapshot,
+                        options.EnableTimescaleHistorySave,
+                        options.EnableCurrentValueSave,
+                        cancellationToken);
+
                     _logger.LogInformation(
-                        "현재값 Snapshot 저장 요청 | Count={Count}",
-                        count);
+                        "현재값 Snapshot 저장 처리 | Rows={Rows} | HistoryInserted={HistoryInserted} | CurrentValueAffected={CurrentValueAffected} | Skipped={Skipped} | TotalMs={TotalMs:N0}",
+                        result.RowCount,
+                        result.HistoryInsertedCount,
+                        result.CurrentValueAffectedCount,
+                        result.Skipped,
+                        result.TotalMs);
                 }
             }
         }
@@ -140,10 +152,16 @@ public class OpcRuntimeManager {
             dbSaveStopped = _dbSaveStopped,
             deviceCount = _opcUaRuntimeService.DeviceCount,
             subscribedCount = _opcUaRuntimeService.SubscribedCount,
-            queueCount = _timescaleDbWriter.QueueCount,
-            totalEnqueued = _timescaleDbWriter.TotalEnqueuedCount,
-            totalInserted = _timescaleDbWriter.TotalInsertedCount,
-            totalDroppedRows = _timescaleDbWriter.TotalDroppedRowCount
+            isFlushRunning = _snapshotPersistenceService.IsFlushRunning,
+            totalSnapshots = _snapshotPersistenceService.TotalSnapshotCount,
+            totalInserted = _snapshotPersistenceService.TotalHistoryInsertedCount,
+            totalCurrentValueUpdated = _snapshotPersistenceService.TotalCurrentValueUpdatedCount,
+            totalSkippedSnapshots = _snapshotPersistenceService.TotalSkippedSnapshotCount,
+            lastSnapshotRows = _snapshotPersistenceService.LastSnapshotRowCount,
+            lastFlushMs = _snapshotPersistenceService.LastFlushTotalMs,
+            lastHistoryMs = _snapshotPersistenceService.LastHistoryMs,
+            lastCurrentValueMs = _snapshotPersistenceService.LastCurrentValueMs,
+            lastFlushCompletedAt = _snapshotPersistenceService.LastFlushCompletedAt
         };
     }
 
@@ -176,9 +194,13 @@ public class OpcRuntimeManager {
             deviceName = target?.DeviceName ?? "",
             tagCount = target?.Tags.Count ?? 0,
             runtimeStatus,
-            queueCount = _timescaleDbWriter.QueueCount,
-            totalEnqueued = _timescaleDbWriter.TotalEnqueuedCount,
-            totalInserted = _timescaleDbWriter.TotalInsertedCount
+            isFlushRunning = _snapshotPersistenceService.IsFlushRunning,
+            totalSnapshots = _snapshotPersistenceService.TotalSnapshotCount,
+            totalInserted = _snapshotPersistenceService.TotalHistoryInsertedCount,
+            totalCurrentValueUpdated = _snapshotPersistenceService.TotalCurrentValueUpdatedCount,
+            totalSkippedSnapshots = _snapshotPersistenceService.TotalSkippedSnapshotCount,
+            lastSnapshotRows = _snapshotPersistenceService.LastSnapshotRowCount,
+            lastFlushMs = _snapshotPersistenceService.LastFlushTotalMs
         };
     }
 
@@ -205,11 +227,16 @@ public class OpcRuntimeManager {
         _lastWriterLogAt = now;
 
         _logger.LogInformation(
-          "History Writer 상태 | Queue={QueueCount} | Enqueued={Enqueued} | Inserted={Inserted} | DroppedRows={DroppedRows}",
-          _timescaleDbWriter.QueueCount,
-          _timescaleDbWriter.TotalEnqueuedCount,
-          _timescaleDbWriter.TotalInsertedCount,
-          _timescaleDbWriter.TotalDroppedRowCount);
+          "Snapshot Writer 상태 | Running={Running} | TotalSnapshots={TotalSnapshots} | Inserted={Inserted} | CurrentValueUpdated={CurrentValueUpdated} | SkippedSnapshots={SkippedSnapshots} | LastRows={LastRows} | LastFlushMs={LastFlushMs:N0} | LastHistoryMs={LastHistoryMs:N0} | LastCurrentValueMs={LastCurrentValueMs:N0}",
+          _snapshotPersistenceService.IsFlushRunning,
+          _snapshotPersistenceService.TotalSnapshotCount,
+          _snapshotPersistenceService.TotalHistoryInsertedCount,
+          _snapshotPersistenceService.TotalCurrentValueUpdatedCount,
+          _snapshotPersistenceService.TotalSkippedSnapshotCount,
+          _snapshotPersistenceService.LastSnapshotRowCount,
+          _snapshotPersistenceService.LastFlushTotalMs,
+          _snapshotPersistenceService.LastHistoryMs,
+          _snapshotPersistenceService.LastCurrentValueMs);
     }
 
     public async Task<object> GetDeviceSummaryAsync(CancellationToken cancellationToken) {
