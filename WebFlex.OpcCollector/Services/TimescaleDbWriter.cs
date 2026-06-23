@@ -5,14 +5,17 @@ using WebFlex.OpcCollector.Runtime;
 namespace WebFlex.OpcCollector.Services;
 
 public class TimescaleDbWriter : IDisposable {
+    private const int DefaultChunkSize = 500;
+
     private readonly ILogger<TimescaleDbWriter> _logger;
-    private readonly string _connectionString;
     private readonly OpcCollectorOptionState _optionState;
+    private readonly NpgsqlDataSource _dataSource;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
 
     private long _totalRequestedCount;
     private long _totalInsertedCount;
     private long _totalFailedCount;
+    private long _totalCurrentValueUpdatedCount;
     private double _lastSaveMs;
     private DateTime _lastSavedAt = DateTime.MinValue;
 
@@ -23,14 +26,20 @@ public class TimescaleDbWriter : IDisposable {
         _logger = logger;
         _optionState = optionState;
 
-        _connectionString = configuration.GetConnectionString("WebFlexTsd")
+        var rawConnectionString = configuration.GetConnectionString("WebFlexTsd")
             ?? throw new InvalidOperationException("ConnectionStrings:WebFlexTsd 설정이 없습니다.");
 
-        _logger.LogInformation("Timescale History Writer 시작 | Mode=DirectSnapshot | Queue=Disabled");
+        var builder = new NpgsqlConnectionStringBuilder(rawConnectionString) {
+            CommandTimeout = 0,
+            CancellationTimeout = 0,
+            KeepAlive = 30
+        };
+
+        _dataSource = NpgsqlDataSource.Create(builder.ConnectionString);
+
+        _logger.LogInformation("Timescale History Writer 시작 | Mode=DirectSnapshot | CurrentValue=InlineUpsert");
     }
 
-    // WebFlex 구조로 변경하면서 큐를 제거했다.
-    // 기존 상태 API 호환을 위해 0을 반환한다.
     public int QueueCount => 0;
 
     public long TotalEnqueuedCount => Interlocked.Read(ref _totalRequestedCount);
@@ -41,28 +50,30 @@ public class TimescaleDbWriter : IDisposable {
 
     public long TotalFailedCount => Interlocked.Read(ref _totalFailedCount);
 
+    public long TotalCurrentValueUpdatedCount => Interlocked.Read(ref _totalCurrentValueUpdatedCount);
+
     public double LastSaveMs => _lastSaveMs;
 
     public DateTime LastSavedAt => _lastSavedAt;
 
-    // 예전 row 단위 enqueue 호출이 남아 있으면 바로 확인할 수 있게 로그만 남긴다.
-    // 정상 구조에서는 호출되면 안 된다.
     public void Enqueue(OpcCollectedValue value) {
         _logger.LogWarning(
-            "TimescaleDbWriter.Enqueue(row) 호출됨. WebFlex식 구조에서는 SaveSnapshotAsync만 사용해야 합니다. NodeId={NodeId}",
+            "TimescaleDbWriter.Enqueue(row) 호출됨. SaveSnapshotAsync만 사용해야 합니다. NodeId={NodeId}",
             value.NodeId);
     }
 
-    public async Task<int> SaveSnapshotAsync(
+    public async Task<HistorySaveResult> SaveSnapshotAsync(
         OpcHistorySnapshot snapshot,
         CancellationToken cancellationToken) {
-        if (snapshot.Values.Count == 0)
-            return 0;
+        if (snapshot.Values.Count == 0) {
+            return HistorySaveResult.Empty;
+        }
 
         var options = _optionState.Current;
 
-        if (!options.EnableTimescaleHistorySave)
-            return 0;
+        if (!options.EnableTimescaleHistorySave && !options.EnableCurrentValueSave) {
+            return HistorySaveResult.Empty;
+        }
 
         await _saveLock.WaitAsync(cancellationToken);
 
@@ -70,27 +81,37 @@ public class TimescaleDbWriter : IDisposable {
             Interlocked.Add(ref _totalRequestedCount, snapshot.Values.Count);
 
             var totalStartedAt = DateTime.UtcNow;
+            var historyInserted = 0;
+            var currentValueAffected = 0;
+            var historyMs = 0d;
+            var currentValueMs = 0d;
 
-            var result = await BulkInsertTimescaleAsync(snapshot.Values, cancellationToken);
+            await using var conn = await _dataSource.OpenConnectionAsync(cancellationToken);
 
-            var totalMs = (DateTime.UtcNow - totalStartedAt).TotalMilliseconds;
+            if (options.EnableTimescaleHistorySave) {
+                (historyInserted, historyMs) = await InsertHistoryAsync(conn, snapshot, cancellationToken);
+                Interlocked.Add(ref _totalInsertedCount, historyInserted);
+            }
+
+            if (options.EnableCurrentValueSave) {
+                (currentValueAffected, currentValueMs) = await UpsertCurrentValueAsync(conn, snapshot.Values, cancellationToken);
+                Interlocked.Add(ref _totalCurrentValueUpdatedCount, currentValueAffected);
+            }
+
+            Interlocked.Add(ref _totalInsertedCount, snapshot.Values.Count);
 
             _lastSaveMs = totalMs;
             _lastSavedAt = DateTime.UtcNow;
 
-            Interlocked.Add(ref _totalInsertedCount, snapshot.Values.Count);
-
             _logger.LogInformation(
-                "History Snapshot 저장 완료 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | TotalMs={TotalMs:N0} | CopyTotalMs={CopyTotalMs:N0} | OpenMs={OpenMs:N0} | BeginCopyMs={BeginCopyMs:N0} | WriteRowsMs={WriteRowsMs:N0} | CompleteMs={CompleteMs:N0} | InsertedRows={InsertedRows}",
+                "History Snapshot 저장 완료 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | HistoryInserted={HistoryInserted} | CurrentValueAffected={CurrentValueAffected} | TotalMs={TotalMs:N0} | HistoryMs={HistoryMs:N0} | CurrentValueMs={CurrentValueMs:N0}",
                 snapshot.SnapshotTime,
                 snapshot.Values.Count,
+                historyInserted,
+                currentValueAffected,
                 totalMs,
-                result.copyTotalMs,
-                result.openMs,
-                result.beginCopyMs,
-                result.writeRowsMs,
-                result.completeMs,
-                TotalInsertedCount);
+                historyMs,
+                currentValueMs);
 
             if (totalMs > 1000) {
                 _logger.LogWarning(
@@ -100,7 +121,12 @@ public class TimescaleDbWriter : IDisposable {
                     totalMs);
             }
 
-            return snapshot.Values.Count;
+            return new HistorySaveResult(
+                snapshot.Values.Count,
+                historyInserted,
+                currentValueAffected,
+                false,
+                totalMs);
         } catch (Exception ex) {
             Interlocked.Add(ref _totalFailedCount, snapshot.Values.Count);
 
@@ -111,24 +137,30 @@ public class TimescaleDbWriter : IDisposable {
                 snapshot.Values.Count,
                 TotalFailedCount);
 
-            throw;
+            return new HistorySaveResult(
+                snapshot.Values.Count,
+                0,
+                0,
+                true,
+                0);
         } finally {
             _saveLock.Release();
         }
     }
 
-    private async Task<(double copyTotalMs, double openMs, double beginCopyMs, double writeRowsMs, double completeMs)> BulkInsertTimescaleAsync(
-        IReadOnlyList<OpcCollectedValue> batch,
+    private async Task<(int inserted, double elapsedMs)> InsertHistoryAsync(
+        NpgsqlConnection conn,
+        OpcHistorySnapshot snapshot,
         CancellationToken cancellationToken) {
-        var copyStartedAt = DateTime.UtcNow;
+        var startedAt = DateTime.UtcNow;
+        var inserted = 0;
+        var chunkSize = GetChunkSize();
 
-        var openStartedAt = DateTime.UtcNow;
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        var openMs = (DateTime.UtcNow - openStartedAt).TotalMilliseconds;
+        for (var offset = 0; offset < snapshot.Values.Count; offset += chunkSize) {
+            var count = Math.Min(chunkSize, snapshot.Values.Count - offset);
+            var chunk = snapshot.Values.Skip(offset).Take(count);
 
-        var beginCopyStartedAt = DateTime.UtcNow;
-        await using var writer = await conn.BeginBinaryImportAsync(@"
+            await using var writer = await conn.BeginBinaryImportAsync(@"
 COPY public.timescale
 (
     time,
@@ -141,40 +173,115 @@ COPY public.timescale
 )
 FROM STDIN (FORMAT BINARY)
 ", cancellationToken);
-        var beginCopyMs = (DateTime.UtcNow - beginCopyStartedAt).TotalMilliseconds;
 
-        var writeRowsStartedAt = DateTime.UtcNow;
+            foreach (var item in chunk) {
+                await writer.StartRowAsync(cancellationToken);
+                await writer.WriteAsync(item.Time, NpgsqlDbType.TimestampTz, cancellationToken);
+                await writer.WriteAsync(item.EndpointUrl, NpgsqlDbType.Text, cancellationToken);
+                await writer.WriteAsync(item.NodeId, NpgsqlDbType.Text, cancellationToken);
+                await writer.WriteAsync(item.Value, NpgsqlDbType.Text, cancellationToken);
+                await writer.WriteAsync(item.Status, NpgsqlDbType.Text, cancellationToken);
 
-        foreach (var item in batch) {
-            await writer.StartRowAsync(cancellationToken);
+                if (item.SourceTimestamp.HasValue) {
+                    await writer.WriteAsync(item.SourceTimestamp.Value, NpgsqlDbType.TimestampTz, cancellationToken);
+                } else {
+                    await writer.WriteNullAsync(cancellationToken);
+                }
 
-            await writer.WriteAsync(item.Time, NpgsqlDbType.TimestampTz, cancellationToken);
-            await writer.WriteAsync(item.EndpointUrl, NpgsqlDbType.Text, cancellationToken);
-            await writer.WriteAsync(item.NodeId, NpgsqlDbType.Text, cancellationToken);
-            await writer.WriteAsync(item.Value, NpgsqlDbType.Text, cancellationToken);
-            await writer.WriteAsync(item.Status, NpgsqlDbType.Text, cancellationToken);
-
-            if (item.SourceTimestamp.HasValue) {
-                await writer.WriteAsync(item.SourceTimestamp.Value, NpgsqlDbType.TimestampTz, cancellationToken);
-            } else {
-                await writer.WriteNullAsync(cancellationToken);
+                await writer.WriteAsync(item.ReceivedAt, NpgsqlDbType.TimestampTz, cancellationToken);
+                inserted++;
             }
 
-            await writer.WriteAsync(item.ReceivedAt, NpgsqlDbType.TimestampTz, cancellationToken);
+            await writer.CompleteAsync(cancellationToken);
         }
 
-        var writeRowsMs = (DateTime.UtcNow - writeRowsStartedAt).TotalMilliseconds;
+        return (inserted, (DateTime.UtcNow - startedAt).TotalMilliseconds);
+    }
 
-        var completeStartedAt = DateTime.UtcNow;
-        await writer.CompleteAsync(cancellationToken);
-        var completeMs = (DateTime.UtcNow - completeStartedAt).TotalMilliseconds;
+    private async Task<(int affected, double elapsedMs)> UpsertCurrentValueAsync(
+        NpgsqlConnection conn,
+        IReadOnlyList<OpcCollectedValue> values,
+        CancellationToken cancellationToken) {
+        var startedAt = DateTime.UtcNow;
+        var totalAffected = 0;
+        var chunkSize = GetChunkSize();
 
-        var copyTotalMs = (DateTime.UtcNow - copyStartedAt).TotalMilliseconds;
+        for (var offset = 0; offset < values.Count; offset += chunkSize) {
+            var count = Math.Min(chunkSize, values.Count - offset);
+            var chunk = values.Skip(offset).Take(count).ToArray();
 
-        return (copyTotalMs, openMs, beginCopyMs, writeRowsMs, completeMs);
+            await using var cmd = new NpgsqlCommand(@"
+INSERT INTO public.currentvalue
+(
+    endpoint_url,
+    node_id,
+    value,
+    status,
+    source_timestamp,
+    received_at,
+    updated_at
+)
+SELECT
+    unnest(@endpoint_urls),
+    unnest(@node_ids),
+    unnest(@values),
+    unnest(@statuses),
+    unnest(@source_timestamps),
+    unnest(@received_ats),
+    now()
+ON CONFLICT (endpoint_url, node_id)
+DO UPDATE SET
+    value = EXCLUDED.value,
+    status = EXCLUDED.status,
+    source_timestamp = EXCLUDED.source_timestamp,
+    received_at = EXCLUDED.received_at,
+    updated_at = now();
+", conn);
+
+            cmd.CommandTimeout = 0;
+            cmd.Parameters.Add(new NpgsqlParameter("@endpoint_urls", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => x.EndpointUrl).ToArray()
+            });
+            cmd.Parameters.Add(new NpgsqlParameter("@node_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => x.NodeId).ToArray()
+            });
+            cmd.Parameters.Add(new NpgsqlParameter("@values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => (object?)x.Value ?? DBNull.Value).ToArray()
+            });
+            cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => (object?)x.Status ?? DBNull.Value).ToArray()
+            });
+            cmd.Parameters.Add(new NpgsqlParameter("@source_timestamps", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
+                Value = chunk.Select(x => x.SourceTimestamp.HasValue
+                    ? (object)x.SourceTimestamp.Value
+                    : DBNull.Value).ToArray()
+            });
+            cmd.Parameters.Add(new NpgsqlParameter("@received_ats", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
+                Value = chunk.Select(x => x.ReceivedAt).ToArray()
+            });
+
+            totalAffected += await cmd.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        return (totalAffected, (DateTime.UtcNow - startedAt).TotalMilliseconds);
+    }
+
+    private int GetChunkSize() {
+        var configured = _optionState.Current.MaxBatchSize;
+        return Math.Max(100, Math.Min(configured, DefaultChunkSize));
     }
 
     public void Dispose() {
         _saveLock.Dispose();
+        _dataSource.Dispose();
     }
+}
+
+public readonly record struct HistorySaveResult(
+    int RequestedRows,
+    int HistoryInsertedRows,
+    int CurrentValueAffectedRows,
+    bool HasError,
+    double TotalMs) {
+    public static HistorySaveResult Empty => new(0, 0, 0, false, 0);
 }

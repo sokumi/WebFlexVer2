@@ -454,8 +454,10 @@ public class OpcUaRuntimeService {
         }
     }
 
-    public List<OpcCollectedValue> CreateCurrentValuesSnapshot(DateTime snapshotTimeUtc) {
-        var snapshot = new List<OpcCollectedValue>();
+    public OpcHistorySnapshot CreateCurrentValuesSnapshot(DateTime snapshotTimeUtc) {
+        var snapshot = new OpcHistorySnapshot {
+            SnapshotTime = snapshotTimeUtc
+        };
 
         foreach (var runtime in _devices.Values) {
             if (runtime.Session == null || !runtime.Session.Connected)
@@ -465,14 +467,14 @@ public class OpcUaRuntimeService {
                 if (!value.SaveToDatabase)
                     continue;
 
-                snapshot.Add(new OpcCollectedValue {
+                snapshot.Values.Add(new OpcCollectedValue {
                     Time = snapshotTimeUtc,
                     EndpointUrl = value.EndpointUrl,
                     NodeId = value.NodeId,
                     Value = value.Value,
                     Status = value.Status,
                     SourceTimestamp = value.SourceTimestamp,
-                    ReceivedAt = snapshotTimeUtc
+                    ReceivedAt = value.ReceivedAt
                 });
             }
         }

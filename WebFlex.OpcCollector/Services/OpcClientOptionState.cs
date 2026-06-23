@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using WebFlex.OpcCollector.Data;
 using WebFlex.Shared.Dtos.Opc;
 
@@ -30,29 +31,53 @@ public class OpcClientOptionState {
     }
 
     public async Task LoadAsync(CancellationToken cancellationToken = default) {
-        await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+        const int maxAttempts = 3;
+        Exception? lastException = null;
 
-        var row = await db.OpcClientOptions
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
+        for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-        var next = new OpcClientOptionDto();
+                var row = await db.OpcClientOptions
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
 
-        if (row != null && !string.IsNullOrWhiteSpace(row.OptionJson)) {
-            next = JsonSerializer.Deserialize<OpcClientOptionDto>(
-                row.OptionJson,
-                JsonOptions()) ?? new OpcClientOptionDto();
+                var next = new OpcClientOptionDto();
 
-            _logger.LogInformation("OPC Client 옵션 DB 로드 완료");
-        } else {
-            _logger.LogInformation("OPC Client 옵션 DB 저장값 없음. 기본값 사용");
+                if (row != null && !string.IsNullOrWhiteSpace(row.OptionJson)) {
+                    next = JsonSerializer.Deserialize<OpcClientOptionDto>(
+                        row.OptionJson,
+                        JsonOptions()) ?? new OpcClientOptionDto();
+
+                    _logger.LogInformation("OPC Client 옵션 DB 로드 완료");
+                } else {
+                    _logger.LogInformation("OPC Client 옵션 DB 저장값 없음. 기본값 사용");
+                }
+
+                Normalize(next);
+
+                lock (_lock) {
+                    _current = next;
+                }
+
+                return;
+            } catch (Exception ex) when (IsTransient(ex) && attempt < maxAttempts) {
+                lastException = ex;
+
+                _logger.LogWarning(
+                    ex,
+                    "OPC Client 옵션 DB 로드 재시도 | Attempt={Attempt}/{MaxAttempts}",
+                    attempt,
+                    maxAttempts);
+
+                await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
+            } catch (Exception ex) {
+                lastException = ex;
+                break;
+            }
         }
 
-        Normalize(next);
-
-        lock (_lock) {
-            _current = next;
-        }
+        throw new InvalidOperationException("OPC Client 옵션 DB 로드를 완료하지 못했습니다.", lastException);
     }
 
     private static OpcClientOptionDto Clone(OpcClientOptionDto source) {
@@ -77,6 +102,14 @@ public class OpcClientOptionState {
         options.KeepAliveCount = options.KeepAliveCount == 0 ? 10u : options.KeepAliveCount;
         options.QueueSize = options.QueueSize == 0 ? 1u : options.QueueSize;
         options.SamplingInterval = Math.Max(100, options.SamplingInterval);
+    }
+
+    private static bool IsTransient(Exception ex) {
+        return ex is TimeoutException
+            or NpgsqlException
+            or InvalidOperationException
+            || ex.InnerException is TimeoutException
+            or NpgsqlException;
     }
 
     private static int NormalizeTimeout(int value, int defaultValue) {
