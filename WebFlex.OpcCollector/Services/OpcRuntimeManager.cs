@@ -41,7 +41,6 @@ public class OpcRuntimeManager {
     public async Task TickAsync(CancellationToken cancellationToken) {
         if (_subscriptionStopped) {
             LogWriterStatus();
-            // 구독 중지 상태에서는 다음 틱까지 대기
             await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
             return;
         }
@@ -55,8 +54,7 @@ public class OpcRuntimeManager {
         }
 
         if (options.EnableSnapshotSave && !_dbSaveStopped) {
-            // 다음 정각 1초까지 정밀 대기 후 스냅샷
-            await WaitForNextSecondAndSaveAsync(nowUtc, cancellationToken);
+            await WaitForNextSecondAndSaveAsync(cancellationToken);  // ← nowUtc 제거
         } else {
             await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
         }
@@ -197,7 +195,8 @@ public class OpcRuntimeManager {
     /// 다음 정각 1초 경계까지 정밀하게 대기한 뒤 스냅샷을 찍고 DB에 저장합니다.
     /// WebFlex 방식: 큐 없이 딕셔너리 직접 스냅샷 → 즉시 저장.
     /// </summary>
-    private async Task WaitForNextSecondAndSaveAsync(DateTime nowUtc, CancellationToken cancellationToken) {
+    private async Task WaitForNextSecondAndSaveAsync(CancellationToken cancellationToken) {
+        var nowUtc = DateTime.UtcNow;
         var currentSecondUtc = TruncateToSecond(nowUtc);
 
         if (_lastSavedSecondUtc == DateTime.MinValue) {
@@ -206,38 +205,41 @@ public class OpcRuntimeManager {
 
         var nextDueSecondUtc = _lastSavedSecondUtc.AddSeconds(1);
 
-        // 아직 다음 정각이 오지 않았으면 남은 시간만큼 대기
+        // 정각(nextDue)이 완전히 지날 때까지 대기
+        // 예: nextDue = 32.000 이면 32.000을 넘길 때까지 대기
         var remaining = (nextDueSecondUtc - DateTime.UtcNow).TotalMilliseconds;
         if (remaining > 0) {
             await Task.Delay(TimeSpan.FromMilliseconds(remaining), cancellationToken);
         }
 
-        var snapshotTimeUtc = DateTime.UtcNow;
+        // 정각이 지났는지 한 번 더 확인 (Task.Delay 오차 보정)
+        while (DateTime.UtcNow < nextDueSecondUtc) {
+            await Task.Delay(1, cancellationToken);
+        }
+
+        // 스냅샷 시각을 실제 현재 시각이 아닌 dueSecond 정각으로 고정
+        var snapshotTimeUtc = nextDueSecondUtc;
         var snapshot = _opcUaRuntimeService.CreateCurrentValuesSnapshot(snapshotTimeUtc);
+
+        // 저장 성공/실패 관계없이 lastSaved 를 dueSecond 로 기록
         _lastSavedSecondUtc = nextDueSecondUtc;
 
-        if (snapshot.Values.Count == 0) {
-            return;
-        }
+        if (snapshot.Values.Count == 0) return;
 
         var result = await _timescaleDbWriter.SaveSnapshotAsync(snapshot, cancellationToken);
 
         if (result.HasError) {
             _logger.LogWarning(
-                "Snapshot 저장 실패 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows}",
+                "Snapshot 저장 실패 | DueSecond={DueSecond:O} | Rows={Rows}",
                 nextDueSecondUtc,
-                snapshot.SnapshotTime,
                 snapshot.Values.Count);
             return;
         }
 
         _logger.LogInformation(
-            "Snapshot 저장 완료 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows} | HistoryInserted={HistoryInserted} | CurrentValueAffected={CurrentValueAffected} | TotalMs={TotalMs:N0}",
+            "Snapshot 저장 완료 | DueSecond={DueSecond:O} | Rows={Rows} | TotalMs={TotalMs:N0}",
             nextDueSecondUtc,
-            snapshot.SnapshotTime,
             result.RequestedRows,
-            result.HistoryInsertedRows,
-            result.CurrentValueAffectedRows,
             result.TotalMs);
     }
 
