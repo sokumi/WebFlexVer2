@@ -98,7 +98,7 @@ public class TimescaleDbWriter : IDisposable {
                 Interlocked.Add(ref _totalCurrentValueUpdatedCount, currentValueAffected);
             }
 
-            var totalMs = (DateTime.UtcNow - totalStartedAt).TotalMilliseconds;
+            Interlocked.Add(ref _totalInsertedCount, snapshot.Values.Count);
 
             _lastSaveMs = totalMs;
             _lastSavedAt = DateTime.UtcNow;
