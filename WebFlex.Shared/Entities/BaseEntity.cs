@@ -1,4 +1,4 @@
-﻿namespace WebFlex.Shared.Entities;
+﻿namespace WebFlex.Shared;
 
 public abstract class BaseEntity {
     public virtual string ID { get; set; }

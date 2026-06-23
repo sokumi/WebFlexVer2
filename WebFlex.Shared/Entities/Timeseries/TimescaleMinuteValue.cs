@@ -10,7 +10,7 @@ public class TimescaleMinuteValue {
     public string GROUP_ID { get; set; }
 
     [ColumnStringLength(4)]
-    public int? STATUS { get; set; }
+    public VaribaleStatusType? STATUS { get; set; }
 
     public string? VALUE { get; set; }
 
