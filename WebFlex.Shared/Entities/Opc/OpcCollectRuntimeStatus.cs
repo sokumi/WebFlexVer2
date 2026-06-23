@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using WebFlex.Shared.Entities;
 
-namespace WebFlex.Shared.Entities.Opc;
+namespace WebFlex.Shared;
 
 public class OpcCollectRuntimeStatus : BaseEntity {
     [Column("clrs_id")]

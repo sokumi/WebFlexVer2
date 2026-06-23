@@ -1,7 +1,7 @@
 ﻿using Opc.Ua;
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
-using WebFlex.Shared.Entities.Opc;
+using WebFlex.Shared;
 using WebFlex.UI.DTO.Device;
 
 namespace WebFlex.UI.Services.Device;

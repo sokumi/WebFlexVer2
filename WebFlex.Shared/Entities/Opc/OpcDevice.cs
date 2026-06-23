@@ -1,11 +1,80 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using Microsoft.EntityFrameworkCore;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Diagnostics;
 using WebFlex.Shared.Entities;
 
-namespace WebFlex.Shared.Entities.Opc;
+namespace WebFlex.Shared;
 
+/// <summary>
+/// 디바이스 정보
+/// </summary>
+[DebuggerDisplay("{ID} {PARENT_ID} {DEVICE_NAME} {DESCRIPTION}")]
+[Table("OPC_DEVICE"), KeyFieldColumn("DEVICE_ID"), Comment("디바이스 정보")]
 public class OpcDevice : BaseEntity {
-    [Column("device_id")]
-    public new string Id { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(10)]
+    [Column(Order = 11), Comment("중그룹 아이디")]
+    [DisplayName("entity.MetrieField.GROUP_ID")]
+    public string? GROUP_ID { get; set; }
+
+    /// <summary>
+    /// 메트리 그룹u
+    /// </summary>
+    [ForeignKey("GROUP_ID")]
+    public OpcGroup? Group { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+    [ColumnRequired]
+    [ColumnStringLength(30)]
+    [Column(Order = 10), Comment("디바이스명")]
+    [DisplayName("entity.Device.DEVICE_NAME")]
+    public string DEVICE_NAME { get; set; }
+
+
+
+
+
+
+
+
+
     public string? OpcGroupId { get; set; }
 
     public OpcGroup? Group { get; set; }

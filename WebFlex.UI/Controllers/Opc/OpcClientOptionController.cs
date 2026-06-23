@@ -2,7 +2,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.Shared.Dtos.Opc;
-using WebFlex.Shared.Entities.Opc;
+using WebFlex.Shared;
 using WebFlex.UI.Data;
 
 namespace WebFlex.UI.Controllers.Opc;

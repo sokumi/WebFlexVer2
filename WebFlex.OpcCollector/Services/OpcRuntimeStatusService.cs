@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WebFlex.OpcCollector.Data;
-using WebFlex.Shared.Entities.Opc;
+using WebFlex.Shared;
 
 namespace WebFlex.OpcCollector.Services;
 

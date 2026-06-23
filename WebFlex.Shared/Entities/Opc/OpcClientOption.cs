@@ -1,4 +1,4 @@
-﻿namespace WebFlex.Shared.Entities.Opc;
+﻿namespace WebFlex.Shared;
 
 public class OpcClientOption {
     public long Id { get; set; }

@@ -6,6 +6,7 @@ public class CurrentValue {
     public string NodeId { get; set; } = "";
 
     public string? Value { get; set; }
+    public string? CookieValue { get; set; }
 
     public string? Status { get; set; }
 

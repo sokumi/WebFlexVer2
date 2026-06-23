@@ -9,6 +9,9 @@ public class CurrentValueMinute {
 
     public string? Value { get; set; }
 
+    public string? CookieValue { get; set; }
+
+
     public string? Status { get; set; }
 
     public DateTime? SourceTimestamp { get; set; }
