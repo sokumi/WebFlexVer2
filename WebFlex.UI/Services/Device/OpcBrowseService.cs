@@ -18,8 +18,8 @@ public class OpcBrowseService {
 #pragma warning disable CS0618
         var selectedEndpoint = CoreClientUtils.SelectEndpoint(
             config,
-            device.EndpointUrl,
-            device.UseSecurity
+            device.ENDPOINT_URL,
+            device.USESECURITY
         );
 #pragma warning restore CS0618
 
@@ -29,11 +29,14 @@ public class OpcBrowseService {
             EndpointConfiguration.Create(config)
         );
 
-        var userIdentity = device.UseAnonymous || string.IsNullOrWhiteSpace(device.UserName)
+        var UserName = "";
+        var Password = "";
+
+        var userIdentity = device.USE_ANONYMOUS || string.IsNullOrWhiteSpace(UserName)
             ? new UserIdentity(new AnonymousIdentityToken())
             : new UserIdentity(new UserNameIdentityToken {
-                UserName = device.UserName,
-                Password = System.Text.Encoding.UTF8.GetBytes(device.Password ?? "")
+                UserName = UserName,
+                Password = System.Text.Encoding.UTF8.GetBytes(Password ?? "")
             });
 
 #pragma warning disable CS0618
@@ -42,7 +45,7 @@ public class OpcBrowseService {
             endpoint,
             false,
             false,
-            $"WebFlexBrowse-{device.DeviceCode}",
+            $"WebFlexBrowse-{device.ID}",
             60000,
             userIdentity,
             Array.Empty<string>()

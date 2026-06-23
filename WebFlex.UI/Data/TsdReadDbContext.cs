@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using WebFlex.Shared.Entities.Timeseries;
+using WebFlex.Shared;
 
 namespace WebFlex.UI.Data;
 

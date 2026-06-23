@@ -22,7 +22,7 @@ public class DeviceTagController : Controller {
 
     [HttpGet, ActionName("list")]
     public async Task<IActionResult> TagList(string deviceId) {
-        var data = await _db.OpcTags
+        var data = await _db.Set<OpcTag>()
             .AsNoTracking()
             .Where(x => x.OpcDeviceId == deviceId)
             .OrderBy(x => x.SortOrder)
@@ -52,15 +52,15 @@ public class DeviceTagController : Controller {
      string deviceId,
      bool onlyCollectable = true,
      CancellationToken cancellationToken = default) {
-        var device = await _db.OpcDevices
+        var device = await _db.Set<OpcDevice>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Id == deviceId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
 
         if (device == null) {
             return Json(ApiResponse<List<DeviceNodeDto>>.Fail("디바이스 정보를 찾을 수 없습니다."));
         }
 
-        if (!device.DeviceType.Equals("OPCUA", StringComparison.OrdinalIgnoreCase)) {
+        if (!device.DEVICE_TYPE.Equals("OPCUA", StringComparison.OrdinalIgnoreCase)) {
             return Json(ApiResponse<List<DeviceNodeDto>>.Fail("OPC UA 디바이스만 노드 조회가 가능합니다."));
         }
 
@@ -85,8 +85,8 @@ public class DeviceTagController : Controller {
             return Json(ApiResponse<bool>.Fail("저장할 노드를 선택하세요."));
         }
 
-        var device = await _db.OpcDevices
-            .FirstOrDefaultAsync(x => x.Id == request.DeviceId);
+        var device = await _db.Set<OpcDevice>()
+            .FirstOrDefaultAsync(x => x.ID == request.DeviceId);
 
         if (device == null) {
             return Json(ApiResponse<bool>.Fail("디바이스 정보를 찾을 수 없습니다."));
@@ -96,20 +96,20 @@ public class DeviceTagController : Controller {
 
         var group = await GetOrCreateDeviceGroupAsync(device, now);
 
-        var existingNodeIds = await _db.OpcTags
-            .Where(x => x.OpcDeviceId == device.Id)
+        var existingNodeIds = await _db.Set<OpcTag>()
+            .Where(x => x.OpcDeviceId == device.ID)
             .Select(x => x.NodeId)
             .ToListAsync();
 
         var existingSet = existingNodeIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var sortOrder = await _db.OpcTags
-            .Where(x => x.OpcDeviceId == device.Id)
+        var sortOrder = await _db.Set<OpcTag>()
+            .Where(x => x.OpcDeviceId == device.ID)
             .MaxAsync(x => (int?)x.SortOrder) ?? 0;
 
         var tagPrefix = $"GT{DateTime.Now:yyMM}";
 
-        var lastTagCode = await _db.OpcTags
+        var lastTagCode = await _db.Set<OpcTag>()
             .Where(x => x.TagCode.StartsWith(tagPrefix))
             .OrderByDescending(x => x.TagCode)
             .Select(x => x.TagCode)
@@ -138,7 +138,7 @@ public class DeviceTagController : Controller {
 
             var tag = new OpcTag {
                 Id = tagCode,
-                OpcDeviceId = device.Id,
+                OpcDeviceId = device.ID,
                 OpcGroupId = group.Id,
                 TagCode = tagCode,
                 NodeId = node.NodeId,
@@ -150,8 +150,7 @@ public class DeviceTagController : Controller {
                 IsCollectEnabled = true,
                 SaveToDatabase = true,
                 ShowOnDashboard = false,
-                SamplingIntervalMs = device.SamplingIntervalMs,
-                QueueSize = device.QueueSize,
+                SamplingIntervalMs = device.SAMPLINGINTERVALMS,
                 SortOrder = sortOrder,
                 Description = node.NodeId,
                 IsEnabled = true,
@@ -159,7 +158,7 @@ public class DeviceTagController : Controller {
                 UpdatedAt = now
             };
 
-            _db.OpcTags.Add(tag);
+            _db.Set<OpcTag>().Add(tag);
         }
 
         await _db.SaveChangesAsync();
@@ -168,8 +167,8 @@ public class DeviceTagController : Controller {
     }
 
     private async Task<OpcGroup> GetOrCreateDeviceGroupAsync(OpcDevice device, DateTime now) {
-        var group = await _db.OpcGroups
-            .FirstOrDefaultAsync(x => x.GroupName == device.DeviceName);
+        var group = await _db.Set<OpcGroup>()
+            .FirstOrDefaultAsync(x => x.GroupName == device.DEVICE_NAME);
 
         if (group != null) {
             return group;
@@ -178,17 +177,16 @@ public class DeviceTagController : Controller {
         var groupCode = await CreateGroupCodeAsync();
 
         group = new OpcGroup {
-            Id = groupCode,
-            GroupCode = groupCode,
-            GroupName = device.DeviceName,
+            ID = groupCode, 
+            GROUP_NAME = device.DEVICE_NAME,
             SortOrder = 0,
-            Description = $"{device.DeviceName} 자동 생성 그룹",
+            Description = $"{device.DEVICE_NAME} 자동 생성 그룹",
             IsEnabled = true,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        _db.OpcGroups.Add(group);
+        _db.Set<OpcGroup>().Add(group);
 
         await _db.SaveChangesAsync();
 
@@ -197,7 +195,7 @@ public class DeviceTagController : Controller {
 
     private async Task<string> CreateGroupCodeAsync() {
         var prefix = $"DG{DateTime.Now:yyMM}";
-        var lastCode = await _db.OpcGroups
+        var lastCode = await _db.Set<OpcGroup>()
             .Where(x => x.GroupCode.StartsWith(prefix))
             .OrderByDescending(x => x.GroupCode)
             .Select(x => x.GroupCode)
@@ -216,7 +214,7 @@ public class DeviceTagController : Controller {
 
     private async Task<string> CreateTagCodeAsync() {
         var prefix = $"GT{DateTime.Now:yyMM}";
-        var lastCode = await _db.OpcTags
+        var lastCode = await _db.Set<OpcTag>()
             .Where(x => x.TagCode.StartsWith(prefix))
             .OrderByDescending(x => x.TagCode)
             .Select(x => x.TagCode)
@@ -244,15 +242,15 @@ public class DeviceTagController : Controller {
             return Json(ApiResponse<bool>.Fail("삭제할 태그를 선택하세요."));
         }
 
-        var tags = await _db.OpcTags
-            .Where(x => request.Ids.Contains(x.Id))
+        var tags = await _db.Set<OpcTag>()
+            .Where(x => request.Ids.Contains(x.ID))
             .ToListAsync();
 
         if (tags.Count == 0) {
             return Json(ApiResponse<bool>.Fail("삭제할 태그를 찾을 수 없습니다."));
         }
 
-        _db.OpcTags.RemoveRange(tags);
+        _db.Set<OpcTag>().RemoveRange(tags);
         await _db.SaveChangesAsync();
 
         return Json(ApiResponse<bool>.Ok(true, $"{tags.Count}개의 태그가 삭제되었습니다."));

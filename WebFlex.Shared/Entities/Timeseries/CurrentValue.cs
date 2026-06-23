@@ -1,18 +1,28 @@
-﻿namespace WebFlex.Shared.Entities.Timeseries;
+﻿using System.Diagnostics;
 
+namespace WebFlex.Shared;
+
+[DebuggerDisplay("{TAG_ID} {GROUP_ID} {Value} {CookieValue} {CookieValue}")]
 public class CurrentValue {
-    public string EndpointUrl { get; set; } = "";
+    [ColumnStringLength(15)]
+    public string TAG_ID { get; set; }
 
-    public string NodeId { get; set; } = "";
+    [ColumnStringLength(15)]
+    public string GROUP_ID { get; set; }
 
-    public string? Value { get; set; }
-    public string? CookieValue { get; set; }
+    [ColumnStringLength(4)]
+    public int? STATUS { get; set; }
 
-    public string? Status { get; set; }
+    public string? VALUE { get; set; }
 
-    public DateTime? SourceTimestamp { get; set; }
+    public string? COOKIE_VALUE { get; set; }
 
-    public DateTime ReceivedAt { get; set; }
+    [ColumnStringLength(8)]
+    public int? UPDATE_COUNT { get; set; }
 
-    public DateTime UpdatedAt { get; set; }
+    public DateTime? SOURCETIMESTAMP { get; set; }
+
+    public DateTime RECEIVEDAT { get; set; }
+
+    public DateTime UPDATEDAT { get; set; }
 }

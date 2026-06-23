@@ -10,8 +10,8 @@ builder.Services.AddDbContext<WebFlexDbContext>(options =>
         builder.Configuration.GetConnectionString("WebFlexDb"),
         npgsqlOptions => {
             npgsqlOptions.MigrationsHistoryTable("s_migrationshistory", "public");
-        }
-    ));
+        })
+    .UseSnakeCaseNamingConvention());
 
 builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));

@@ -20,7 +20,7 @@ public class OpcClientOptionController : ControllerBase {
 
     [HttpGet]
     public async Task<IActionResult> Get(CancellationToken cancellationToken) {
-        var row = await _db.OpcClientOptions
+        var row = await _db.Set<OpcClientOption>()
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
 
@@ -47,7 +47,7 @@ public class OpcClientOptionController : ControllerBase {
         CancellationToken cancellationToken) {
         var now = DateTime.UtcNow;
 
-        var row = await _db.OpcClientOptions
+        var row = await _db.Set<OpcClientOption>()
             .FirstOrDefaultAsync(x => x.OptionCode == OptionCode, cancellationToken);
 
         var optionJson = JsonSerializer.Serialize(request.Options, JsonOptions());
@@ -63,7 +63,7 @@ public class OpcClientOptionController : ControllerBase {
                 CreatedAt = now
             };
 
-            _db.OpcClientOptions.Add(row);
+            _db.Set<OpcClientOption>().Add(row);
         }
 
         row.OptionJson = optionJson;

@@ -24,7 +24,7 @@ public class OpcRuntimeStatusService {
 
         var nowUtc = DateTime.UtcNow;
 
-        var status = await db.OpcCollectRuntimeStatuses
+        var status = await db.Set<OpcCollectRuntimeStatus>()
             .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
 
         if (status == null) {
@@ -36,7 +36,7 @@ public class OpcRuntimeStatusService {
                 IsEnabled = true
             };
 
-            db.OpcCollectRuntimeStatuses.Add(status);
+            db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
         status.EndpointUrl = endpointUrl;
@@ -59,7 +59,7 @@ public class OpcRuntimeStatusService {
 
         var nowUtc = DateTime.UtcNow;
 
-        var status = await db.OpcCollectRuntimeStatuses
+        var status = await db.Set<OpcCollectRuntimeStatus>()
             .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
 
         if (status == null) {
@@ -71,7 +71,7 @@ public class OpcRuntimeStatusService {
                 IsEnabled = true
             };
 
-            db.OpcCollectRuntimeStatuses.Add(status);
+            db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
         status.EndpointUrl = endpointUrl;
@@ -94,7 +94,7 @@ public class OpcRuntimeStatusService {
 
         var nowUtc = DateTime.UtcNow;
 
-        var status = await db.OpcCollectRuntimeStatuses
+        var status = await db.Set<OpcCollectRuntimeStatus>()
             .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
 
         if (status == null) {
@@ -106,7 +106,7 @@ public class OpcRuntimeStatusService {
                 IsEnabled = true
             };
 
-            db.OpcCollectRuntimeStatuses.Add(status);
+            db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
         status.EndpointUrl = endpointUrl;
@@ -129,7 +129,7 @@ public class OpcRuntimeStatusService {
 
         var nowUtc = DateTime.UtcNow;
 
-        var status = await db.OpcCollectRuntimeStatuses
+        var status = await db.Set<OpcCollectRuntimeStatus>()
             .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
 
         if (status == null) {
@@ -141,7 +141,7 @@ public class OpcRuntimeStatusService {
                 IsEnabled = true
             };
 
-            db.OpcCollectRuntimeStatuses.Add(status);
+            db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
         status.EndpointUrl = endpointUrl;

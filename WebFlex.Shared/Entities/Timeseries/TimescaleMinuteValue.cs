@@ -1,17 +1,20 @@
-﻿namespace WebFlex.Shared.Entities.Timeseries;
+﻿namespace WebFlex.Shared;
 
 public class TimescaleMinuteValue {
     public DateTime Time { get; set; }
 
-    public string EndpointUrl { get; set; } = "";
+    [ColumnStringLength(15)]
+    public string TAG_ID { get; set; }
 
-    public string NodeId { get; set; } = "";
+    [ColumnStringLength(15)]
+    public string GROUP_ID { get; set; }
 
-    public string? Value { get; set; }
+    [ColumnStringLength(4)]
+    public int? STATUS { get; set; }
 
-    public string? CookieValue { get; set; }
+    public string? VALUE { get; set; }
 
-    public string? Status { get; set; }
+    public string? COOKIE_VALUE { get; set; }
 
     public DateTime? SourceTimestamp { get; set; }
 

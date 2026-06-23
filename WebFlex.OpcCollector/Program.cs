@@ -19,8 +19,9 @@ builder.Services.Configure<OpcCollectorOptions>(
 
 builder.Services.AddSingleton<OpcCollectorOptionState>();
 
-builder.Services.AddDbContextFactory<WebFlexConfigDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexDb")));
+builder.Services.AddDbContext<WebFlexConfigDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexDb"))
+        .UseSnakeCaseNamingConvention());
 
 builder.Services.AddSingleton<OpcCollectTargetProvider>();
 builder.Services.AddSingleton<OpcClientOptionState>();

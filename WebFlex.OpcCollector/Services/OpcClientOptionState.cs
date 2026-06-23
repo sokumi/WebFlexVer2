@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using WebFlex.OpcCollector.Data;
+using WebFlex.Shared;
 using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Services;
@@ -38,7 +39,7 @@ public class OpcClientOptionState {
             try {
                 await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
 
-                var row = await db.OpcClientOptions
+                var row = await db.Set<OpcClientOption>()
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
 
