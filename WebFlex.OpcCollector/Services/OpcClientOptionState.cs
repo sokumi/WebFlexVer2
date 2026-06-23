@@ -41,13 +41,13 @@ public class OpcClientOptionState {
 
                 var row = await db.Set<OpcClientOption>()
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
+                    .FirstOrDefaultAsync(x => x.OPTION_CODE == OptionCode && x.IsEnabled, cancellationToken);
 
                 var next = new OpcClientOptionDto();
 
-                if (row != null && !string.IsNullOrWhiteSpace(row.OptionJson)) {
+                if (row != null && !string.IsNullOrWhiteSpace(row.OPTION_JSON)) {
                     next = JsonSerializer.Deserialize<OpcClientOptionDto>(
-                        row.OptionJson,
+                        row.OPTION_JSON,
                         JsonOptions()) ?? new OpcClientOptionDto();
 
                     _logger.LogInformation("OPC Client 옵션 DB 로드 완료");

@@ -3,7 +3,7 @@
 public class OpcTagDto {
     public string Id { get; set; }
 
-    public string OpcDeviceId { get; set; }
+    public string DEVICE_ID { get; set; }
 
     public string? OpcGroupId { get; set; }
 

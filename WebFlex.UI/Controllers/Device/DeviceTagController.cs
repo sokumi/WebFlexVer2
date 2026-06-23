@@ -24,22 +24,19 @@ public class DeviceTagController : Controller {
     public async Task<IActionResult> TagList(string deviceId) {
         var data = await _db.Set<OpcTag>()
             .AsNoTracking()
-            .Where(x => x.OpcDeviceId == deviceId)
-            .OrderBy(x => x.SortOrder)
-            .ThenBy(x => x.DisplayName)
+            .Where(x => x.DEVICE_ID == deviceId)
+            .OrderBy(x => x.SORT_ORDER)
+            .ThenBy(x => x.TAG_NAME)
             .Select(x => new DeviceTagDto {
-                Id = x.Id,
-                TagCode = x.TagCode,
-                NodeId = x.NodeId,
-                DisplayName = x.DisplayName,
-                GroupName = x.GroupName,
-                DataType = x.DataType,
-                IsCollectEnabled = x.IsCollectEnabled,
-                SaveToDatabase = x.SaveToDatabase,
-                ShowOnDashboard = x.ShowOnDashboard,
-                SamplingIntervalMs = x.SamplingIntervalMs,
-                QueueSize = x.QueueSize,
-                SortOrder = x.SortOrder,
+                Id = x.ID,
+                TagName = x.TAG_NAME,
+                GroupId = x.GROUP_ID,
+                DataType = x.DATA_TYPE,
+                IsCollectEnabled = x.IS_COLLECTENABLED,
+                SaveToDatabase = x.SAVE_TO_DATABASE,
+                ShowOnDashboard = x.SHOW_ON_DASHBOARD,
+                SamplingIntervalMs = x.SAMPLINGINTERVALMS,
+                SortOrder = x.SORT_ORDER,
                 IsEnabled = x.IsEnabled
             })
             .ToListAsync();
@@ -97,14 +94,14 @@ public class DeviceTagController : Controller {
         var group = await GetOrCreateDeviceGroupAsync(device, now);
 
         var existingNodeIds = await _db.Set<OpcTag>()
-            .Where(x => x.OpcDeviceId == device.ID)
+            .Where(x => x.DEVICE_ID == device.ID)
             .Select(x => x.NodeId)
             .ToListAsync();
 
         var existingSet = existingNodeIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var sortOrder = await _db.Set<OpcTag>()
-            .Where(x => x.OpcDeviceId == device.ID)
+            .Where(x => x.DEVICE_ID == device.ID)
             .MaxAsync(x => (int?)x.SortOrder) ?? 0;
 
         var tagPrefix = $"GT{DateTime.Now:yyMM}";
@@ -137,22 +134,21 @@ public class DeviceTagController : Controller {
             var tagCode = $"{tagPrefix}{nextTagNo++:D4}";
 
             var tag = new OpcTag {
-                Id = tagCode,
-                OpcDeviceId = device.ID,
-                OpcGroupId = group.Id,
-                TagCode = tagCode,
+                ID = tagCode,
+                DEVICE_ID = device.ID,
+                GROUP_ID = group.ID,
                 NodeId = node.NodeId,
-                DisplayName = string.IsNullOrWhiteSpace(node.DisplayName)
+                TAG_NAME = string.IsNullOrWhiteSpace(node.DisplayName)
                     ? node.NodeId
                     : node.DisplayName,
-                GroupName = group.GroupName,
-                DataType = node.DataType,
-                IsCollectEnabled = true,
-                SaveToDatabase = true,
-                ShowOnDashboard = false,
-                SamplingIntervalMs = device.SAMPLINGINTERVALMS,
-                SortOrder = sortOrder,
-                Description = node.NodeId,
+                //GroupName = group.GroupName,
+                DATA_TYPE = node.DataType,
+                IS_COLLECTENABLED = true,
+                SAVE_TO_DATABASE = true,
+                SHOW_ON_DASHBOARD = false,
+                SAMPLINGINTERVALMS = device.SAMPLINGINTERVALMS,
+                SORT_ORDER = sortOrder,
+                DESCRIPTION = node.NodeId,
                 IsEnabled = true,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -177,10 +173,10 @@ public class DeviceTagController : Controller {
         var groupCode = await CreateGroupCodeAsync();
 
         group = new OpcGroup {
-            ID = groupCode, 
+            ID = groupCode,
             GROUP_NAME = device.DEVICE_NAME,
-            SortOrder = 0,
-            Description = $"{device.DEVICE_NAME} 자동 생성 그룹",
+            SORT_ORDER = 0,
+            DESCRIPTION = $"{device.DEVICE_NAME} 자동 생성 그룹",
             IsEnabled = true,
             CreatedAt = now,
             UpdatedAt = now

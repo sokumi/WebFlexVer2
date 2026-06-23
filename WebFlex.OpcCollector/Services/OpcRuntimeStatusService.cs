@@ -25,13 +25,13 @@ public class OpcRuntimeStatusService {
         var nowUtc = DateTime.UtcNow;
 
         var status = await db.Set<OpcCollectRuntimeStatus>()
-            .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.DEVICE_ID == deviceId, cancellationToken);
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
-                Id = deviceId,
-                OpcDeviceId = deviceId,
-                EndpointUrl = endpointUrl,
+                ID = deviceId,
+                DEVICE_ID = deviceId,
+                ENDPOINT_URL = endpointUrl,
                 CreatedAt = nowUtc,
                 IsEnabled = true
             };
@@ -39,12 +39,12 @@ public class OpcRuntimeStatusService {
             db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
-        status.EndpointUrl = endpointUrl;
-        status.IsConnected = true;
-        status.SubscribedCount = subscribedCount;
-        status.LastConnectedAt ??= nowUtc;
-        status.LastErrorMessage = null;
-        status.StatusUpdatedAt = nowUtc;
+        status.ENDPOINT_URL = endpointUrl;
+        status.IS_CONNECTED = true;
+        status.SUBSCRIBED_COUNT = subscribedCount;
+        status.LAST_CONNECTED_AT ??= nowUtc;
+        status.LAST_ERROR_MESSAGE = null;
+        status.STATUS_UPDATED_AT = nowUtc;
         status.UpdatedAt = nowUtc;
 
         await db.SaveChangesAsync(cancellationToken);
@@ -60,13 +60,13 @@ public class OpcRuntimeStatusService {
         var nowUtc = DateTime.UtcNow;
 
         var status = await db.Set<OpcCollectRuntimeStatus>()
-            .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.DEVICE_ID == deviceId, cancellationToken);
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
-                Id = deviceId,
-                OpcDeviceId = deviceId,
-                EndpointUrl = endpointUrl,
+                ID = deviceId,
+                DEVICE_ID = deviceId,
+                ENDPOINT_URL = endpointUrl,
                 CreatedAt = nowUtc,
                 IsEnabled = true
             };
@@ -74,12 +74,12 @@ public class OpcRuntimeStatusService {
             db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
-        status.EndpointUrl = endpointUrl;
-        status.IsConnected = true;
-        status.SubscribedCount = subscribedCount;
-        status.LastReceivedAt = nowUtc;
-        status.LastErrorMessage = null;
-        status.StatusUpdatedAt = nowUtc;
+        status.ENDPOINT_URL = endpointUrl;
+        status.IS_CONNECTED = true;
+        status.SUBSCRIBED_COUNT = subscribedCount;
+        status.LAST_RECEIVED_AT = nowUtc;
+        status.LAST_ERROR_MESSAGE = null;
+        status.STATUS_UPDATED_AT = nowUtc;
         status.UpdatedAt = nowUtc;
 
         await db.SaveChangesAsync(cancellationToken);
@@ -95,13 +95,13 @@ public class OpcRuntimeStatusService {
         var nowUtc = DateTime.UtcNow;
 
         var status = await db.Set<OpcCollectRuntimeStatus>()
-            .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.DEVICE_ID == deviceId, cancellationToken);
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
-                Id = deviceId,
-                OpcDeviceId = deviceId,
-                EndpointUrl = endpointUrl,
+                ID = deviceId,
+                DEVICE_ID = deviceId,
+                ENDPOINT_URL = endpointUrl,
                 CreatedAt = nowUtc,
                 IsEnabled = true
             };
@@ -109,12 +109,12 @@ public class OpcRuntimeStatusService {
             db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
-        status.EndpointUrl = endpointUrl;
-        status.IsConnected = false;
-        status.SubscribedCount = 0;
-        status.LastDisconnectedAt = nowUtc;
-        status.LastErrorMessage = errorMessage;
-        status.StatusUpdatedAt = nowUtc;
+        status.ENDPOINT_URL = endpointUrl;
+        status.IS_CONNECTED = false;
+        status.SUBSCRIBED_COUNT = 0;
+        status.LAST_DISCONNECTED_AT = nowUtc;
+        status.LAST_ERROR_MESSAGE = errorMessage;
+        status.STATUS_UPDATED_AT = nowUtc;
         status.UpdatedAt = nowUtc;
 
         await db.SaveChangesAsync(cancellationToken);
@@ -130,13 +130,13 @@ public class OpcRuntimeStatusService {
         var nowUtc = DateTime.UtcNow;
 
         var status = await db.Set<OpcCollectRuntimeStatus>()
-            .FirstOrDefaultAsync(x => x.OpcDeviceId == deviceId, cancellationToken);
+            .FirstOrDefaultAsync(x => x.DEVICE_ID == deviceId, cancellationToken);
 
         if (status == null) {
             status = new OpcCollectRuntimeStatus {
-                Id = deviceId,
-                OpcDeviceId = deviceId,
-                EndpointUrl = endpointUrl,
+                ID = deviceId,
+                DEVICE_ID = deviceId,
+                ENDPOINT_URL = endpointUrl,
                 CreatedAt = nowUtc,
                 IsEnabled = true
             };
@@ -144,10 +144,10 @@ public class OpcRuntimeStatusService {
             db.Set<OpcCollectRuntimeStatus>().Add(status);
         }
 
-        status.EndpointUrl = endpointUrl;
-        status.IsConnected = false;
-        status.LastErrorMessage = errorMessage;
-        status.StatusUpdatedAt = nowUtc;
+        status.ENDPOINT_URL = endpointUrl;
+        status.IS_CONNECTED = false;
+        status.LAST_ERROR_MESSAGE = errorMessage;
+        status.STATUS_UPDATED_AT = nowUtc;
         status.UpdatedAt = nowUtc;
 
         await db.SaveChangesAsync(cancellationToken);
