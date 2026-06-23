@@ -41,6 +41,8 @@ public class OpcRuntimeManager {
     public async Task TickAsync(CancellationToken cancellationToken) {
         if (_subscriptionStopped) {
             LogWriterStatus();
+            // 구독 중지 상태에서는 다음 틱까지 대기
+            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
             return;
         }
 
@@ -53,7 +55,10 @@ public class OpcRuntimeManager {
         }
 
         if (options.EnableSnapshotSave && !_dbSaveStopped) {
-            await SaveDueSnapshotsAsync(nowUtc, cancellationToken);
+            // 다음 정각 1초까지 정밀 대기 후 스냅샷
+            await WaitForNextSecondAndSaveAsync(nowUtc, cancellationToken);
+        } else {
+            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
         }
 
         LogWriterStatus();
@@ -126,7 +131,7 @@ public class OpcRuntimeManager {
             dbSaveStopped = _dbSaveStopped,
             deviceCount = _opcUaRuntimeService.DeviceCount,
             subscribedCount = _opcUaRuntimeService.SubscribedCount,
-            queueCount = _timescaleDbWriter.QueueCount,
+            // queueCount 제거 (큐 폐기)
             totalRequested = _timescaleDbWriter.TotalEnqueuedCount,
             totalInserted = _timescaleDbWriter.TotalInsertedCount,
             totalFailed = _timescaleDbWriter.TotalFailedCount,
@@ -188,43 +193,52 @@ public class OpcRuntimeManager {
         _lastReloadAt = DateTime.UtcNow;
     }
 
-    private async Task SaveDueSnapshotsAsync(DateTime nowUtc, CancellationToken cancellationToken) {
+    /// <summary>
+    /// 다음 정각 1초 경계까지 정밀하게 대기한 뒤 스냅샷을 찍고 DB에 저장합니다.
+    /// WebFlex 방식: 큐 없이 딕셔너리 직접 스냅샷 → 즉시 저장.
+    /// </summary>
+    private async Task WaitForNextSecondAndSaveAsync(DateTime nowUtc, CancellationToken cancellationToken) {
         var currentSecondUtc = TruncateToSecond(nowUtc);
 
         if (_lastSavedSecondUtc == DateTime.MinValue) {
             _lastSavedSecondUtc = currentSecondUtc.AddSeconds(-1);
         }
 
-        while (_lastSavedSecondUtc < currentSecondUtc) {
-            var dueSecondUtc = _lastSavedSecondUtc.AddSeconds(1);
-            var snapshotTimeUtc = DateTime.UtcNow;
-            var snapshot = _opcUaRuntimeService.CreateCurrentValuesSnapshot(snapshotTimeUtc);
-            _lastSavedSecondUtc = dueSecondUtc;
+        var nextDueSecondUtc = _lastSavedSecondUtc.AddSeconds(1);
 
-            if (snapshot.Values.Count == 0) {
-                continue;
-            }
-
-            var result = await _timescaleDbWriter.SaveSnapshotAsync(snapshot, cancellationToken);
-
-            if (result.HasError) {
-                _logger.LogWarning(
-                    "현재값 Snapshot 저장 실패 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows}",
-                    dueSecondUtc,
-                    snapshot.SnapshotTime,
-                    snapshot.Values.Count);
-                break;
-            }
-
-            _logger.LogInformation(
-                "현재값 Snapshot 저장 완료 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows} | HistoryInserted={HistoryInserted} | CurrentValueAffected={CurrentValueAffected} | TotalMs={TotalMs:N0}",
-                dueSecondUtc,
-                snapshot.SnapshotTime,
-                result.RequestedRows,
-                result.HistoryInsertedRows,
-                result.CurrentValueAffectedRows,
-                result.TotalMs);
+        // 아직 다음 정각이 오지 않았으면 남은 시간만큼 대기
+        var remaining = (nextDueSecondUtc - DateTime.UtcNow).TotalMilliseconds;
+        if (remaining > 0) {
+            await Task.Delay(TimeSpan.FromMilliseconds(remaining), cancellationToken);
         }
+
+        var snapshotTimeUtc = DateTime.UtcNow;
+        var snapshot = _opcUaRuntimeService.CreateCurrentValuesSnapshot(snapshotTimeUtc);
+        _lastSavedSecondUtc = nextDueSecondUtc;
+
+        if (snapshot.Values.Count == 0) {
+            return;
+        }
+
+        var result = await _timescaleDbWriter.SaveSnapshotAsync(snapshot, cancellationToken);
+
+        if (result.HasError) {
+            _logger.LogWarning(
+                "Snapshot 저장 실패 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows}",
+                nextDueSecondUtc,
+                snapshot.SnapshotTime,
+                snapshot.Values.Count);
+            return;
+        }
+
+        _logger.LogInformation(
+            "Snapshot 저장 완료 | DueSecond={DueSecond:O} | SnapshotTime={SnapshotTime:O} | Rows={Rows} | HistoryInserted={HistoryInserted} | CurrentValueAffected={CurrentValueAffected} | TotalMs={TotalMs:N0}",
+            nextDueSecondUtc,
+            snapshot.SnapshotTime,
+            result.RequestedRows,
+            result.HistoryInsertedRows,
+            result.CurrentValueAffectedRows,
+            result.TotalMs);
     }
 
     private void LogWriterStatus() {

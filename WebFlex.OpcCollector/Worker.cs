@@ -18,14 +18,16 @@ public class Worker : BackgroundService {
 
         await _runtimeManager.StartAsync(stoppingToken);
 
+        // 200ms 폴링 루프 제거 → 1초 단위 스냅샷 루프로 변경
         while (!stoppingToken.IsCancellationRequested) {
             try {
                 await _runtimeManager.TickAsync(stoppingToken);
+            } catch (OperationCanceledException) {
+                break;
             } catch (Exception ex) {
-                _logger.LogError(ex, "OPC Runtime Tick 실패");
+                _logger.LogError(ex, "OPC Runtime Tick 오류");
+                await Task.Delay(TimeSpan.FromMilliseconds(200), stoppingToken);
             }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(200), stoppingToken);
         }
     }
 

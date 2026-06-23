@@ -98,7 +98,8 @@ public class TimescaleDbWriter : IDisposable {
                 Interlocked.Add(ref _totalCurrentValueUpdatedCount, currentValueAffected);
             }
 
-            Interlocked.Add(ref _totalInsertedCount, snapshot.Values.Count);
+            // 수정: totalMs 변수 올바르게 계산
+            var totalMs = (DateTime.UtcNow - totalStartedAt).TotalMilliseconds;
 
             _lastSaveMs = totalMs;
             _lastSavedAt = DateTime.UtcNow;
@@ -132,17 +133,11 @@ public class TimescaleDbWriter : IDisposable {
 
             _logger.LogError(
                 ex,
-                "Timescale History Snapshot 저장 실패 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | FailedRows={FailedRows}",
+                "Timescale History Snapshot 저장 실패 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows}",
                 snapshot.SnapshotTime,
-                snapshot.Values.Count,
-                TotalFailedCount);
+                snapshot.Values.Count);
 
-            return new HistorySaveResult(
-                snapshot.Values.Count,
-                0,
-                0,
-                true,
-                0);
+            return new HistorySaveResult(snapshot.Values.Count, 0, 0, true, 0);
         } finally {
             _saveLock.Release();
         }
