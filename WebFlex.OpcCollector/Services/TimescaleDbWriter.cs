@@ -1,4 +1,3 @@
-﻿using System.Threading.Channels;
 using Npgsql;
 using NpgsqlTypes;
 using WebFlex.OpcCollector.Runtime;
@@ -6,24 +5,16 @@ using WebFlex.OpcCollector.Runtime;
 namespace WebFlex.OpcCollector.Services;
 
 public class TimescaleDbWriter : IDisposable {
-    private const int HistoryChannelCapacity = 100000;
-
-    private readonly Channel<OpcCollectedValue> _historyChannel;
     private readonly ILogger<TimescaleDbWriter> _logger;
     private readonly string _connectionString;
     private readonly OpcCollectorOptionState _optionState;
-    private readonly CancellationTokenSource _cts = new();
-    private readonly Task _workerTask;
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
 
-    private DateTime _lastInsertLogAt = DateTime.MinValue;
-
-    private long _queueCount;
-    private long _totalEnqueuedCount;
+    private long _totalRequestedCount;
     private long _totalInsertedCount;
-    private long _totalDroppedRowCount;
-
-    private DateTime _lastEnqueueLogAt = DateTime.UtcNow;
-    private long _lastEnqueueLogCount;
+    private long _totalFailedCount;
+    private double _lastSaveMs;
+    private DateTime _lastSavedAt = DateTime.MinValue;
 
     public TimescaleDbWriter(
         IConfiguration configuration,
@@ -35,198 +26,94 @@ public class TimescaleDbWriter : IDisposable {
         _connectionString = configuration.GetConnectionString("WebFlexTsd")
             ?? throw new InvalidOperationException("ConnectionStrings:WebFlexTsd 설정이 없습니다.");
 
-        _historyChannel = Channel.CreateBounded<OpcCollectedValue>(
-            new BoundedChannelOptions(HistoryChannelCapacity) {
-                FullMode = BoundedChannelFullMode.DropOldest,
-                SingleReader = true,
-                SingleWriter = false,
-                AllowSynchronousContinuations = false
-            });
-
-        _workerTask = Task.Run(ProcessHistoryQueueAsync);
+        _logger.LogInformation("Timescale History Writer 시작 | Mode=DirectSnapshot | Queue=Disabled");
     }
 
-    public int QueueCount => (int)Math.Max(0, Interlocked.Read(ref _queueCount));
+    // WebFlex 구조로 변경하면서 큐를 제거했다.
+    // 기존 상태 API 호환을 위해 0을 반환한다.
+    public int QueueCount => 0;
 
-    public long TotalEnqueuedCount => Interlocked.Read(ref _totalEnqueuedCount);
+    public long TotalEnqueuedCount => Interlocked.Read(ref _totalRequestedCount);
 
     public long TotalInsertedCount => Interlocked.Read(ref _totalInsertedCount);
 
-    public long TotalDroppedRowCount => Interlocked.Read(ref _totalDroppedRowCount);
+    public long TotalDroppedRowCount => 0;
 
+    public long TotalFailedCount => Interlocked.Read(ref _totalFailedCount);
+
+    public double LastSaveMs => _lastSaveMs;
+
+    public DateTime LastSavedAt => _lastSavedAt;
+
+    // 예전 row 단위 enqueue 호출이 남아 있으면 바로 확인할 수 있게 로그만 남긴다.
+    // 정상 구조에서는 호출되면 안 된다.
     public void Enqueue(OpcCollectedValue value) {
-        var beforeCount = Interlocked.Read(ref _queueCount);
-
-        if (beforeCount >= HistoryChannelCapacity) {
-            // DropOldest로 기존 row 1개가 밀려나간 것으로 본다.
-            Interlocked.Increment(ref _totalDroppedRowCount);
-        }
-
-        var written = _historyChannel.Writer.TryWrite(value);
-
-        if (!written) {
-            Interlocked.Increment(ref _totalDroppedRowCount);
-
-            _logger.LogWarning(
-                "Timescale History 채널 입력 실패 | QueueRemain={QueueRemain}",
-                QueueCount);
-
-            return;
-        }
-
-        if (beforeCount < HistoryChannelCapacity) {
-            Interlocked.Increment(ref _queueCount);
-        }
-
-        Interlocked.Increment(ref _totalEnqueuedCount);
-
-        var now = DateTime.UtcNow;
-        var lastLogAt = _lastEnqueueLogAt;
-
-        if ((now - lastLogAt).TotalSeconds >= 5) {
-            var total = TotalEnqueuedCount;
-            var diff = total - Interlocked.Read(ref _lastEnqueueLogCount);
-
-            _lastEnqueueLogAt = now;
-            Interlocked.Exchange(ref _lastEnqueueLogCount, total);
-
-            _logger.LogInformation(
-                "History Enqueue 속도 | Last5SecRows={Rows} | RowsPerSec={RowsPerSec:N0} | QueueRemain={QueueRemain} | TotalEnqueued={TotalEnqueued}",
-                diff,
-                diff / Math.Max(1, (now - lastLogAt).TotalSeconds),
-                QueueCount,
-                total);
-        }
+        _logger.LogWarning(
+            "TimescaleDbWriter.Enqueue(row) 호출됨. WebFlex식 구조에서는 SaveSnapshotAsync만 사용해야 합니다. NodeId={NodeId}",
+            value.NodeId);
     }
 
-    private async Task ProcessHistoryQueueAsync() {
-        while (!_cts.Token.IsCancellationRequested) {
-            try {
-                var options = _optionState.Current;
-
-                await Task.Delay(options.FlushIntervalMilliseconds, _cts.Token);
-
-                await FlushOnceAsync(_cts.Token);
-            } catch (OperationCanceledException) {
-                break;
-            } catch (Exception ex) {
-                _logger.LogError(ex, "Timescale History Writer 처리 오류");
-            }
-        }
-
-        try {
-            await FlushAllAsync(CancellationToken.None);
-        } catch (Exception ex) {
-            _logger.LogError(ex, "Timescale History Writer 종료 전 Flush 실패");
-        }
-    }
-
-    private async Task FlushOnceAsync(CancellationToken cancellationToken) {
-        var options = _optionState.Current;
-
-        if (!options.EnableTimescaleHistorySave)
-            return;
-
-        var maxBatchSize = Math.Max(1, options.MaxBatchSize);
-        var batch = new List<OpcCollectedValue>(maxBatchSize);
-
-        var beforeQueue = QueueCount;
-        var drainStartedAt = DateTime.UtcNow;
-
-        while (batch.Count < maxBatchSize &&
-               _historyChannel.Reader.TryRead(out var item)) {
-            Interlocked.Decrement(ref _queueCount);
-            batch.Add(item);
-        }
-
-        var drainMs = (DateTime.UtcNow - drainStartedAt).TotalMilliseconds;
-
-        if (batch.Count == 0)
-            return;
-
-        _logger.LogInformation(
-            "History Queue Drain | BeforeQueue={BeforeQueue} | Drained={Drained} | AfterQueue={AfterQueue} | DrainMs={DrainMs:N0} | MaxBatchSize={MaxBatchSize}",
-            beforeQueue,
-            batch.Count,
-            QueueCount,
-            drainMs,
-            maxBatchSize);
-
-        await SaveHistoryAsync(batch, cancellationToken);
-    }
-
-    private async Task FlushAllAsync(CancellationToken cancellationToken) {
-        var options = _optionState.Current;
-
-        if (!options.EnableTimescaleHistorySave)
-            return;
-
-        while (true) {
-            var maxBatchSize = Math.Max(1, options.MaxBatchSize);
-            var batch = new List<OpcCollectedValue>(maxBatchSize);
-
-            while (batch.Count < maxBatchSize &&
-                   _historyChannel.Reader.TryRead(out var item)) {
-                Interlocked.Decrement(ref _queueCount);
-                batch.Add(item);
-            }
-
-            if (batch.Count == 0)
-                break;
-
-            await SaveHistoryAsync(batch, cancellationToken);
-        }
-    }
-
-    private async Task SaveHistoryAsync(
-        IReadOnlyList<OpcCollectedValue> batch,
+    public async Task<int> SaveSnapshotAsync(
+        OpcHistorySnapshot snapshot,
         CancellationToken cancellationToken) {
-        if (batch.Count == 0)
-            return;
+        if (snapshot.Values.Count == 0)
+            return 0;
 
         var options = _optionState.Current;
 
-        var totalStartedAt = DateTime.UtcNow;
-        double copyTotalMs = 0;
-        double openMs = 0;
-        double beginCopyMs = 0;
-        double writeRowsMs = 0;
-        double completeMs = 0;
+        if (!options.EnableTimescaleHistorySave)
+            return 0;
+
+        await _saveLock.WaitAsync(cancellationToken);
 
         try {
-            (copyTotalMs, openMs, beginCopyMs, writeRowsMs, completeMs)
-                = await BulkInsertTimescaleAsync(batch, cancellationToken);
+            Interlocked.Add(ref _totalRequestedCount, snapshot.Values.Count);
 
-            Interlocked.Add(ref _totalInsertedCount, batch.Count);
+            var totalStartedAt = DateTime.UtcNow;
+
+            var result = await BulkInsertTimescaleAsync(snapshot.Values, cancellationToken);
 
             var totalMs = (DateTime.UtcNow - totalStartedAt).TotalMilliseconds;
 
+            _lastSaveMs = totalMs;
+            _lastSavedAt = DateTime.UtcNow;
+
+            Interlocked.Add(ref _totalInsertedCount, snapshot.Values.Count);
+
             _logger.LogInformation(
-                "History 저장 상세 | Batch={Batch} | TotalMs={TotalMs:N0} | CopyTotalMs={CopyTotalMs:N0} | OpenMs={OpenMs:N0} | BeginCopyMs={BeginCopyMs:N0} | WriteRowsMs={WriteRowsMs:N0} | CompleteMs={CompleteMs:N0} | QueueRemain={QueueRemain} | Inserted={Inserted} | DroppedRows={DroppedRows}",
-                batch.Count,
+                "History Snapshot 저장 완료 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | TotalMs={TotalMs:N0} | CopyTotalMs={CopyTotalMs:N0} | OpenMs={OpenMs:N0} | BeginCopyMs={BeginCopyMs:N0} | WriteRowsMs={WriteRowsMs:N0} | CompleteMs={CompleteMs:N0} | InsertedRows={InsertedRows}",
+                snapshot.SnapshotTime,
+                snapshot.Values.Count,
                 totalMs,
-                copyTotalMs,
-                openMs,
-                beginCopyMs,
-                writeRowsMs,
-                completeMs,
-                QueueCount,
-                TotalInsertedCount,
-                TotalDroppedRowCount);
+                result.copyTotalMs,
+                result.openMs,
+                result.beginCopyMs,
+                result.writeRowsMs,
+                result.completeMs,
+                TotalInsertedCount);
 
             if (totalMs > 1000) {
                 _logger.LogWarning(
-                    "History 저장 지연 | Batch={Batch} | TotalMs={TotalMs:N0} | QueueRemain={QueueRemain}",
-                    batch.Count,
-                    totalMs,
-                    QueueCount);
+                    "History Snapshot 저장 지연 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | TotalMs={TotalMs:N0}",
+                    snapshot.SnapshotTime,
+                    snapshot.Values.Count,
+                    totalMs);
             }
+
+            return snapshot.Values.Count;
         } catch (Exception ex) {
+            Interlocked.Add(ref _totalFailedCount, snapshot.Values.Count);
+
             _logger.LogError(
                 ex,
-                "Timescale History 저장 실패 | Count={Count} | QueueRemain={QueueRemain}",
-                batch.Count,
-                QueueCount);
+                "Timescale History Snapshot 저장 실패 | SnapshotTime={SnapshotTime:yyyy-MM-dd HH:mm:ss.fff} | Rows={Rows} | FailedRows={FailedRows}",
+                snapshot.SnapshotTime,
+                snapshot.Values.Count,
+                TotalFailedCount);
+
+            throw;
+        } finally {
+            _saveLock.Release();
         }
     }
 
@@ -288,15 +175,6 @@ FROM STDIN (FORMAT BINARY)
     }
 
     public void Dispose() {
-        _historyChannel.Writer.TryComplete();
-        _cts.Cancel();
-
-        try {
-            _workerTask.Wait(TimeSpan.FromSeconds(5));
-        } catch {
-            // ignore
-        }
-
-        _cts.Dispose();
+        _saveLock.Dispose();
     }
 }
