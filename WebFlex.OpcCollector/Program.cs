@@ -4,7 +4,7 @@ using WebFlex.OpcCollector;
 using WebFlex.OpcCollector.Data;
 using WebFlex.OpcCollector.Logging;
 using WebFlex.OpcCollector.Options;
-using WebFlex.OpcCollector.Services;
+using WebFlex.OpcCollector.Services; 
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,7 +37,8 @@ builder.Services.AddHostedService<Worker>();
 builder.Services.AddControllers();
 
 var app = builder.Build();
-
+ 
+await app.Services.GetRequiredService<OpcCollectorOptionState>().LoadAsync();
 await app.Services.GetRequiredService<OpcClientOptionState>().LoadAsync();
 
 app.MapControllers();

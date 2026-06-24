@@ -27,7 +27,7 @@ public class OpcCollectOption : BaseEntity {
 
     [Column(Order = 13), Comment("수집 대상 재조회 주기(초)")]
     [DisplayName("entity.OpcCollectOption.RELOAD_INTERVAL_SECONDS")]
-    public int? RELOAD_INTERVAL_SECONDS { get; set; } 
+    public int? RELOAD_INTERVAL_SECONDS { get; set; }
 
     [Column(Order = 14), Comment("저장 주기(ms)")]
     [DisplayName("entity.OpcCollectOption.SAVE_INTERVAL_MILLISECONDS")]
@@ -35,11 +35,11 @@ public class OpcCollectOption : BaseEntity {
 
     [Column(Order = 15), Comment("Flush 주기(ms)")]
     [DisplayName("entity.OpcCollectOption.FLUSH_INTERVAL_MILLISECONDS")]
-    public int? FLUSH_INTERVAL_MILLISECONDS { get; set; } 
+    public int? FLUSH_INTERVAL_MILLISECONDS { get; set; }
 
     [Column(Order = 16), Comment("최대 배치 크기")]
     [DisplayName("entity.OpcCollectOption.MAX_BATCH_SIZE")]
-    public int? MAX_BATCH_SIZE { get; set; } 
+    public int? MAX_BATCH_SIZE { get; set; }
 
     [Column(Order = 17), Comment("변경값만 저장 여부")]
     [DisplayName("entity.OpcCollectOption.SAVE_ONLY_CHANGED_VALUE")]
@@ -47,7 +47,7 @@ public class OpcCollectOption : BaseEntity {
 
     [Column(Order = 18), Comment("자동 재연결 여부")]
     [DisplayName("entity.OpcCollectOption.AUTO_RECONNECT")]
-    public bool AUTO_RECONNECT { get; set; } 
+    public bool AUTO_RECONNECT { get; set; }
 
     [Column(Order = 19), Comment("재연결 주기(초)")]
     [DisplayName("entity.OpcCollectOption.RECONNECT_INTERVAL_SECONDS")]
@@ -55,10 +55,18 @@ public class OpcCollectOption : BaseEntity {
 
     [Column(Order = 20), Comment("연결 확인 주기(초)")]
     [DisplayName("entity.OpcCollectOption.CONNECTION_CHECK_INTERVAL_SECONDS")]
-    public int? CONNECTION_CHECK_INTERVAL_SECONDS { get; set; } 
+    public int? CONNECTION_CHECK_INTERVAL_SECONDS { get; set; }
+
+    [Column(Order = 21), Comment("옵션 JSON")]
+    [DisplayName("entity.OpcCollectOption.OPTION_JSON")]
+    public string? OPTION_JSON { get; set; }
+
+    [Column(Order = 22), Comment("설정된 옵션명 목록")]
+    [DisplayName("entity.OpcCollectOption.CONFIGURED_OPTION_NAMES")]
+    public string? CONFIGURED_OPTION_NAMES { get; set; }
 
     [ColumnStringLength(500)]
-    [Column(Order = 21), Comment("설명")]
+    [Column(Order = 23), Comment("설명")]
     [DisplayName("entity.OpcCollectOption.DESCRIPTION")]
     public string? DESCRIPTION { get; set; }
 }

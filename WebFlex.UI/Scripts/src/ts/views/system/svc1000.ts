@@ -39,7 +39,6 @@ export default class Page {
     async loadStatus(): Promise<void> {
         try {
             const response = await fetch("/system/service/status");
-
             const text = await response.text();
 
             if (!response.ok) {
@@ -124,32 +123,6 @@ export default class Page {
         await this.post("/system/service/uninstall");
     }
 
-    async post(url: string): Promise<void> {
-        try {
-            const response = await fetch(url, {
-                method: "POST"
-            });
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const data = await response.json() as ServiceCommandResult;
-
-            this.writeResult(data);
-
-            if (!data.success) {
-                alert(data.message ?? "요청 처리에 실패했습니다.");
-            }
-
-            await this.loadStatus();
-        } catch (e) {
-            console.error(e);
-            alert("요청 처리 중 오류가 발생했습니다.");
-            this.writeError(e);
-        }
-    }
-
     async deployZip(): Promise<void> {
         const input = document.getElementById("collectorZipFile") as HTMLInputElement | null;
 
@@ -182,11 +155,13 @@ export default class Page {
                 body: formData
             });
 
+            const text = await response.text();
+
             if (!response.ok) {
-                throw new Error(await response.text());
+                throw new Error(text);
             }
 
-            const data = await response.json() as ServiceCommandResult;
+            const data = JSON.parse(text) as ServiceCommandResult;
 
             this.writeResult(data);
 

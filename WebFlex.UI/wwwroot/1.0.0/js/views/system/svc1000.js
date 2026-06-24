@@ -120,28 +120,6 @@ class Page {
         }
         await this.post("/system/service/uninstall");
     }
-    async post(url) {
-        var _a;
-        try {
-            const response = await fetch(url, {
-                method: "POST"
-            });
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            const data = await response.json();
-            this.writeResult(data);
-            if (!data.success) {
-                alert((_a = data.message) !== null && _a !== void 0 ? _a : "요청 처리에 실패했습니다.");
-            }
-            await this.loadStatus();
-        }
-        catch (e) {
-            console.error(e);
-            alert("요청 처리 중 오류가 발생했습니다.");
-            this.writeError(e);
-        }
-    }
     async deployZip() {
         var _a;
         const input = document.getElementById("collectorZipFile");
@@ -166,10 +144,11 @@ class Page {
                 method: "POST",
                 body: formData
             });
+            const text = await response.text();
             if (!response.ok) {
-                throw new Error(await response.text());
+                throw new Error(text);
             }
-            const data = await response.json();
+            const data = JSON.parse(text);
             this.writeResult(data);
             if (!data.success) {
                 alert((_a = data.message) !== null && _a !== void 0 ? _a : "배포에 실패했습니다.");

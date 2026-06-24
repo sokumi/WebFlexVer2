@@ -1,49 +1,48 @@
 ﻿namespace WebFlex.Shared.Dtos.Opc;
 
 public class OpcCollectorRuntimeOptionsDto {
-    public bool EnableAutoReload { get; set; } = true;
-    public bool EnableSnapshotSave { get; set; } = true;
-    public bool EnableTimescaleHistorySave { get; set; } = true;
-    public bool EnableCurrentValueSave { get; set; } = true;
+    public bool EnableAutoReload { get; set; }
+    public bool EnableSnapshotSave { get; set; }
+    public bool EnableTimescaleHistorySave { get; set; }
+    public bool EnableCurrentValueSave { get; set; }
 
-    public int ReloadIntervalSeconds { get; set; } = 3600;
-    public int SaveIntervalMilliseconds { get; set; } = 1000; 
-    public int MaxBatchSize { get; set; } = 5000;
-    public int WriterLogIntervalSeconds { get; set; } = 30;
+    public int ReloadIntervalSeconds { get; set; }
+    public int SaveIntervalMilliseconds { get; set; }
+    public int MaxBatchSize { get; set; }
+    public int WriterLogIntervalSeconds { get; set; }
 
-    public int DefaultPublishingIntervalMs { get; set; } = 1000;
-    public int DefaultSamplingIntervalMs { get; set; } = 1000;
-    public int DefaultQueueSize { get; set; } = 1;
+    public int DefaultPublishingIntervalMs { get; set; }
+    public int DefaultSamplingIntervalMs { get; set; }
+    public int DefaultQueueSize { get; set; }
 
-    // -1이면 uint.MaxValue로 처리
-    public int SubscriptionKeepAliveCount { get; set; } = -1;
-    public int SubscriptionLifetimeCount { get; set; } = -1;
-    public int MaxNotificationsPerPublish { get; set; } = -1;
-    public byte SubscriptionPriority { get; set; } = 100;
-    public bool DiscardOldest { get; set; } = true;
+    public int SubscriptionKeepAliveCount { get; set; }
+    public int SubscriptionLifetimeCount { get; set; }
+    public int MaxNotificationsPerPublish { get; set; }
+    public byte SubscriptionPriority { get; set; }
+    public bool DiscardOldest { get; set; }
 
-    public bool AutoAcceptUntrustedCertificates { get; set; } = true;
-    public bool RejectSHA1SignedCertificates { get; set; } = false;
-    public int MinimumCertificateKeySize { get; set; } = 1024;
-    public bool SuppressNonceValidationErrors { get; set; } = true;
-    public string CertificateStoreRootPath { get; set; } = "pki";
+    public bool AutoAcceptUntrustedCertificates { get; set; }
+    public bool RejectSHA1SignedCertificates { get; set; }
+    public int MinimumCertificateKeySize { get; set; }
+    public bool SuppressNonceValidationErrors { get; set; }
+    public string CertificateStoreRootPath { get; set; } = "";
 
-    public int OperationTimeoutMilliseconds { get; set; } = 6000000;
-    public int DefaultSessionTimeoutMilliseconds { get; set; } = -1;
-    public int MinSubscriptionLifetimeMilliseconds { get; set; } = -1;
+    public int OperationTimeoutMilliseconds { get; set; }
+    public int DefaultSessionTimeoutMilliseconds { get; set; }
+    public int MinSubscriptionLifetimeMilliseconds { get; set; }
 
-    public int MaxStringLength { get; set; } = int.MaxValue;
-    public int MaxByteStringLength { get; set; } = int.MaxValue;
-    public int MaxArrayLength { get; set; } = 65535;
-    public int MaxMessageSize { get; set; } = 419430400;
-    public int MaxBufferSize { get; set; } = 65535;
-    public int ChannelLifetime { get; set; } = -1;
-    public int SecurityTokenLifetime { get; set; } = -1;
+    public int MaxStringLength { get; set; }
+    public int MaxByteStringLength { get; set; }
+    public int MaxArrayLength { get; set; }
+    public int MaxMessageSize { get; set; }
+    public int MaxBufferSize { get; set; }
+    public int ChannelLifetime { get; set; }
+    public int SecurityTokenLifetime { get; set; }
 
-    public bool DisableHiResClock { get; set; } = true;
+    public bool DisableHiResClock { get; set; }
 
-    public bool DefaultUseSecurity { get; set; } = false;
-    public bool DefaultUseAnonymous { get; set; } = true;
+    public bool DefaultUseSecurity { get; set; }
+    public bool DefaultUseAnonymous { get; set; }
     public string DefaultSecurityPolicy { get; set; } = "";
     public string DefaultSecurityMode { get; set; } = "";
 
@@ -55,7 +54,7 @@ public class OpcCollectorRuntimeOptionsDto {
             EnableCurrentValueSave = source.EnableCurrentValueSave,
 
             ReloadIntervalSeconds = source.ReloadIntervalSeconds,
-            SaveIntervalMilliseconds = source.SaveIntervalMilliseconds, 
+            SaveIntervalMilliseconds = source.SaveIntervalMilliseconds,
             MaxBatchSize = source.MaxBatchSize,
             WriterLogIntervalSeconds = source.WriterLogIntervalSeconds,
 

@@ -1,16 +1,26 @@
-﻿using Microsoft.Extensions.Options;
-using WebFlex.OpcCollector.Options;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using WebFlex.OpcCollector.Data;
+using WebFlex.Shared;
 using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Services;
 
 public class OpcCollectorOptionState {
-    private readonly object _lock = new();
-    private OpcCollectorRuntimeOptionsDto _current;
+    private const string OptionCode = "DEFAULT";
 
-    public OpcCollectorOptionState(IOptions<OpcCollectorOptions> options) {
-        _current = OpcCollectorRuntimeOptionsDto.Clone(options.Value);
-        Normalize(_current);
+    private readonly IDbContextFactory<WebFlexConfigDbContext> _dbContextFactory;
+    private readonly ILogger<OpcCollectorOptionState> _logger;
+    private readonly object _lock = new();
+
+    private OpcCollectorRuntimeOptionsDto _current = new();
+
+    public OpcCollectorOptionState(
+        IDbContextFactory<WebFlexConfigDbContext> dbContextFactory,
+        ILogger<OpcCollectorOptionState> logger) {
+        _dbContextFactory = dbContextFactory;
+        _logger = logger;
     }
 
     public OpcCollectorRuntimeOptionsDto Current {
@@ -19,6 +29,55 @@ public class OpcCollectorOptionState {
                 return OpcCollectorRuntimeOptionsDto.Clone(_current);
             }
         }
+    }
+
+    public async Task LoadAsync(CancellationToken cancellationToken = default) {
+        const int maxAttempts = 3;
+        Exception? lastException = null;
+
+        for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+                await using var db = await _dbContextFactory.CreateDbContextAsync(cancellationToken);
+
+                var row = await db.Set<OpcCollectOption>()
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.OPTION_CODE == OptionCode && x.IsEnabled, cancellationToken);
+
+                if (row == null || string.IsNullOrWhiteSpace(row.OPTION_JSON)) {
+                    throw new InvalidOperationException("OPC Collector 옵션 DB 기본값이 없습니다. opc_collect_option seed 데이터를 확인하세요.");
+                }
+
+                var next = JsonSerializer.Deserialize<OpcCollectorRuntimeOptionsDto>(
+                    row.OPTION_JSON,
+                    JsonOptions()
+                ) ?? throw new InvalidOperationException("OPC Collector 옵션 JSON 역직렬화 실패");
+
+                Normalize(next);
+
+                lock (_lock) {
+                    _current = next;
+                }
+
+                _logger.LogInformation("OPC Collector 옵션 DB 로드 완료");
+
+                return;
+            } catch (Exception ex) when (IsTransient(ex) && attempt < maxAttempts) {
+                lastException = ex;
+
+                _logger.LogWarning(
+                    ex,
+                    "OPC Collector 옵션 DB 로드 재시도 | Attempt={Attempt}/{MaxAttempts}",
+                    attempt,
+                    maxAttempts);
+
+                await Task.Delay(TimeSpan.FromSeconds(attempt), cancellationToken);
+            } catch (Exception ex) {
+                lastException = ex;
+                break;
+            }
+        }
+
+        throw new InvalidOperationException("OPC Collector 옵션 DB 로드를 완료하지 못했습니다.", lastException);
     }
 
     public OpcCollectorRuntimeOptionsDto Update(OpcCollectorRuntimeOptionsDto request) {
@@ -33,7 +92,7 @@ public class OpcCollectorOptionState {
 
     private static void Normalize(OpcCollectorRuntimeOptionsDto options) {
         options.ReloadIntervalSeconds = Math.Max(1, options.ReloadIntervalSeconds);
-        options.SaveIntervalMilliseconds = Math.Max(100, options.SaveIntervalMilliseconds); 
+        options.SaveIntervalMilliseconds = Math.Max(100, options.SaveIntervalMilliseconds);
         options.MaxBatchSize = Math.Max(1, options.MaxBatchSize);
         options.WriterLogIntervalSeconds = Math.Max(1, options.WriterLogIntervalSeconds);
 
@@ -57,5 +116,20 @@ public class OpcCollectorOptionState {
         options.MaxArrayLength = options.MaxArrayLength <= 0 ? 65535 : options.MaxArrayLength;
         options.MaxMessageSize = options.MaxMessageSize <= 0 ? 419430400 : options.MaxMessageSize;
         options.MaxBufferSize = options.MaxBufferSize <= 0 ? 65535 : options.MaxBufferSize;
+    }
+
+    private static bool IsTransient(Exception ex) {
+        return ex is TimeoutException
+            or NpgsqlException
+            or InvalidOperationException
+            || ex.InnerException is TimeoutException
+            or NpgsqlException;
+    }
+
+    private static JsonSerializerOptions JsonOptions() {
+        return new JsonSerializerOptions {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            PropertyNameCaseInsensitive = true
+        };
     }
 }

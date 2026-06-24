@@ -29,7 +29,6 @@ public class OpcClientOption : BaseEntity {
     [DisplayName("entity.OpcClientOption.OPTION_JSON")]
     public string? OPTION_JSON { get; set; }
 
-    [ColumnStringLength(1000)]
     [Column(Order = 14), Comment("설정된 옵션명 목록")]
     [DisplayName("entity.OpcClientOption.CONFIGURED_OPTION_NAMES")]
     public string? CONFIGURED_OPTION_NAMES { get; set; }

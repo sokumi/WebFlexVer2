@@ -42,7 +42,7 @@ class Page {
     async load() {
         try {
             this.setStatus("불러오는 중...");
-            const response = await fetch("/api/opc-collector/options");
+            const response = await fetch("/api/opc-collect-options");
             if (!response.ok) {
                 throw new Error(await response.text());
             }
@@ -59,12 +59,12 @@ class Page {
     async save() {
         var _a, _b;
         try {
-            if (!confirm("OPC Collector 옵션을 저장할까요? 일부 옵션은 서비스 재시작 후 적용됩니다.")) {
+            if (!confirm("OPC Collector 옵션을 저장할까요? 저장 후 Windows Service 제어 화면에서 서비스를 재시작하면 적용됩니다.")) {
                 return;
             }
             this.setStatus("저장 중...");
             const request = this.getForm();
-            const response = await fetch("/api/opc-collector/options", {
+            const response = await fetch("/api/opc-collect-options", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
