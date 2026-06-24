@@ -66,6 +66,7 @@ public class CurrentValueNotifyService : BackgroundService {
         }
     }
 
+    // PostgreSQL LISTEN 채널
     private async Task ListenLoopAsync(
         string connectionString,
         CancellationToken stoppingToken) {

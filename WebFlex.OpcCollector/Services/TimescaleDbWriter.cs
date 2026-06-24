@@ -12,7 +12,7 @@ public class TimescaleDbWriter : IDisposable {
     private readonly NpgsqlDataSource _dataSource;
     private readonly SemaphoreSlim _saveLock = new(1, 1);
 
-    private long _totalRequestedCount;
+    private long _totalSnapshotRows;
     private long _totalInsertedCount;
     private long _totalFailedCount;
     private long _totalCurrentValueUpdatedCount;
@@ -40,13 +40,9 @@ public class TimescaleDbWriter : IDisposable {
         _logger.LogInformation("Timescale History Writer 시작 | Mode=DirectSnapshot | CurrentValue=InlineUpsert");
     }
 
-    public int QueueCount => 0;
-
-    public long TotalEnqueuedCount => Interlocked.Read(ref _totalRequestedCount);
+    public long TotalSnapshotRows => Interlocked.Read(ref _totalSnapshotRows);
 
     public long TotalInsertedCount => Interlocked.Read(ref _totalInsertedCount);
-
-    public long TotalDroppedRowCount => 0;
 
     public long TotalFailedCount => Interlocked.Read(ref _totalFailedCount);
 
@@ -56,11 +52,7 @@ public class TimescaleDbWriter : IDisposable {
 
     public DateTime LastSavedAt => _lastSavedAt;
 
-    public void Enqueue(OpcCollectedValue value) {
-        _logger.LogWarning(
-            "TimescaleDbWriter.Enqueue(row) 호출됨. SaveSnapshotAsync만 사용해야 합니다. NodeId={NodeId}",
-            value.TagId);
-    }
+ 
 
     public async Task<HistorySaveResult> SaveSnapshotAsync(
         OpcHistorySnapshot snapshot,
@@ -78,7 +70,7 @@ public class TimescaleDbWriter : IDisposable {
         await _saveLock.WaitAsync(cancellationToken);
 
         try {
-            Interlocked.Add(ref _totalRequestedCount, snapshot.Values.Count);
+            Interlocked.Add(ref _totalSnapshotRows, snapshot.Values.Count);
 
             var totalStartedAt = DateTime.UtcNow;
             var historyInserted = 0;

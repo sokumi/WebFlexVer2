@@ -23,7 +23,7 @@
                 <tr>
                     <th>EnableSnapshotSave</th>
                     <td><input id="enableSnapshotSave" type="checkbox" /></td>
-                    <td>메모리에 보관 중인 CurrentValues 스냅샷을 주기적으로 저장 큐에 넣을지 여부입니다.</td>
+                    <td>메모리에 보관 중인 CurrentValues 스냅샷을 주기적으로 DB에 직접 저장할지 여부입니다.</td>
                 </tr>
                 <tr>
                     <th>EnableTimescaleHistorySave</th>
@@ -44,16 +44,11 @@
                     <th>SaveIntervalMilliseconds</th>
                     <td><input id="saveIntervalMilliseconds" type="number" /></td>
                     <td>스냅샷 저장 기준 주기입니다. 현재 코드는 초 변경 기준으로 저장하므로 참고용 옵션입니다.</td>
-                </tr>
-                <tr>
-                    <th>FlushIntervalMilliseconds</th>
-                    <td><input id="flushIntervalMilliseconds" type="number" /></td>
-                    <td>저장 큐를 DB로 flush하는 주기입니다. 밀리초 단위입니다.</td>
-                </tr>
+                </tr> 
                 <tr>
                     <th>MaxBatchSize</th>
                     <td><input id="maxBatchSize" type="number" /></td>
-                    <td>한 번의 flush에서 큐에서 꺼내 저장할 최대 건수입니다.</td>
+                    <td>한 번의 DB 저장에서 나눠 처리할 최대 행 수입니다.</td>
                 </tr>
                 <tr>
                     <th>WriterLogIntervalSeconds</th>

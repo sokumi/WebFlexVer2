@@ -6,7 +6,6 @@
 
     reloadIntervalSeconds: number;
     saveIntervalMilliseconds: number;
-    flushIntervalMilliseconds: number;
     maxBatchSize: number;
     writerLogIntervalSeconds: number;
 
@@ -151,7 +150,6 @@ export default class Page {
 
         this.setNumber("reloadIntervalSeconds", data.reloadIntervalSeconds);
         this.setNumber("saveIntervalMilliseconds", data.saveIntervalMilliseconds);
-        this.setNumber("flushIntervalMilliseconds", data.flushIntervalMilliseconds);
         this.setNumber("maxBatchSize", data.maxBatchSize);
         this.setNumber("writerLogIntervalSeconds", data.writerLogIntervalSeconds);
 
@@ -200,7 +198,6 @@ export default class Page {
 
             reloadIntervalSeconds: this.getNumber("reloadIntervalSeconds"),
             saveIntervalMilliseconds: this.getNumber("saveIntervalMilliseconds"),
-            flushIntervalMilliseconds: this.getNumber("flushIntervalMilliseconds"),
             maxBatchSize: this.getNumber("maxBatchSize"),
             writerLogIntervalSeconds: this.getNumber("writerLogIntervalSeconds"),
 

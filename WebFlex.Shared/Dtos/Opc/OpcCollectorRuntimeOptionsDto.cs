@@ -7,8 +7,7 @@ public class OpcCollectorRuntimeOptionsDto {
     public bool EnableCurrentValueSave { get; set; } = true;
 
     public int ReloadIntervalSeconds { get; set; } = 3600;
-    public int SaveIntervalMilliseconds { get; set; } = 1000;
-    public int FlushIntervalMilliseconds { get; set; } = 200;
+    public int SaveIntervalMilliseconds { get; set; } = 1000; 
     public int MaxBatchSize { get; set; } = 5000;
     public int WriterLogIntervalSeconds { get; set; } = 30;
 
@@ -56,8 +55,7 @@ public class OpcCollectorRuntimeOptionsDto {
             EnableCurrentValueSave = source.EnableCurrentValueSave,
 
             ReloadIntervalSeconds = source.ReloadIntervalSeconds,
-            SaveIntervalMilliseconds = source.SaveIntervalMilliseconds,
-            FlushIntervalMilliseconds = source.FlushIntervalMilliseconds,
+            SaveIntervalMilliseconds = source.SaveIntervalMilliseconds, 
             MaxBatchSize = source.MaxBatchSize,
             WriterLogIntervalSeconds = source.WriterLogIntervalSeconds,
 

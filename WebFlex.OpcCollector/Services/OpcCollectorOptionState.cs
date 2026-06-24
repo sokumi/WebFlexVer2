@@ -33,8 +33,7 @@ public class OpcCollectorOptionState {
 
     private static void Normalize(OpcCollectorRuntimeOptionsDto options) {
         options.ReloadIntervalSeconds = Math.Max(1, options.ReloadIntervalSeconds);
-        options.SaveIntervalMilliseconds = Math.Max(100, options.SaveIntervalMilliseconds);
-        options.FlushIntervalMilliseconds = Math.Max(50, options.FlushIntervalMilliseconds);
+        options.SaveIntervalMilliseconds = Math.Max(100, options.SaveIntervalMilliseconds); 
         options.MaxBatchSize = Math.Max(1, options.MaxBatchSize);
         options.WriterLogIntervalSeconds = Math.Max(1, options.WriterLogIntervalSeconds);
 

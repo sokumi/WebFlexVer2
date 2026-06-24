@@ -81,6 +81,7 @@ class Page {
             this.eventSource = null;
         }
         $("#lblStreamStatus").text("연결 중");
+        // SSE로 받아서 currentvalue 이벤트의 JSON을 파싱
         const source = new EventSource("/api/currentvalue/stream");
         this.eventSource = source;
         source.addEventListener("connected", () => {

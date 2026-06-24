@@ -175,8 +175,7 @@ class Page {
             const data = await response.json();
             this.setTextWithFlash("#lblDeviceCount", data.deviceCount);
             this.setTextWithFlash("#lblSubscribedCount", data.subscribedCount);
-            this.setTextWithFlash("#lblQueueCount", data.queueCount);
-            this.setTextWithFlash("#lblTotalEnqueued", data.totalEnqueued);
+            this.setTextWithFlash("#lblTotalSnapshotRows", data.totalSnapshotRows);
             this.setTextWithFlash("#lblTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSubscriptionStopped", data.subscriptionStopped ? "중지" : "동작");
         }
@@ -207,8 +206,7 @@ class Page {
             this.setTextWithFlash("#lblSelectedTagCount", data.tagCount);
             this.setTextWithFlash("#lblSelectedSubscribedCount", runtime.subscribedCount);
             this.setTextWithFlash("#lblSelectedCurrentValueCount", runtime.currentValueCount);
-            this.setTextWithFlash("#lblSelectedQueueCount", data.queueCount);
-            this.setTextWithFlash("#lblSelectedTotalEnqueued", data.totalEnqueued);
+            this.setTextWithFlash("#lblSelectedTotalSnapshotRows", data.totalSnapshotRows);
             this.setTextWithFlash("#lblSelectedTotalInserted", data.totalInserted);
             this.setTextWithFlash("#lblSelectedSubscriptionStopped", runtime.subscriptionStopped ? "중지" : "동작");
         }

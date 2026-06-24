@@ -129,8 +129,7 @@ public class OpcRuntimeManager {
             dbSaveStopped = _dbSaveStopped,
             deviceCount = _opcUaRuntimeService.DeviceCount,
             subscribedCount = _opcUaRuntimeService.SubscribedCount,
-            // queueCount 제거 (큐 폐기)
-            totalRequested = _timescaleDbWriter.TotalEnqueuedCount,
+            totalSnapshotRows = _timescaleDbWriter.TotalSnapshotRows,
             totalInserted = _timescaleDbWriter.TotalInsertedCount,
             totalFailed = _timescaleDbWriter.TotalFailedCount,
             totalCurrentValueUpdated = _timescaleDbWriter.TotalCurrentValueUpdatedCount,
@@ -147,9 +146,8 @@ public class OpcRuntimeManager {
         var saved = _optionState.Update(request);
 
         _logger.LogInformation(
-            "OPC Collector 옵션 변경 | ReloadIntervalSeconds={ReloadIntervalSeconds} | FlushIntervalMilliseconds={FlushIntervalMilliseconds} | MaxBatchSize={MaxBatchSize}",
+            "OPC Collector 옵션 변경 | ReloadIntervalSeconds={ReloadIntervalSeconds} | MaxBatchSize={MaxBatchSize}",
             saved.ReloadIntervalSeconds,
-            saved.FlushIntervalMilliseconds,
             saved.MaxBatchSize);
 
         return saved;
@@ -168,8 +166,7 @@ public class OpcRuntimeManager {
             deviceName = target?.DeviceName ?? "",
             tagCount = target?.Tags.Count ?? 0,
             runtimeStatus,
-            queueCount = _timescaleDbWriter.QueueCount,
-            totalRequested = _timescaleDbWriter.TotalEnqueuedCount,
+            totalSnapshotRows = _timescaleDbWriter.TotalSnapshotRows,
             totalInserted = _timescaleDbWriter.TotalInsertedCount,
             totalFailed = _timescaleDbWriter.TotalFailedCount,
             totalCurrentValueUpdated = _timescaleDbWriter.TotalCurrentValueUpdatedCount,
@@ -253,9 +250,8 @@ public class OpcRuntimeManager {
         _lastWriterLogAt = now;
 
         _logger.LogInformation(
-            "History Writer 상태 | Queue={QueueCount} | Requested={Requested} | Inserted={Inserted} | Failed={Failed} | CurrentValueUpdated={CurrentValueUpdated} | LastSaveMs={LastSaveMs:N0} | LastSavedAt={LastSavedAt:O}",
-            _timescaleDbWriter.QueueCount,
-            _timescaleDbWriter.TotalEnqueuedCount,
+            "History Writer 상태 | SnapshotRows={SnapshotRows} | Inserted={Inserted} | Failed={Failed} | CurrentValueUpdated={CurrentValueUpdated} | LastSaveMs={LastSaveMs:N0} | LastSavedAt={LastSavedAt:O}",
+            _timescaleDbWriter.TotalSnapshotRows,
             _timescaleDbWriter.TotalInsertedCount,
             _timescaleDbWriter.TotalFailedCount,
             _timescaleDbWriter.TotalCurrentValueUpdatedCount,

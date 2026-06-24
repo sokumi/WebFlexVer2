@@ -115,7 +115,6 @@ class Page {
         this.setChecked("enableCurrentValueSave", data.enableCurrentValueSave);
         this.setNumber("reloadIntervalSeconds", data.reloadIntervalSeconds);
         this.setNumber("saveIntervalMilliseconds", data.saveIntervalMilliseconds);
-        this.setNumber("flushIntervalMilliseconds", data.flushIntervalMilliseconds);
         this.setNumber("maxBatchSize", data.maxBatchSize);
         this.setNumber("writerLogIntervalSeconds", data.writerLogIntervalSeconds);
         this.setNumber("defaultPublishingIntervalMs", data.defaultPublishingIntervalMs);
@@ -155,7 +154,6 @@ class Page {
             enableCurrentValueSave: this.getChecked("enableCurrentValueSave"),
             reloadIntervalSeconds: this.getNumber("reloadIntervalSeconds"),
             saveIntervalMilliseconds: this.getNumber("saveIntervalMilliseconds"),
-            flushIntervalMilliseconds: this.getNumber("flushIntervalMilliseconds"),
             maxBatchSize: this.getNumber("maxBatchSize"),
             writerLogIntervalSeconds: this.getNumber("writerLogIntervalSeconds"),
             defaultPublishingIntervalMs: this.getNumber("defaultPublishingIntervalMs"),
