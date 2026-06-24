@@ -123,7 +123,6 @@ class Page {
     }
     init() {
         $("#btnSave").on("click", () => this.save());
-        $("#btnRestartService").on("click", () => this.restartService());
         this.load();
     }
     async load() {
@@ -148,7 +147,7 @@ class Page {
     }
     async save() {
         try {
-            if (!confirm("OPC Client 옵션을 DB에 저장할까요? 저장 후 서비스 재시작 시 적용됩니다.")) {
+            if (!confirm("OPC Client 옵션을 DB에 저장할까요? 저장 후 Windows Service 제어 화면에서 서비스를 재시작하면 적용됩니다.")) {
                 return;
             }
             this.setStatus("저장 중...");
@@ -168,35 +167,14 @@ class Page {
             if (!response.ok) {
                 throw new Error(await response.text());
             }
-            this.setStatus("저장 완료. 서비스 재시작 후 적용됩니다.");
-            alert("저장되었습니다. 서비스 재시작 후 적용됩니다.");
+            this.setStatus("저장 완료. Windows Service 제어 화면에서 서비스 재시작 후 적용됩니다.");
+            alert("저장되었습니다. Windows Service 제어 화면에서 서비스 재시작 후 적용됩니다.");
             await this.load();
         }
         catch (e) {
             console.error(e);
             this.setStatus("저장 실패");
             alert("OPC Client 옵션 저장 중 오류가 발생했습니다.");
-        }
-    }
-    async restartService() {
-        try {
-            if (!confirm("OPC Collector 서비스를 재시작할까요? 저장된 OPC Client 옵션은 재시작 후 적용됩니다.")) {
-                return;
-            }
-            this.setStatus("서비스 재시작 요청 중...");
-            const response = await fetch("/api/opc-collector/restart-process", {
-                method: "POST"
-            });
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            this.setStatus("서비스 재시작 요청 완료");
-            alert("서비스 재시작 요청이 완료되었습니다.");
-        }
-        catch (e) {
-            console.error(e);
-            this.setStatus("서비스 재시작 요청 실패");
-            alert("서비스 재시작 요청 중 오류가 발생했습니다.");
         }
     }
     setForm(data) {

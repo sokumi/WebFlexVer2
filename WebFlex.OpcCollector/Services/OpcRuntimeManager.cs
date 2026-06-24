@@ -70,17 +70,6 @@ public class OpcRuntimeManager {
         _logger.LogInformation("OPC Runtime Manager stopped.");
     }
 
-    public async Task RestartAllDevicesAsync(CancellationToken cancellationToken) {
-        _logger.LogWarning("전체 OPC 디바이스 재구독 요청");
-
-        _subscriptionStopped = false;
-
-        await _opcUaRuntimeService.StopAllAsync();
-        await ReloadTargetsAsync(cancellationToken);
-
-        _logger.LogInformation("전체 OPC 디바이스 재구독 완료");
-    }
-
     public async Task StopSubscriptionAsync(CancellationToken cancellationToken) {
         _logger.LogWarning("전체 OPC 구독 중지 요청");
 

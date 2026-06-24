@@ -55,7 +55,6 @@ export default class Page {
     init(): void {
         $("#btnLoad").on("click", () => this.load());
         $("#btnSave").on("click", () => this.save());
-        $("#btnRestartDevices").on("click", () => this.restartDevices());
 
         this.load();
     }
@@ -83,7 +82,7 @@ export default class Page {
 
     private async save(): Promise<void> {
         try {
-            if (!confirm("OPC Collector 옵션을 저장할까요? 일부 옵션은 재구독 후 적용됩니다.")) {
+            if (!confirm("OPC Collector 옵션을 저장할까요? 일부 옵션은 서비스 재시작 후 적용됩니다.")) {
                 return;
             }
 
@@ -117,30 +116,7 @@ export default class Page {
             alert("옵션 저장 중 오류가 발생했습니다.");
         }
     }
-
-    private async restartDevices(): Promise<void> {
-        try {
-            if (!confirm("전체 디바이스를 재구독할까요?")) {
-                return;
-            }
-
-            this.setStatus("전체 재구독 요청 중...");
-
-            const response = await fetch("/api/opc-collector/devices/restart", {
-                method: "POST"
-            });
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            this.setStatus("전체 재구독 요청 완료");
-        } catch (e) {
-            console.error(e);
-            this.setStatus("전체 재구독 요청 실패");
-            alert("전체 재구독 요청 중 오류가 발생했습니다.");
-        }
-    }
+     
 
     private setForm(data: OpcCollectorOptions): void {
         this.setChecked("enableAutoReload", data.enableAutoReload);

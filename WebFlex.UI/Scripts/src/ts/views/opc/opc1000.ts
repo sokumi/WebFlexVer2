@@ -29,7 +29,6 @@ export default class Page {
 
         $("#btnStopSubscription").on("click", () => this.post("/api/opc-collector/subscription/stop"));
         $("#btnStartSubscription").on("click", () => this.post("/api/opc-collector/subscription/start"));
-        $("#btnRestartProcess").on("click", () => this.restartProcess());
         $("#btnRefresh").on("click", () => this.refresh());
 
         $("#btnLoadDeviceStatus").on("click", () => this.startSelectedDeviceAutoRefresh());
@@ -91,14 +90,6 @@ export default class Page {
 
         await this.post(`/api/opc-collector/device/${encodedDeviceId}/subscription/${action}`);
         await this.loadSelectedDeviceStatus(false);
-    }
-
-    async restartProcess(): Promise<void> {
-        if (!confirm("OPC Collector 전체를 재가동할까요?")) {
-            return;
-        }
-
-        await this.post("/api/opc-collector/restart-process");
     }
 
     async post(url: string): Promise<void> {

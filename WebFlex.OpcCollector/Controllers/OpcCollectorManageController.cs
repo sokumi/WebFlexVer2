@@ -8,16 +8,13 @@ namespace WebFlex.OpcCollector.Controllers;
 [ApiController]
 [Route("api/opc-collector-manage")]
 public class OpcCollectorManageController : ControllerBase {
-    private readonly OpcRuntimeManager _runtimeManager;
-    private readonly IHostApplicationLifetime _lifetime;
+    private readonly OpcRuntimeManager _runtimeManager; 
     private readonly ILogger<OpcCollectorManageController> _logger;
 
     public OpcCollectorManageController(
-        OpcRuntimeManager runtimeManager,
-        IHostApplicationLifetime lifetime,
+        OpcRuntimeManager runtimeManager, 
         ILogger<OpcCollectorManageController> logger) {
-        _runtimeManager = runtimeManager;
-        _lifetime = lifetime;
+        _runtimeManager = runtimeManager; 
         _logger = logger;
     }
 
@@ -61,13 +58,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
-    }
-
-    [HttpPost("devices/restart")]
-    public async Task<IActionResult> RestartAllDevices(CancellationToken cancellationToken) {
-        await _runtimeManager.RestartAllDevicesAsync(cancellationToken);
-        return Ok(new { success = true, message = "전체 디바이스 재구독 요청 완료" });
-    }
+    } 
 
     [HttpPost("subscription/stop")]
     public async Task<IActionResult> StopSubscription(CancellationToken cancellationToken) {
@@ -79,19 +70,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartSubscription(CancellationToken cancellationToken) {
         await _runtimeManager.StartSubscriptionAsync(cancellationToken);
         return Ok(new { success = true, message = "전체 디바이스 구독 재시작 요청 완료" });
-    }
-
-    [HttpPost("restart-process")]
-    public IActionResult RestartProcess() {
-        _logger.LogWarning("OPC Collector 전체 재가동 요청 수신");
-
-        Task.Run(async () => {
-            await Task.Delay(1000);
-            _lifetime.StopApplication();
-        });
-
-        return Ok(new { success = true, message = "전체 재가동 요청 완료" });
-    }
+    } 
 
     [HttpGet("device-summary")]
     public async Task<IActionResult> DeviceSummary(CancellationToken cancellationToken) {
