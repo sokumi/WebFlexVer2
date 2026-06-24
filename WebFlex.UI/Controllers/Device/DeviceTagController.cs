@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Opc.Ua;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.DTO.Common;
@@ -30,6 +31,7 @@ public class DeviceTagController : Controller {
             .Select(x => new DeviceTagDto {
                 Id = x.ID,
                 TagName = x.TAG_NAME,
+                NodeId = x.NODE_ID,
                 GroupId = x.GROUP_ID,
                 DataType = x.DATA_TYPE,
                 IsCollectEnabled = x.IS_COLLECTENABLED,
@@ -95,21 +97,21 @@ public class DeviceTagController : Controller {
 
         var existingNodeIds = await _db.Set<OpcTag>()
             .Where(x => x.DEVICE_ID == device.ID)
-            .Select(x => x.NodeId)
+            .Select(x => x.NODE_ID)
             .ToListAsync();
 
         var existingSet = existingNodeIds.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var sortOrder = await _db.Set<OpcTag>()
             .Where(x => x.DEVICE_ID == device.ID)
-            .MaxAsync(x => (int?)x.SortOrder) ?? 0;
+            .MaxAsync(x => (int?)x.SORT_ORDER) ?? 0;
 
         var tagPrefix = $"GT{DateTime.Now:yyMM}";
 
         var lastTagCode = await _db.Set<OpcTag>()
-            .Where(x => x.TagCode.StartsWith(tagPrefix))
-            .OrderByDescending(x => x.TagCode)
-            .Select(x => x.TagCode)
+            .Where(x => x.ID.StartsWith(tagPrefix))
+            .OrderByDescending(x => x.ID)
+            .Select(x => x.ID)
             .FirstOrDefaultAsync();
 
         var nextTagNo = 1;
@@ -137,7 +139,7 @@ public class DeviceTagController : Controller {
                 ID = tagCode,
                 DEVICE_ID = device.ID,
                 GROUP_ID = group.ID,
-                NodeId = node.NodeId,
+                NODE_ID = node.NodeId,
                 TAG_NAME = string.IsNullOrWhiteSpace(node.DisplayName)
                     ? node.NodeId
                     : node.DisplayName,
@@ -164,7 +166,7 @@ public class DeviceTagController : Controller {
 
     private async Task<OpcGroup> GetOrCreateDeviceGroupAsync(OpcDevice device, DateTime now) {
         var group = await _db.Set<OpcGroup>()
-            .FirstOrDefaultAsync(x => x.GroupName == device.DEVICE_NAME);
+            .FirstOrDefaultAsync(x => x.GROUP_NAME == device.DEVICE_NAME);
 
         if (group != null) {
             return group;
@@ -192,9 +194,9 @@ public class DeviceTagController : Controller {
     private async Task<string> CreateGroupCodeAsync() {
         var prefix = $"DG{DateTime.Now:yyMM}";
         var lastCode = await _db.Set<OpcGroup>()
-            .Where(x => x.GroupCode.StartsWith(prefix))
-            .OrderByDescending(x => x.GroupCode)
-            .Select(x => x.GroupCode)
+            .Where(x => x.ID.StartsWith(prefix))
+            .OrderByDescending(x => x.ID)
+            .Select(x => x.ID)
             .FirstOrDefaultAsync();
 
         var nextNo = 1;
@@ -211,9 +213,9 @@ public class DeviceTagController : Controller {
     private async Task<string> CreateTagCodeAsync() {
         var prefix = $"GT{DateTime.Now:yyMM}";
         var lastCode = await _db.Set<OpcTag>()
-            .Where(x => x.TagCode.StartsWith(prefix))
-            .OrderByDescending(x => x.TagCode)
-            .Select(x => x.TagCode)
+            .Where(x => x.ID.StartsWith(prefix))
+            .OrderByDescending(x => x.ID)
+            .Select(x => x.ID)
             .FirstOrDefaultAsync();
 
         var nextNo = 1;

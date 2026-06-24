@@ -22,8 +22,14 @@ public class OpcTag : BaseEntity {
     [ForeignKey("DEVICE_ID")]
     public OpcDevice? Device { get; set; }
 
+    [ColumnRequired]
+    [ColumnStringLength(100)]
+    [Column(Order = 12), Comment("노드 아이디")]
+    [DisplayName("entity.OpcTag.NODE_ID")]
+    public string NODE_ID { get; set; }
+
     [ColumnStringLength(15)]
-    [Column(Order = 12), Comment("중그룹 아이디")]
+    [Column(Order = 13), Comment("중그룹 아이디")]
     [DisplayName("entity.OpcTag.GROUP_ID")]
     public string? GROUP_ID { get; set; }
 

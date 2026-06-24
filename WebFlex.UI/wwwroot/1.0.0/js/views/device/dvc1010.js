@@ -289,7 +289,7 @@ __webpack_require__.r(__webpack_exports__);
     }
     createNodeElement(node, depth) {
         const isVariable = node.nodeClass === "Variable";
-        const checked = this.selectedNodes.some(x => x.nodeId === node.nodeId);
+        const checked = this.selectedNodes.some(x => x.NODE_ID === node.nodeId);
         const padding = depth * 18;
         const $wrapper = $(`<div class="tree-node"></div>`);
         const $row = $(`
@@ -329,12 +329,12 @@ __webpack_require__.r(__webpack_exports__);
     }
     toggleNode(node, checked) {
         if (checked) {
-            if (!this.selectedNodes.some(x => x.nodeId === node.nodeId)) {
+            if (!this.selectedNodes.some(x => x.NODE_ID === node.nodeId)) {
                 this.selectedNodes.push(node);
             }
         }
         else {
-            this.selectedNodes = this.selectedNodes.filter(x => x.nodeId !== node.nodeId);
+            this.selectedNodes = this.selectedNodes.filter(x => x.NODE_ID !== node.nodeId);
         }
         this.renderSelectedNodes();
     }
@@ -360,8 +360,8 @@ __webpack_require__.r(__webpack_exports__);
             const $tr = $(`
             <tr>
                 <td><input type="checkbox" class="chk-tag" data-id="${tag.id}" /></td>
-                <td>${tag.tagCode}</td>
-                <td>${tag.displayName}</td>
+                <td>${tag.id}</td>
+                <td>${tag.tagName}</td>
                 <td>${tag.nodeId}</td>
                 <td>${tag.isCollectEnabled ? "Y" : "N"}</td>
                 <td>${tag.saveToDatabase ? "Y" : "N"}</td>

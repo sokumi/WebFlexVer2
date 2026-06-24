@@ -9,20 +9,9 @@ namespace WebFlex.Shared;
 /// <summary>
 /// 디바이스 정보
 /// </summary>
-[DebuggerDisplay("{Id} {GROUP_ID} {DEVICE_NAME} {ENDPOINT_URL}")]
+[DebuggerDisplay("{Id} {TAG_ID} {DEVICE_NAME} {ENDPOINT_URL}")]
 [Table("opc_device"), KeyFieldColumn("DEVICE_ID"), Comment("디바이스 정보")]
 public class OpcDevice : BaseEntity {
-
-    [ColumnStringLength(15)]
-    [Column(Order = 11), Comment("중그룹 아이디")]
-    [DisplayName("entity.OpcDevice.GROUP_ID")]
-    public string? GROUP_ID { get; set; }
-
-    /// <summary>
-    /// 중그룹
-    /// </summary>
-    [ForeignKey("GROUP_ID")]
-    public OpcGroup? Group { get; set; }
 
     [ColumnRequired]
     [ColumnStringLength(100)]

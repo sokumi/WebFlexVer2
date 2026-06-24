@@ -2,6 +2,7 @@ using System.Threading.Channels;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.Services.CurrentValue;
 
@@ -25,18 +26,18 @@ public class CurrentValueController : ControllerBase {
 
     [HttpGet("list")]
     public async Task<IActionResult> List(CancellationToken cancellationToken) {
-        var data = await _db.CurrentValues
+        var data = await _db.Set<CurrentValue>()
             .AsNoTracking()
-            .OrderBy(x => x.EndpointUrl)
-            .ThenBy(x => x.NodeId)
+            .OrderBy(x => x.GROUP_ID)
+            .ThenBy(x => x.TAG_ID)
             .Select(x => new CurrentValueDto {
-                EndpointUrl = x.EndpointUrl,
-                NodeId = x.NodeId,
-                Value = x.Value,
-                Status = x.Status,
-                SourceTimestamp = x.SourceTimestamp,
-                ReceivedAt = x.ReceivedAt,
-                UpdatedAt = x.UpdatedAt
+                GroupId = x.GROUP_ID,
+                TagId = x.TAG_ID,
+                Value = x.VALUE,
+                Status = x.STATUS,
+                SourceTimestamp = x.SOURCETIMESTAMP,
+                ReceivedAt = x.RECEIVEDAT,
+                UpdatedAt = x.UPDATEDAT
             })
             .ToListAsync(cancellationToken);
 
@@ -111,10 +112,11 @@ public class CurrentValueController : ControllerBase {
     }
 
     public class CurrentValueDto {
-        public string EndpointUrl { get; set; } = "";
-        public string NodeId { get; set; } = "";
+        public string GroupId { get; set; } = "";
+        public string TagId { get; set; } = "";
         public string? Value { get; set; }
-        public string? Status { get; set; }
+        public string? CookieValue { get; set; }
+        public VaribaleStatusType? Status { get; set; }
         public DateTime? SourceTimestamp { get; set; }
         public DateTime ReceivedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

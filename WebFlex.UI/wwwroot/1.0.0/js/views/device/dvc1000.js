@@ -154,7 +154,6 @@ __webpack_require__.r(__webpack_exports__);
             $("#txtPassword").val((_b = row.password) !== null && _b !== void 0 ? _b : "");
             $("#txtPublishingIntervalMs").val(row.publishingIntervalMs);
             $("#txtSamplingIntervalMs").val(row.samplingIntervalMs);
-            $("#txtQueueSize").val(row.queueSize);
             $("#txtSortOrder").val(row.sortOrder);
             $("#txtDescription").val((_c = row.description) !== null && _c !== void 0 ? _c : "");
         };
@@ -183,7 +182,7 @@ __webpack_require__.r(__webpack_exports__);
         for (const row of this.rows) {
             const $tr = $(`
                 <tr>
-                    <td>${row.deviceCode}</td>
+                    <td>${row.id}</td>
                     <td>${row.deviceName}</td>
                     <td>${row.deviceType}</td>
                     <td>${row.deviceAddress}</td>
@@ -213,12 +212,11 @@ __webpack_require__.r(__webpack_exports__);
         $("#txtPassword").val("");
         $("#txtPublishingIntervalMs").val(1000);
         $("#txtSamplingIntervalMs").val(1000);
-        $("#txtQueueSize").val(100);
         $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
     }
     getFormData() {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
         return {
             id: this.selectedId || null,
             deviceName: String((_a = $("#txtDeviceName").val()) !== null && _a !== void 0 ? _a : ""),
@@ -234,9 +232,8 @@ __webpack_require__.r(__webpack_exports__);
             password: String((_g = $("#txtPassword").val()) !== null && _g !== void 0 ? _g : ""),
             publishingIntervalMs: Number((_h = $("#txtPublishingIntervalMs").val()) !== null && _h !== void 0 ? _h : 1000),
             samplingIntervalMs: Number((_j = $("#txtSamplingIntervalMs").val()) !== null && _j !== void 0 ? _j : 1000),
-            queueSize: Number((_k = $("#txtQueueSize").val()) !== null && _k !== void 0 ? _k : 100),
-            sortOrder: Number((_l = $("#txtSortOrder").val()) !== null && _l !== void 0 ? _l : 0),
-            description: String((_m = $("#txtDescription").val()) !== null && _m !== void 0 ? _m : "")
+            sortOrder: Number((_k = $("#txtSortOrder").val()) !== null && _k !== void 0 ? _k : 0),
+            description: String((_l = $("#txtDescription").val()) !== null && _l !== void 0 ? _l : "")
         };
     }
 });

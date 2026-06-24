@@ -89,7 +89,7 @@ export default class {
         for (const row of this.rows) {
             const $tr = $(`
                 <tr>
-                    <td>${row.deviceCode}</td>
+                    <td>${row.id}</td>
                     <td>${row.deviceName}</td>
                     <td>${row.deviceType}</td>
                     <td>${row.deviceAddress}</td>
@@ -122,7 +122,6 @@ export default class {
         $("#txtPassword").val(row.password ?? "");
         $("#txtPublishingIntervalMs").val(row.publishingIntervalMs);
         $("#txtSamplingIntervalMs").val(row.samplingIntervalMs);
-        $("#txtQueueSize").val(row.queueSize);
         $("#txtSortOrder").val(row.sortOrder);
         $("#txtDescription").val(row.description ?? "");
     };
@@ -145,7 +144,6 @@ export default class {
         $("#txtPassword").val("");
         $("#txtPublishingIntervalMs").val(1000);
         $("#txtSamplingIntervalMs").val(1000);
-        $("#txtQueueSize").val(100);
         $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
     }
@@ -166,7 +164,6 @@ export default class {
             password: String($("#txtPassword").val() ?? ""),
             publishingIntervalMs: Number($("#txtPublishingIntervalMs").val() ?? 1000),
             samplingIntervalMs: Number($("#txtSamplingIntervalMs").val() ?? 1000),
-            queueSize: Number($("#txtQueueSize").val() ?? 100),
             sortOrder: Number($("#txtSortOrder").val() ?? 0),
             description: String($("#txtDescription").val() ?? "")
         };

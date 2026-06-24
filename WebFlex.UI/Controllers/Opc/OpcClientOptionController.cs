@@ -22,7 +22,7 @@ public class OpcClientOptionController : ControllerBase {
     public async Task<IActionResult> Get(CancellationToken cancellationToken) {
         var row = await _db.Set<OpcClientOption>()
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.OptionCode == OptionCode && x.IsEnabled, cancellationToken);
+            .FirstOrDefaultAsync(x => x.OPTION_CODE == OptionCode && x.IsEnabled, cancellationToken);
 
         var result = new OpcClientOptionViewDto {
             Options = new OpcClientOptionDto(),
@@ -32,10 +32,10 @@ public class OpcClientOptionController : ControllerBase {
 
         if (row != null) {
             result.Options = JsonSerializer.Deserialize<OpcClientOptionDto>(
-                row.OptionJson,
+                row.OPTION_JSON,
                 JsonOptions()) ?? new OpcClientOptionDto();
 
-            result.ConfiguredOptionNames = SplitNames(row.ConfiguredOptionNames);
+            result.ConfiguredOptionNames = SplitNames(row.CONFIGURED_OPTION_NAMES);
         }
 
         return Ok(result);
@@ -48,7 +48,7 @@ public class OpcClientOptionController : ControllerBase {
         var now = DateTime.UtcNow;
 
         var row = await _db.Set<OpcClientOption>()
-            .FirstOrDefaultAsync(x => x.OptionCode == OptionCode, cancellationToken);
+            .FirstOrDefaultAsync(x => x.OPTION_CODE == OptionCode, cancellationToken);
 
         var optionJson = JsonSerializer.Serialize(request.Options, JsonOptions());
 
@@ -58,17 +58,17 @@ public class OpcClientOptionController : ControllerBase {
 
         if (row == null) {
             row = new OpcClientOption {
-                OptionCode = OptionCode,
-                OptionName = "OPC Client Default Options",
+                OPTION_CODE = OptionCode,
+                OPTION_NAME = "OPC Client Default Options",
                 CreatedAt = now
             };
 
             _db.Set<OpcClientOption>().Add(row);
         }
 
-        row.OptionJson = optionJson;
-        row.ConfiguredOptionNames = configuredNames;
-        row.Description = "OPC1030 화면에서 저장한 OPC Client 옵션";
+        row.OPTION_JSON = optionJson;
+        row.CONFIGURED_OPTION_NAMES = configuredNames;
+        row.DESCRIPTION = "OPC1030 화면에서 저장한 OPC Client 옵션";
         row.IsEnabled = true;
         row.UpdatedAt = now;
 

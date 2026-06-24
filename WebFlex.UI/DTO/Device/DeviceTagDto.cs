@@ -2,7 +2,8 @@
 
 public class DeviceTagDto {
     public string Id { get; set; }
-    public string TagName { get; set; } = "";
+    public string TagName { get; set; }
+    public string NodeId { get; set; } 
     public string? GroupId { get; set; }
     public string? DataType { get; set; }
     public bool IsCollectEnabled { get; set; }
