@@ -2,9 +2,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
-using WebFlex.UI.DTO.Common;
-using WebFlex.UI.DTO.Device;
-using WebFlex.UI.Services.Device;
+using WebFlex.UI.DTO;
+using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers.Device;
 

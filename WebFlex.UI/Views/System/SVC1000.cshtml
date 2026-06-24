@@ -1,0 +1,41 @@
+﻿@{
+    ViewData["Title"] = "서비스 관리";
+}
+
+<div class="page-service-manager">
+    <h2>Windows Service 관리</h2>
+
+    <div style="margin-bottom: 16px;">
+        <div>
+            <strong>서비스 이름:</strong>
+            <span id="serviceName">-</span>
+        </div>
+        <div>
+            <strong>표시 이름:</strong>
+            <span id="displayName">-</span>
+        </div>
+        <div>
+            <strong>서비스 상태:</strong>
+            <span id="serviceStatus">-</span>
+        </div>
+        <div>
+            <strong>실행 파일 경로:</strong>
+            <span id="exePath">-</span>
+        </div>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+        <button type="button" id="btnRefresh">새로고침</button>
+        <button type="button" id="btnInstall">서비스 등록</button>
+        <button type="button" id="btnStart">서비스 시작</button>
+        <button type="button" id="btnStop">서비스 중지</button>
+        <button type="button" id="btnRestart">서비스 재시작</button>
+        <button type="button" id="btnUninstall">서비스 삭제</button>
+    </div>
+
+    <pre id="resultBox" style="min-height: 250px; padding: 12px; border: 1px solid #ccc; overflow: auto;"></pre>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/system/svc1000.js"></script>
+}

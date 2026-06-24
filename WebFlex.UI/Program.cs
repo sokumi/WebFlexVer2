@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using WebFlex.UI.Services.CurrentValue;
+using WebFlex.UI.Services;
 using WebFlex.UI.Data;
-using WebFlex.UI.Services.Timescale;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,13 +15,15 @@ builder.Services.AddDbContext<WebFlexDbContext>(options =>
 builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));
 
-builder.Services.AddScoped<WebFlex.UI.Services.Device.OpcBrowseService>();
+builder.Services.AddScoped<WebFlex.UI.Services.OpcBrowseService>();
 
 builder.Services.AddSingleton<CurrentValueNotifyService>();
+builder.Services.AddSingleton<WindowsServiceManager>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<CurrentValueNotifyService>());
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<TimescaleOptionService>();
+
 
 builder.Services.AddControllersWithViews();
 

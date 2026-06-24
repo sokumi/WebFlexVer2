@@ -1,4 +1,4 @@
-﻿namespace WebFlex.UI.DTO.Device;
+﻿namespace WebFlex.UI.DTO;
 
 public class DeviceDto {
     public string Id { get; set; }

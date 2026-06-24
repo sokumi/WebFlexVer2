@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
-using WebFlex.UI.Services.CurrentValue;
+using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers.Main;
 

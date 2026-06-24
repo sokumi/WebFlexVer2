@@ -2,7 +2,7 @@
 using System.Threading.Channels;
 using Npgsql;
 
-namespace WebFlex.UI.Services.CurrentValue;
+namespace WebFlex.UI.Services;
 
 public class CurrentValueNotifyService : BackgroundService {
     private readonly IConfiguration _configuration;

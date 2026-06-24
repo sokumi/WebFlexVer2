@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using WebFlex.Shared.Dtos.Opc;
-using WebFlex.UI.Services.Timescale;
+using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers.Opc;
 

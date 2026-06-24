@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 using Npgsql;
 using WebFlex.Shared.Dtos.Opc;
 
-namespace WebFlex.UI.Services.Timescale;
+namespace WebFlex.UI.Services;
 
 public class TimescaleOptionService {
     private readonly IConfiguration _configuration;

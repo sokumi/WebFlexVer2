@@ -1,4 +1,4 @@
-﻿namespace WebFlex.UI.DTO.Common;
+﻿namespace WebFlex.UI.DTO;
 
 public class ApiResponse<T> {
     public bool Success { get; set; }

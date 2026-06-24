@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.Json.Serialization;
 
-namespace WebFlex.UI.DTO.Common;
+namespace WebFlex.UI.DTO;
 
 /// <summary>
 /// 엑션 Data Transfer Object

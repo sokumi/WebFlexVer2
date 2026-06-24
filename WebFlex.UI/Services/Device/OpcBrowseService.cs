@@ -2,9 +2,9 @@
 using Opc.Ua.Client;
 using Opc.Ua.Configuration;
 using WebFlex.Shared;
-using WebFlex.UI.DTO.Device;
+using WebFlex.UI.DTO;
 
-namespace WebFlex.UI.Services.Device;
+namespace WebFlex.UI.Services;
 
 public class OpcBrowseService {
     public async Task<List<DeviceNodeDto>> BrowseAsync(

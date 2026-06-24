@@ -1,4 +1,4 @@
-﻿namespace WebFlex.UI.DTO.Device;
+﻿namespace WebFlex.UI.DTO;
 
 public class DeviceTagSaveRequest {
     public string DeviceId { get; set; }
