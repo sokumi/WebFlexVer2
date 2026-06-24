@@ -480,6 +480,7 @@ public class OpcUaRuntimeService {
                     TagId = value.TagId,
                     Value = value.Value,
                     Status = value.Status,
+                    CookieValue = value.CookieValue,
                     SourceTimestamp = value.SourceTimestamp,
                     ReceivedAt = value.ReceivedAt
                 });

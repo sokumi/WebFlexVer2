@@ -50,6 +50,7 @@ public class OpcCollectTargetProvider {
                     .ThenBy(tag => tag.TAG_NAME)
                     .Select(tag => new OpcCollectTargetTagDto {
                         TagId = tag.ID,
+                        GroupId = tag.GROUP_ID,
                         TagCode = "",
                         NodeId = tag.NODE_ID ?? "",
                         DisplayName = tag.TAG_NAME ?? "",

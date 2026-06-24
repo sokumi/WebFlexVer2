@@ -232,6 +232,7 @@ INSERT INTO public.currentvalue
     value,
     status,
     cookie_value,
+    update_count,
     source_timestamp,
     received_at,
     updated_at
@@ -242,6 +243,7 @@ SELECT
     unnest(@values),
     unnest(@statuses),
     unnest(@cookie_values),
+    1,
     unnest(@source_timestamps),
     unnest(@received_ats),
     now()
@@ -254,11 +256,13 @@ DO UPDATE SET
     source_timestamp  = EXCLUDED.source_timestamp,
     received_at       = EXCLUDED.received_at,
     updated_at        = now(),
-    update_count      = public.currentvalue.update_count + 1
+    update_count      = COALESCE(public.currentvalue.update_count, 0) + 1
 WHERE public.currentvalue.value IS DISTINCT FROM EXCLUDED.value
    OR public.currentvalue.status IS DISTINCT FROM EXCLUDED.status
    OR public.currentvalue.cookie_value IS DISTINCT FROM EXCLUDED.cookie_value
-   OR public.currentvalue.group_id IS DISTINCT FROM EXCLUDED.group_id;
+   OR public.currentvalue.group_id IS DISTINCT FROM EXCLUDED.group_id
+   OR public.currentvalue.source_timestamp IS DISTINCT FROM EXCLUDED.source_timestamp
+   OR public.currentvalue.received_at IS DISTINCT FROM EXCLUDED.received_at;
 ", conn);
 
             cmd.CommandTimeout = 0;
@@ -268,19 +272,27 @@ WHERE public.currentvalue.value IS DISTINCT FROM EXCLUDED.value
             });
 
             cmd.Parameters.Add(new NpgsqlParameter("@group_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => (object?)x.GroupId ?? DBNull.Value).ToArray()
+                Value = chunk.Select(x => string.IsNullOrWhiteSpace(x.GroupId)
+                    ? DBNull.Value
+                    : (object)x.GroupId).ToArray()
             });
 
             cmd.Parameters.Add(new NpgsqlParameter("@values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => (object?)x.Value ?? DBNull.Value).ToArray()
+                Value = chunk.Select(x => x.Value == null
+                    ? DBNull.Value
+                    : (object)x.Value).ToArray()
             });
 
-            cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => (object?)x.Status ?? DBNull.Value).ToArray()
+            cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Integer) {
+                Value = chunk.Select(x => x.Status.HasValue
+                    ? (object)(int)x.Status.Value
+                    : DBNull.Value).ToArray()
             });
 
             cmd.Parameters.Add(new NpgsqlParameter("@cookie_values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => (object?)x.CookieValue ?? DBNull.Value).ToArray()
+                Value = chunk.Select(x => string.IsNullOrWhiteSpace(x.CookieValue)
+                    ? DBNull.Value
+                    : (object)x.CookieValue).ToArray()
             });
 
             cmd.Parameters.Add(new NpgsqlParameter("@source_timestamps", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {

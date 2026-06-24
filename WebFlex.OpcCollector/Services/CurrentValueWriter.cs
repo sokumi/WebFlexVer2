@@ -193,10 +193,8 @@ WHERE public.currentvalue.value IS DISTINCT FROM EXCLUDED.value
             Value = batch.Select(x => (object?)x.Value ?? DBNull.Value).ToArray()
         });
 
-        cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Integer) {
-            Value = chunk.Select(x => x.Status.HasValue
-                ? (object)(int)x.Status.Value
-                : DBNull.Value).ToArray()
+        cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = batch.Select(x => (object?)x.Status ?? DBNull.Value).ToArray()
         });
 
         cmd.Parameters.Add(new NpgsqlParameter("@cookie_values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
