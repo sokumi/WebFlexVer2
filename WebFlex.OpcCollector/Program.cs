@@ -19,7 +19,7 @@ builder.Services.Configure<OpcCollectorOptions>(
 
 builder.Services.AddSingleton<OpcCollectorOptionState>();
 
-builder.Services.AddDbContext<WebFlexConfigDbContext>(options =>
+builder.Services.AddDbContextFactory<WebFlexConfigDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexDb"))
         .UseSnakeCaseNamingConvention());
 

@@ -1,6 +1,6 @@
 ﻿type CurrentValueRow = {
-    endpointUrl: string;
-    nodeId: string;
+    groupId: string;
+    tagId: string;
     value?: string | null;
     status?: string | null;
     sourceTimestamp?: string | null;
@@ -48,7 +48,7 @@ export default class Page {
             this.rowMap.clear();
 
             for (const row of this.rows) {
-                this.rowMap.set(this.makeKey(row.endpointUrl, row.nodeId), row);
+                this.rowMap.set(this.makeKey(row.groupId, row.tagId), row);
             }
 
             $("#lblTotalCount").text(String(this.rows.length));
@@ -98,7 +98,7 @@ export default class Page {
     }
 
     private applyUpdate(row: CurrentValueRow): void {
-        const key = this.makeKey(row.endpointUrl, row.nodeId);
+        const key = this.makeKey(row.groupId, row.tagId);
         const existing = this.rowMap.get(key);
 
         let changed = false;
@@ -145,18 +145,6 @@ export default class Page {
         this.requestRender();
     }
 
-    //private requestRender(): void {
-    //    if (this.renderRequested) {
-    //        return;
-    //    }
-
-    //    this.renderRequested = true;
-
-    //    window.requestAnimationFrame(() => {
-    //        this.renderRequested = false;
-    //        this.renderVisibleRows();
-    //    });
-    //}
 
     private requestRender(): void {
         if (this.renderTimer != null) {
@@ -225,16 +213,16 @@ export default class Page {
     }
 
     private renderRow(row: CurrentValueRow): string {
-        const key = this.makeKey(row.endpointUrl, row.nodeId);
+        const key = this.makeKey(row.groupId, row.tagId);
         const statusClass = this.isGoodStatus(row.status) ? "status-good" : "status-bad";
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
 
         return `
         <tr style="height:${this.rowHeight}px">
-            <td title="${this.escapeHtml(row.endpointUrl)}">${this.escapeHtml(row.endpointUrl)}</td>
-            <td title="${this.escapeHtml(row.nodeId)}">${this.escapeHtml(row.nodeId)}</td>
+            <td title="${this.escapeHtml(row.groupId)}">${this.escapeHtml(row.groupId)}</td>
+            <td title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</td>
             <td class="value-cell ${flashClass}" title="${this.escapeHtml(row.value ?? "")}">${this.escapeHtml(row.value ?? "")}</td>
-            <td class="${statusClass}">${this.escapeHtml(row.status ?? "")}</td>
+            //<td class="${statusClass}">${this.escapeHtml(row.status ?? "")}</td>
             <td>${this.formatDate(row.sourceTimestamp)}</td>
             <td>${this.formatDate(row.updatedAt)}</td>
         </tr>
@@ -253,8 +241,8 @@ export default class Page {
             normalized === "0x00000000";
     }
 
-    private makeKey(endpointUrl: string, nodeId: string): string {
-        return `${endpointUrl}||${nodeId}`;
+    private makeKey(groupId: string, tagId: string): string {
+        return `${groupId}||${tagId}`;
     }
 
     private formatDate(value?: string | null): string {

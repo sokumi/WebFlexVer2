@@ -174,10 +174,13 @@ FROM STDIN (FORMAT BINARY)
             foreach (var item in chunk) {
                 await writer.StartRowAsync(cancellationToken);
                 await writer.WriteAsync(item.Time, NpgsqlDbType.TimestampTz, cancellationToken);
-                await writer.WriteAsync(item.EndpointUrl, NpgsqlDbType.Text, cancellationToken);
-                await writer.WriteAsync(item.NodeId, NpgsqlDbType.Text, cancellationToken);
+                await writer.WriteAsync(item.GroupId, NpgsqlDbType.Text, cancellationToken);
+                await writer.WriteAsync(item.TagId, NpgsqlDbType.Text, cancellationToken);
                 await writer.WriteAsync(item.Value, NpgsqlDbType.Text, cancellationToken);
-                await writer.WriteAsync(item.Status, NpgsqlDbType.Text, cancellationToken);
+                if (item.Status.HasValue)
+                    await writer.WriteAsync((int)item.Status.Value, NpgsqlDbType.Integer, cancellationToken);
+                else
+                    await writer.WriteNullAsync(cancellationToken);
 
                 if (item.SourceTimestamp.HasValue) {
                     await writer.WriteAsync(item.SourceTimestamp.Value, NpgsqlDbType.TimestampTz, cancellationToken);
@@ -209,51 +212,68 @@ FROM STDIN (FORMAT BINARY)
             await using var cmd = new NpgsqlCommand(@"
 INSERT INTO public.currentvalue
 (
-    endpoint_url,
-    node_id,
+    tag_id,
+    group_id,
     value,
     status,
+    cookie_value,
     source_timestamp,
     received_at,
     updated_at
 )
 SELECT
-    unnest(@endpoint_urls),
-    unnest(@node_ids),
+    unnest(@tag_ids),
+    unnest(@group_ids),
     unnest(@values),
     unnest(@statuses),
+    unnest(@cookie_values),
     unnest(@source_timestamps),
     unnest(@received_ats),
     now()
-ON CONFLICT (endpoint_url, node_id)
+ON CONFLICT (tag_id)
 DO UPDATE SET
-    value            = EXCLUDED.value,
-    status           = EXCLUDED.status,
-    source_timestamp = EXCLUDED.source_timestamp,
-    received_at      = EXCLUDED.received_at,
-    updated_at       = now()
+    group_id          = EXCLUDED.group_id,
+    value             = EXCLUDED.value,
+    status            = EXCLUDED.status,
+    cookie_value      = EXCLUDED.cookie_value,
+    source_timestamp  = EXCLUDED.source_timestamp,
+    received_at       = EXCLUDED.received_at,
+    updated_at        = now(),
+    update_count      = public.currentvalue.update_count + 1
 WHERE public.currentvalue.value IS DISTINCT FROM EXCLUDED.value
-   OR public.currentvalue.status IS DISTINCT FROM EXCLUDED.status;
+   OR public.currentvalue.status IS DISTINCT FROM EXCLUDED.status
+   OR public.currentvalue.cookie_value IS DISTINCT FROM EXCLUDED.cookie_value
+   OR public.currentvalue.group_id IS DISTINCT FROM EXCLUDED.group_id;
 ", conn);
 
             cmd.CommandTimeout = 0;
-            cmd.Parameters.Add(new NpgsqlParameter("@endpoint_urls", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => x.EndpointUrl).ToArray()
+
+            cmd.Parameters.Add(new NpgsqlParameter("@tag_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => x.TagId).ToArray()
             });
-            cmd.Parameters.Add(new NpgsqlParameter("@node_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-                Value = chunk.Select(x => x.NodeId).ToArray()
+
+            cmd.Parameters.Add(new NpgsqlParameter("@group_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => (object?)x.GroupId ?? DBNull.Value).ToArray()
             });
+
             cmd.Parameters.Add(new NpgsqlParameter("@values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
                 Value = chunk.Select(x => (object?)x.Value ?? DBNull.Value).ToArray()
             });
+
             cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) {
                 Value = chunk.Select(x => (object?)x.Status ?? DBNull.Value).ToArray()
             });
+
+            cmd.Parameters.Add(new NpgsqlParameter("@cookie_values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+                Value = chunk.Select(x => (object?)x.CookieValue ?? DBNull.Value).ToArray()
+            });
+
             cmd.Parameters.Add(new NpgsqlParameter("@source_timestamps", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
                 Value = chunk.Select(x => x.SourceTimestamp.HasValue
                     ? (object)x.SourceTimestamp.Value
                     : DBNull.Value).ToArray()
             });
+
             cmd.Parameters.Add(new NpgsqlParameter("@received_ats", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
                 Value = chunk.Select(x => x.ReceivedAt).ToArray()
             });

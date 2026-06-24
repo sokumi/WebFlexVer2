@@ -2,6 +2,7 @@
 using Opc.Ua;
 using Opc.Ua.Client;
 using WebFlex.OpcCollector.Runtime;
+using WebFlex.Shared;
 using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Services;
@@ -379,15 +380,19 @@ public class OpcUaRuntimeService {
                 saveToDatabase = false;
             }
 
-            // 최신 값 갱신
+            var statusType = StatusCode.IsGood(value.StatusCode)
+    ? VaribaleStatusType.Good
+    : VaribaleStatusType.Bad;
+
             var currentValue = new OpcCurrentRuntimeValue {
-                EndpointUrl = runtime.EndpointUrl,
-                NodeId = nodeIdText,
+                TagId = tag?.TagId ?? "",
+                GroupId = tag?.GroupId,
                 Value = value.Value?.ToString(),
-                Status = value.StatusCode.ToString(),
+                Status = (VaribaleStatusType)statusType,
+                CookieValue = null,
                 SourceTimestamp = value.SourceTimestamp == DateTime.MinValue
-                ? null
-                : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
+                    ? null
+                    : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
                 ReceivedAt = nowUtc,
                 SaveToDatabase = saveToDatabase
             };
@@ -416,6 +421,8 @@ public class OpcUaRuntimeService {
             }
         }
     }
+
+
 
     private async Task RemoveDeviceAsync(string deviceId) {
         if (!_devices.TryRemove(deviceId, out var runtime))
@@ -469,8 +476,8 @@ public class OpcUaRuntimeService {
 
                 snapshot.Values.Add(new OpcCollectedValue {
                     Time = snapshotTimeUtc,
-                    EndpointUrl = value.EndpointUrl,
-                    NodeId = value.NodeId,
+                    GroupId = value.GroupId,
+                    TagId = value.TagId,
                     Value = value.Value,
                     Status = value.Status,
                     SourceTimestamp = value.SourceTimestamp,

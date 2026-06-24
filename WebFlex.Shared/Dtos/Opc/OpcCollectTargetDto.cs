@@ -37,6 +37,8 @@ public class OpcCollectTargetDto {
 public class OpcCollectTargetTagDto {
     public string TagId { get; set; }
 
+    public string GroupId { get; set; }
+
     public string TagCode { get; set; } = "";
 
     public string NodeId { get; set; } = "";

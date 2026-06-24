@@ -51,7 +51,7 @@ public class OpcCollectTargetProvider {
                     .Select(tag => new OpcCollectTargetTagDto {
                         TagId = tag.ID,
                         TagCode = "",
-                        NodeId = tag.TAG_NAME ?? "",
+                        NodeId = tag.NODE_ID ?? "",
                         DisplayName = tag.TAG_NAME ?? "",
                         SamplingIntervalMs = tag.SAMPLINGINTERVALMS ?? device.SAMPLINGINTERVALMS ?? 1000,
                         SaveToDatabase = tag.SAVE_TO_DATABASE

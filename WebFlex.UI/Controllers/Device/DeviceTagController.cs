@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Opc.Ua;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.DTO.Common;
 using WebFlex.UI.DTO.Device;
 using WebFlex.UI.Services.Device;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace WebFlex.UI.Controllers.Device;
 
@@ -13,12 +14,15 @@ namespace WebFlex.UI.Controllers.Device;
 public class DeviceTagController : Controller {
     private readonly WebFlexDbContext _db;
     private readonly OpcBrowseService _opcBrowseService;
+    private readonly IConfiguration _configuration;
 
     public DeviceTagController(
         WebFlexDbContext db,
-        OpcBrowseService opcBrowseService) {
+        OpcBrowseService opcBrowseService,
+        IConfiguration configuration) {
         _db = db;
         _opcBrowseService = opcBrowseService;
+        _configuration = configuration;
     }
 
     [HttpGet, ActionName("list")]
@@ -122,6 +126,8 @@ public class DeviceTagController : Controller {
             nextTagNo = lastTagNo + 1;
         }
 
+        var newTags = new List<OpcTag>();
+
         foreach (var node in request.Nodes) {
             if (string.IsNullOrWhiteSpace(node.NodeId)) {
                 continue;
@@ -157,9 +163,13 @@ public class DeviceTagController : Controller {
             };
 
             _db.Set<OpcTag>().Add(tag);
+            newTags.Add(tag);
         }
 
         await _db.SaveChangesAsync();
+
+        await InsertCurrentValuesAsync(newTags);
+
 
         return Json(ApiResponse<bool>.Ok(true, "태그가 저장되었습니다."));
     }
@@ -210,24 +220,6 @@ public class DeviceTagController : Controller {
         return $"{prefix}{nextNo:D4}";
     }
 
-    private async Task<string> CreateTagCodeAsync() {
-        var prefix = $"GT{DateTime.Now:yyMM}";
-        var lastCode = await _db.Set<OpcTag>()
-            .Where(x => x.ID.StartsWith(prefix))
-            .OrderByDescending(x => x.ID)
-            .Select(x => x.ID)
-            .FirstOrDefaultAsync();
-
-        var nextNo = 1;
-
-        if (!string.IsNullOrWhiteSpace(lastCode) &&
-            lastCode.Length >= prefix.Length + 4 &&
-            int.TryParse(lastCode.Substring(prefix.Length), out var lastNo)) {
-            nextNo = lastNo + 1;
-        }
-
-        return $"{prefix}{nextNo:D4}";
-    }
 
 
     public class DeleteTagRequest {
@@ -251,7 +243,81 @@ public class DeviceTagController : Controller {
         _db.Set<OpcTag>().RemoveRange(tags);
         await _db.SaveChangesAsync();
 
+        await DeleteCurrentValuesAsync(tags.Select(x => x.ID).ToArray());
+
         return Json(ApiResponse<bool>.Ok(true, $"{tags.Count}개의 태그가 삭제되었습니다."));
+    }
+
+    private async Task InsertCurrentValuesAsync(IReadOnlyList<OpcTag> tags) {
+        if (tags.Count == 0)
+            return;
+
+        var connectionString = _configuration.GetConnectionString("WebFlexTsd")
+            ?? throw new InvalidOperationException("ConnectionStrings:WebFlexTsd 설정이 없습니다.");
+
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+INSERT INTO public.currentvalue
+(
+    tag_id,
+    group_id,
+    value,
+    status,
+    cookie_value,
+    update_count,
+    source_timestamp,
+    received_at,
+    updated_at
+)
+SELECT
+    unnest(@tag_ids),
+    unnest(@group_ids),
+    NULL,
+    NULL,
+    NULL,
+    0,
+    NULL,
+    now(),
+    now()
+ON CONFLICT (tag_id)
+DO UPDATE SET
+    group_id = EXCLUDED.group_id,
+    updated_at = now();
+", conn);
+
+        cmd.Parameters.Add(new NpgsqlParameter("@tag_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = tags.Select(x => x.ID).ToArray()
+        });
+
+        cmd.Parameters.Add(new NpgsqlParameter("@group_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = tags.Select(x => (object?)x.GROUP_ID ?? DBNull.Value).ToArray()
+        });
+
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    private async Task DeleteCurrentValuesAsync(IReadOnlyList<string> tagIds) {
+        if (tagIds.Count == 0)
+            return;
+
+        var connectionString = _configuration.GetConnectionString("WebFlexTsd")
+            ?? throw new InvalidOperationException("ConnectionStrings:WebFlexTsd 설정이 없습니다.");
+
+        await using var conn = new NpgsqlConnection(connectionString);
+        await conn.OpenAsync();
+
+        await using var cmd = new NpgsqlCommand(@"
+DELETE FROM public.currentvalue
+WHERE tag_id = ANY(@tag_ids);
+", conn);
+
+        cmd.Parameters.Add(new NpgsqlParameter("@tag_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = tagIds.ToArray()
+        });
+
+        await cmd.ExecuteNonQueryAsync();
     }
 
 }

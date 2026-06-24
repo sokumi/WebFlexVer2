@@ -116,7 +116,7 @@ public class CurrentValueWriter : IDisposable {
                _currentValueChannel.Reader.TryRead(out var item)) {
             Interlocked.Decrement(ref _queueCount);
 
-            var key = MakeKey(item.EndpointUrl, item.NodeId);
+            var key = item.TagId;
             latestMap[key] = item;
 
             drained++;
@@ -148,47 +148,59 @@ public class CurrentValueWriter : IDisposable {
         await using var cmd = new NpgsqlCommand(@"
 INSERT INTO public.currentvalue
 (
-    endpoint_url,
-    node_id,
+    tag_id,
+    group_id,
     value,
     status,
+    cookie_value,
     source_timestamp,
     received_at,
     updated_at
 )
 SELECT
-    unnest(@endpoint_urls),
-    unnest(@node_ids),
+    unnest(@tag_ids),
+    unnest(@group_ids),
     unnest(@values),
     unnest(@statuses),
+    unnest(@cookie_values),
     unnest(@source_timestamps),
     unnest(@received_ats),
     now()
-ON CONFLICT (endpoint_url, node_id)
+ON CONFLICT (tag_id)
 DO UPDATE SET
+    group_id          = EXCLUDED.group_id,
     value             = EXCLUDED.value,
     status            = EXCLUDED.status,
+    cookie_value      = EXCLUDED.cookie_value,
     source_timestamp  = EXCLUDED.source_timestamp,
     received_at       = EXCLUDED.received_at,
-    updated_at        = now()
+    updated_at        = now(),
+    update_count      = public.currentvalue.update_count + 1
 WHERE public.currentvalue.value IS DISTINCT FROM EXCLUDED.value
-   OR public.currentvalue.status IS DISTINCT FROM EXCLUDED.status;
+   OR public.currentvalue.status IS DISTINCT FROM EXCLUDED.status
+   OR public.currentvalue.cookie_value IS DISTINCT FROM EXCLUDED.cookie_value;
 ", conn);
 
-        cmd.Parameters.Add(new NpgsqlParameter("@endpoint_urls", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-            Value = batch.Select(x => x.EndpointUrl).ToArray()
+        cmd.Parameters.Add(new NpgsqlParameter("@tag_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = batch.Select(x => x.TagId).ToArray()
         });
 
-        cmd.Parameters.Add(new NpgsqlParameter("@node_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-            Value = batch.Select(x => x.NodeId).ToArray()
+        cmd.Parameters.Add(new NpgsqlParameter("@group_ids", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = batch.Select(x => (object?)x.GroupId ?? DBNull.Value).ToArray()
         });
 
         cmd.Parameters.Add(new NpgsqlParameter("@values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
             Value = batch.Select(x => (object?)x.Value ?? DBNull.Value).ToArray()
         });
 
-        cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Text) {
-            Value = batch.Select(x => (object?)x.Status ?? DBNull.Value).ToArray()
+        cmd.Parameters.Add(new NpgsqlParameter("@statuses", NpgsqlDbType.Array | NpgsqlDbType.Integer) {
+            Value = chunk.Select(x => x.Status.HasValue
+                ? (object)(int)x.Status.Value
+                : DBNull.Value).ToArray()
+        });
+
+        cmd.Parameters.Add(new NpgsqlParameter("@cookie_values", NpgsqlDbType.Array | NpgsqlDbType.Text) {
+            Value = batch.Select(x => (object?)x.CookieValue ?? DBNull.Value).ToArray()
         });
 
         cmd.Parameters.Add(new NpgsqlParameter("@source_timestamps", NpgsqlDbType.Array | NpgsqlDbType.TimestampTz) {
