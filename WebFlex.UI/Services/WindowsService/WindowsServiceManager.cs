@@ -27,27 +27,39 @@ public sealed class WindowsServiceManager {
     }
 
     public WindowsServiceStatusDto GetStatus() {
-        var service = ServiceController.GetServices()
-            .FirstOrDefault(x =>
-                string.Equals(x.ServiceName, _serviceName, StringComparison.OrdinalIgnoreCase));
+        try {
+            using var service = new ServiceController(_serviceName);
 
-        if (service == null) {
+            var status = service.Status;
+
+            return new WindowsServiceStatusDto {
+                ServiceName = service.ServiceName,
+                DisplayName = service.DisplayName,
+                Status = status.ToString(),
+                Exists = true,
+                ExePath = _exePath
+            };
+        } catch (InvalidOperationException ex) {
             return new WindowsServiceStatusDto {
                 ServiceName = _serviceName,
                 DisplayName = _displayName,
                 Status = "NotInstalled",
                 Exists = false,
-                ExePath = _exePath
+                ExePath = _exePath,
+                Error = ex.Message
+            };
+        } catch (Exception ex) {
+            _logger.LogError(ex, "Windows Service 상태 조회 실패 | ServiceName={ServiceName}", _serviceName);
+
+            return new WindowsServiceStatusDto {
+                ServiceName = _serviceName,
+                DisplayName = _displayName,
+                Status = "Error",
+                Exists = false,
+                ExePath = _exePath,
+                Error = ex.ToString()
             };
         }
-
-        return new WindowsServiceStatusDto {
-            ServiceName = service.ServiceName,
-            DisplayName = service.DisplayName,
-            Status = service.Status.ToString(),
-            Exists = true,
-            ExePath = _exePath
-        };
     }
 
     public async Task<WindowsServiceCommandResultDto> InstallAsync() {

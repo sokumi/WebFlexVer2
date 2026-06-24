@@ -6,6 +6,7 @@ public sealed class WindowsServiceStatusDto {
     public string Status { get; set; } = "";
     public bool Exists { get; set; }
     public string ExePath { get; set; } = "";
+    public string? Error { get; set; }
 }
 
 public sealed class WindowsServiceCommandResultDto {

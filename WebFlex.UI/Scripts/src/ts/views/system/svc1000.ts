@@ -40,24 +40,56 @@ export default class Page {
         try {
             const response = await fetch("/system/service/status");
 
+            const text = await response.text();
+
             if (!response.ok) {
-                throw new Error(await response.text());
+                throw new Error(text);
             }
 
-            const data = await response.json() as ServiceStatusRow;
+            const data = JSON.parse(text) as ServiceStatusRow & { error?: string };
 
-            this.setTextWithFlash("#serviceName", data.serviceName ?? "-");
-            this.setTextWithFlash("#displayName", data.displayName ?? "-");
-            this.setTextWithFlash("#serviceStatus", data.status ?? "-");
-            this.setTextWithFlash("#exePath", data.exePath ?? "-");
+            this.setTextWithFlash("#serviceName", data.serviceName);
+            this.setTextWithFlash("#displayName", data.displayName);
+            this.setTextWithFlash("#serviceStatus", data.status);
+            this.setTextWithFlash("#exePath", data.exePath);
 
             this.setButtonState(data);
-
             this.writeResult(data);
+
+            if (data.status === "Error" && data.error) {
+                console.error(data.error);
+            }
         } catch (e) {
             console.error(e);
-
             this.setTextWithFlash("#serviceStatus", "조회 실패");
+            this.writeError(e);
+        }
+    }
+
+    async post(url: string): Promise<void> {
+        try {
+            const response = await fetch(url, {
+                method: "POST"
+            });
+
+            const text = await response.text();
+
+            if (!response.ok) {
+                throw new Error(text);
+            }
+
+            const data = JSON.parse(text) as ServiceCommandResult;
+
+            this.writeResult(data);
+
+            if (!data.success) {
+                alert(data.message ?? "요청 처리에 실패했습니다.");
+            }
+
+            await this.loadStatus();
+        } catch (e) {
+            console.error(e);
+            alert("요청 처리 중 오류가 발생했습니다.");
             this.writeError(e);
         }
     }

@@ -53,23 +53,49 @@ class Page {
         }, 3000);
     }
     async loadStatus() {
-        var _a, _b, _c, _d;
         try {
             const response = await fetch("/system/service/status");
+            const text = await response.text();
             if (!response.ok) {
-                throw new Error(await response.text());
+                throw new Error(text);
             }
-            const data = await response.json();
-            this.setTextWithFlash("#serviceName", (_a = data.serviceName) !== null && _a !== void 0 ? _a : "-");
-            this.setTextWithFlash("#displayName", (_b = data.displayName) !== null && _b !== void 0 ? _b : "-");
-            this.setTextWithFlash("#serviceStatus", (_c = data.status) !== null && _c !== void 0 ? _c : "-");
-            this.setTextWithFlash("#exePath", (_d = data.exePath) !== null && _d !== void 0 ? _d : "-");
+            const data = JSON.parse(text);
+            this.setTextWithFlash("#serviceName", data.serviceName);
+            this.setTextWithFlash("#displayName", data.displayName);
+            this.setTextWithFlash("#serviceStatus", data.status);
+            this.setTextWithFlash("#exePath", data.exePath);
             this.setButtonState(data);
             this.writeResult(data);
+            if (data.status === "Error" && data.error) {
+                console.error(data.error);
+            }
         }
         catch (e) {
             console.error(e);
             this.setTextWithFlash("#serviceStatus", "조회 실패");
+            this.writeError(e);
+        }
+    }
+    async post(url) {
+        var _a;
+        try {
+            const response = await fetch(url, {
+                method: "POST"
+            });
+            const text = await response.text();
+            if (!response.ok) {
+                throw new Error(text);
+            }
+            const data = JSON.parse(text);
+            this.writeResult(data);
+            if (!data.success) {
+                alert((_a = data.message) !== null && _a !== void 0 ? _a : "요청 처리에 실패했습니다.");
+            }
+            await this.loadStatus();
+        }
+        catch (e) {
+            console.error(e);
+            alert("요청 처리 중 오류가 발생했습니다.");
             this.writeError(e);
         }
     }

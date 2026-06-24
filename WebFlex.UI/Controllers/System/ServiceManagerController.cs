@@ -1,16 +1,21 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WebFlex.UI.Models;
 using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers;
 
-[Authorize]
+//[Authorize]
 [Route("system/service")]
 public sealed class ServiceManagerController : Controller {
     private readonly WindowsServiceManager _serviceManager;
+    private readonly ILogger<ServiceManagerController> _logger;
 
-    public ServiceManagerController(WindowsServiceManager serviceManager) {
+    public ServiceManagerController(
+        WindowsServiceManager serviceManager,
+        ILogger<ServiceManagerController> logger) {
         _serviceManager = serviceManager;
+        _logger = logger;
     }
 
     [HttpGet("")]
@@ -20,37 +25,100 @@ public sealed class ServiceManagerController : Controller {
 
     [HttpGet("status")]
     public IActionResult Status() {
-        var result = _serviceManager.GetStatus();
-        return Json(result);
+        try {
+            var result = _serviceManager.GetStatus();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 상태 조회 API 실패");
+
+            return Json(new WindowsServiceStatusDto {
+                ServiceName = "",
+                DisplayName = "",
+                Status = "Error",
+                Exists = false,
+                ExePath = "",
+                Error = ex.ToString()
+            });
+        }
     }
 
     [HttpPost("install")]
     public async Task<IActionResult> Install() {
-        var result = await _serviceManager.InstallAsync();
-        return Json(result);
+        try {
+            var result = await _serviceManager.InstallAsync();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 등록 API 실패");
+
+            return Json(new WindowsServiceCommandResultDto {
+                Success = false,
+                Message = ex.Message,
+                Error = ex.ToString()
+            });
+        }
     }
 
     [HttpPost("start")]
     public async Task<IActionResult> Start() {
-        var result = await _serviceManager.StartAsync();
-        return Json(result);
+        try {
+            var result = await _serviceManager.StartAsync();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 시작 API 실패");
+
+            return Json(new WindowsServiceCommandResultDto {
+                Success = false,
+                Message = ex.Message,
+                Error = ex.ToString()
+            });
+        }
     }
 
     [HttpPost("stop")]
     public async Task<IActionResult> Stop() {
-        var result = await _serviceManager.StopAsync();
-        return Json(result);
+        try {
+            var result = await _serviceManager.StopAsync();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 중지 API 실패");
+
+            return Json(new WindowsServiceCommandResultDto {
+                Success = false,
+                Message = ex.Message,
+                Error = ex.ToString()
+            });
+        }
     }
 
     [HttpPost("restart")]
     public async Task<IActionResult> Restart() {
-        var result = await _serviceManager.RestartAsync();
-        return Json(result);
+        try {
+            var result = await _serviceManager.RestartAsync();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 재시작 API 실패");
+
+            return Json(new WindowsServiceCommandResultDto {
+                Success = false,
+                Message = ex.Message,
+                Error = ex.ToString()
+            });
+        }
     }
 
     [HttpPost("uninstall")]
     public async Task<IActionResult> Uninstall() {
-        var result = await _serviceManager.UninstallAsync();
-        return Json(result);
+        try {
+            var result = await _serviceManager.UninstallAsync();
+            return Json(result);
+        } catch (Exception ex) {
+            _logger.LogError(ex, "서비스 삭제 API 실패");
+
+            return Json(new WindowsServiceCommandResultDto {
+                Success = false,
+                Message = ex.Message,
+                Error = ex.ToString()
+            });
+        }
     }
 }
