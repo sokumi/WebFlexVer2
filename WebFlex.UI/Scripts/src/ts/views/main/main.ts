@@ -1,8 +1,8 @@
 ﻿type CurrentValueRow = {
-    groupId: string;
+    groupId?: string | null;
     tagId: string;
     value?: string | null;
-    status?: string | null;
+    status?: string | number | null;
     sourceTimestamp?: string | null;
     receivedAt?: string | null;
     updatedAt?: string | null;
@@ -213,36 +213,67 @@ export default class Page {
     }
 
     private renderRow(row: CurrentValueRow): string {
-        const key = this.makeKey(row.groupId, row.tagId);
+        const groupId = row.groupId ?? "";
+        const statusText = this.formatStatus(row.status);
+
+        const key = this.makeKey(groupId, row.tagId);
         const statusClass = this.isGoodStatus(row.status) ? "status-good" : "status-bad";
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
 
         return `
-        <tr style="height:${this.rowHeight}px">
-            <td title="${this.escapeHtml(row.groupId)}">${this.escapeHtml(row.groupId)}</td>
-            <td title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</td>
-            <td class="value-cell ${flashClass}" title="${this.escapeHtml(row.value ?? "")}">${this.escapeHtml(row.value ?? "")}</td>
-            //<td class="${statusClass}">${this.escapeHtml(row.status ?? "")}</td>
-            <td>${this.formatDate(row.sourceTimestamp)}</td>
-            <td>${this.formatDate(row.updatedAt)}</td>
-        </tr>
-    `;
+    <tr style="height:${this.rowHeight}px">
+        <td title="${this.escapeHtml(groupId)}">${this.escapeHtml(groupId)}</td>
+        <td title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</td>
+        <td class="value-cell ${flashClass}" title="${this.escapeHtml(row.value ?? "")}">${this.escapeHtml(row.value ?? "")}</td>
+        <td class="${statusClass}">${this.escapeHtml(statusText)}</td>
+        <td>${this.formatDate(row.sourceTimestamp)}</td>
+        <td>${this.formatDate(row.updatedAt)}</td>
+    </tr>
+`;
     }
 
-    private isGoodStatus(status?: string | null): boolean {
+    private formatStatus(status?: string | number | null): string {
+        if (status == null || status === "") {
+            return "";
+        }
+
+        if (typeof status === "number") {
+            if (status === 0) return "Good";
+            if (status === 1) return "Bad";
+            return String(status);
+        }
+
+        const normalized = String(status).toLowerCase();
+
+        if (normalized === "0" || normalized === "good") {
+            return "Good";
+        }
+
+        if (normalized === "1" || normalized === "bad") {
+            return "Bad";
+        }
+
+        return String(status);
+    }
+
+    private isGoodStatus(status?: string | number | null): boolean {
         if (status == null || status === "") {
             return true;
         }
 
-        const normalized = status.toLowerCase();
+        if (typeof status === "number") {
+            return status === 0;
+        }
+
+        const normalized = String(status).toLowerCase();
 
         return normalized.includes("good") ||
             normalized === "0" ||
             normalized === "0x00000000";
     }
 
-    private makeKey(groupId: string, tagId: string): string {
-        return `${groupId}||${tagId}`;
+    private makeKey(groupId: string | null | undefined, tagId: string): string {
+        return `${groupId ?? ""}||${tagId}`;
     }
 
     private formatDate(value?: string | null): string {

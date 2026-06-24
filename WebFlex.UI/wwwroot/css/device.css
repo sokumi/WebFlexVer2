@@ -1,4 +1,8 @@
-﻿.page-device {
+﻿.d-none {
+    display: none !important;
+}
+
+.page-device {
     height: 100%;
 }
 

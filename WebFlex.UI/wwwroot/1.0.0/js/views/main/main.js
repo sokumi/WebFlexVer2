@@ -192,31 +192,56 @@ class Page {
     }
     renderRow(row) {
         var _a, _b, _c;
-        const key = this.makeKey(row.groupId, row.tagId);
+        const groupId = (_a = row.groupId) !== null && _a !== void 0 ? _a : "";
+        const statusText = this.formatStatus(row.status);
+        const key = this.makeKey(groupId, row.tagId);
         const statusClass = this.isGoodStatus(row.status) ? "status-good" : "status-bad";
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
         return `
-        <tr style="height:${this.rowHeight}px">
-            <td title="${this.escapeHtml(row.groupId)}">${this.escapeHtml(row.groupId)}</td>
-            <td title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</td>
-            <td class="value-cell ${flashClass}" title="${this.escapeHtml((_a = row.value) !== null && _a !== void 0 ? _a : "")}">${this.escapeHtml((_b = row.value) !== null && _b !== void 0 ? _b : "")}</td>
-            //<td class="${statusClass}">${this.escapeHtml((_c = row.status) !== null && _c !== void 0 ? _c : "")}</td>
-            <td>${this.formatDate(row.sourceTimestamp)}</td>
-            <td>${this.formatDate(row.updatedAt)}</td>
-        </tr>
-    `;
+    <tr style="height:${this.rowHeight}px">
+        <td title="${this.escapeHtml(groupId)}">${this.escapeHtml(groupId)}</td>
+        <td title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</td>
+        <td class="value-cell ${flashClass}" title="${this.escapeHtml((_b = row.value) !== null && _b !== void 0 ? _b : "")}">${this.escapeHtml((_c = row.value) !== null && _c !== void 0 ? _c : "")}</td>
+        <td class="${statusClass}">${this.escapeHtml(statusText)}</td>
+        <td>${this.formatDate(row.sourceTimestamp)}</td>
+        <td>${this.formatDate(row.updatedAt)}</td>
+    </tr>
+`;
+    }
+    formatStatus(status) {
+        if (status == null || status === "") {
+            return "";
+        }
+        if (typeof status === "number") {
+            if (status === 0)
+                return "Good";
+            if (status === 1)
+                return "Bad";
+            return String(status);
+        }
+        const normalized = String(status).toLowerCase();
+        if (normalized === "0" || normalized === "good") {
+            return "Good";
+        }
+        if (normalized === "1" || normalized === "bad") {
+            return "Bad";
+        }
+        return String(status);
     }
     isGoodStatus(status) {
         if (status == null || status === "") {
             return true;
         }
-        const normalized = status.toLowerCase();
+        if (typeof status === "number") {
+            return status === 0;
+        }
+        const normalized = String(status).toLowerCase();
         return normalized.includes("good") ||
             normalized === "0" ||
             normalized === "0x00000000";
     }
     makeKey(groupId, tagId) {
-        return `${groupId}||${tagId}`;
+        return `${groupId !== null && groupId !== void 0 ? groupId : ""}||${tagId}`;
     }
     formatDate(value) {
         if (value == null || value === "") {
