@@ -27,7 +27,7 @@ export default class {
 
     async loadDevices(): Promise<void> {
         try {
-            const res = await api.get({ url: "/device/manage/list" });
+            const res = await api.get<any[]>({ url: "/device/manage/list" });
 
             this.devices = res.data ?? [];
 
@@ -69,7 +69,7 @@ export default class {
         try {
             const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
 
-            const res = await api.get({
+            const res = await api.get<any[]>({
                 url: `/device/tag/browse?deviceId=${this.selectedDeviceId}&onlyCollectable=${onlyCollectable}`
             });
 
@@ -158,7 +158,7 @@ export default class {
         if (!this.selectedDeviceId) return;
 
         try {
-            const res = await api.get({
+            const res = await api.get<any[]>({
                 url: `/device/tag/list?deviceId=${this.selectedDeviceId}`
             });
 

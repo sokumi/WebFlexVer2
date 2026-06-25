@@ -164,3 +164,50 @@
 .tabulator-cell {
     border-right: 0 !important;
 }
+
+.wf-grid {
+    min-height: 240px;
+}
+
+.wf-grid-wrap .tabulator {
+    font-size: 13px;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    background: var(--wf-surface-soft) !important;
+    border-right: 0 !important;
+    color: var(--wf-text-muted) !important;
+    font-weight: 800;
+}
+
+.tabulator .tabulator-header .tabulator-col-content {
+    padding: 10px 12px !important;
+}
+
+.tabulator-row .tabulator-cell {
+    padding: 9px 12px !important;
+    color: var(--wf-text);
+}
+
+.tabulator .tabulator-footer {
+    background: var(--wf-surface) !important;
+    border-top: 1px solid var(--wf-border) !important;
+    color: var(--wf-text-muted) !important;
+}
+
+    .tabulator .tabulator-footer .tabulator-page {
+        border: 1px solid var(--wf-border) !important;
+        border-radius: 8px;
+        background: var(--wf-surface-soft) !important;
+        color: var(--wf-text) !important;
+    }
+
+        .tabulator .tabulator-footer .tabulator-page.active {
+            background: var(--wf-blue) !important;
+            border-color: var(--wf-blue) !important;
+            color: #ffffff !important;
+        }
+
+.tabulator .tabulator-placeholder {
+    color: var(--wf-text-muted) !important;
+}

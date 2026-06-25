@@ -12,6 +12,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\views\test\tst2000.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Scripts\src\css\views\test\tst1000.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\auth\login.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -33,6 +41,8 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\views\test\tst2000.ts" />
+    <Content Include="Scripts\src\ts\views\test\tst1000.ts" />
     <Content Include="Scripts\src\ts\views\main\main.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />
@@ -72,6 +82,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="Scripts\src\ts\framework\grid\webflexGridFormatters.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\framework\grid\webflexGrid.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\viewmodels\currentValueViewModel.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

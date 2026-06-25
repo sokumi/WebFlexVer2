@@ -14,7 +14,6 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
 
-// ─── axios 인스턴스 ───────────────────────────────────────────
 const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
     headers: {
         "Content-Type": "application/json"
@@ -25,7 +24,6 @@ instance.interceptors.response.use((response) => response, (error) => {
     const message = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.statusText) !== null && _b !== void 0 ? _b : error.message) !== null && _c !== void 0 ? _c : "알 수 없는 오류";
     return Promise.reject(new Error(message));
 });
-// ─── API 유틸 ─────────────────────────────────────────────────
 const api = {
     async get(options) {
         const res = await instance.get(options.url, options.config);

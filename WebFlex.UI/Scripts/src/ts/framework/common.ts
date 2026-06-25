@@ -5,28 +5,21 @@
     AxiosResponse
 } from "axios";
 
-// ─── 공통 응답 타입 ───────────────────────────────────────────
-export interface ApiResponse<T = any> {
-    success: boolean;
-    message?: string;
-    data?: T;
-}
+import type { ApiResponse } from "../dtos/apiResponse";
 
-export interface PagedResponse<T = any> {
+export type PagedResponse<T = unknown> = {
     currentPage: number;
     pageSize: number;
     totalCount: number;
     list: T[];
-}
+};
 
-// ─── 요청 옵션 타입 ───────────────────────────────────────────
-export interface RequestOptions {
+export type RequestOptions<TRequest = unknown> = {
     url: string;
-    data?: any;
+    data?: TRequest;
     config?: AxiosRequestConfig;
-}
+};
 
-// ─── axios 인스턴스 ───────────────────────────────────────────
 const instance: AxiosInstance = axios.create({
     headers: {
         "Content-Type": "application/json"
@@ -45,25 +38,28 @@ instance.interceptors.response.use(
     }
 );
 
-// ─── API 유틸 ─────────────────────────────────────────────────
 export const api = {
-    async get<T = any>(options: RequestOptions): Promise<ApiResponse<T>> {
-        const res = await instance.get<ApiResponse<T>>(options.url, options.config);
+    async get<TResponse = unknown>(options: RequestOptions): Promise<ApiResponse<TResponse>> {
+        const res = await instance.get<ApiResponse<TResponse>>(options.url, options.config);
         return res.data;
     },
 
-    async post<T = any>(options: RequestOptions): Promise<ApiResponse<T>> {
-        const res = await instance.post<ApiResponse<T>>(options.url, options.data, options.config);
+    async post<TResponse = unknown, TRequest = unknown>(
+        options: RequestOptions<TRequest>
+    ): Promise<ApiResponse<TResponse>> {
+        const res = await instance.post<ApiResponse<TResponse>>(options.url, options.data, options.config);
         return res.data;
     },
 
-    async put<T = any>(options: RequestOptions): Promise<ApiResponse<T>> {
-        const res = await instance.put<ApiResponse<T>>(options.url, options.data, options.config);
+    async put<TResponse = unknown, TRequest = unknown>(
+        options: RequestOptions<TRequest>
+    ): Promise<ApiResponse<TResponse>> {
+        const res = await instance.put<ApiResponse<TResponse>>(options.url, options.data, options.config);
         return res.data;
     },
 
-    async delete<T = any>(options: RequestOptions): Promise<ApiResponse<T>> {
-        const res = await instance.delete<ApiResponse<T>>(options.url, options.config);
+    async delete<TResponse = unknown>(options: RequestOptions): Promise<ApiResponse<TResponse>> {
+        const res = await instance.delete<ApiResponse<TResponse>>(options.url, options.config);
         return res.data;
     }
 };

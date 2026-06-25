@@ -73,7 +73,7 @@ export default class {
 
     async load(): Promise<void> {
         try {
-            const res = await api.get({ url: "/device/manage/list" });
+            const res = await api.get<any[]>({ url: "/device/manage/list" });
 
             this.rows = res.data ?? [];
             this.renderGrid();

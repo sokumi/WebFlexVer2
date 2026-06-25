@@ -27,4 +27,9 @@ public static class MVCPath {
     internal static class System {
         public const string SVC1000 = "~/Views/System/SVC1000.cshtml";
     }
+
+    // test
+    internal static class Test {
+        public const string TST1000 = "~/Views/Test/TST1000.cshtml";
+    }
 }
