@@ -1,55 +1,7 @@
-﻿type OpcCollectorOptions = {
-    enableAutoReload: boolean;
-    enableSnapshotSave: boolean;
-    enableTimescaleHistorySave: boolean;
-    enableCurrentValueSave: boolean;
+﻿import type { ApiResponse } from "../../dtos/apiResponse";
+import type { OpcCollectorOptionsDto } from "../../dtos/opcCollectorDto";
 
-    reloadIntervalSeconds: number;
-    saveIntervalMilliseconds: number;
-    maxBatchSize: number;
-    writerLogIntervalSeconds: number;
-
-    defaultPublishingIntervalMs: number;
-    defaultSamplingIntervalMs: number;
-    defaultQueueSize: number;
-
-    subscriptionKeepAliveCount: number;
-    subscriptionLifetimeCount: number;
-    maxNotificationsPerPublish: number;
-    subscriptionPriority: number;
-    discardOldest: boolean;
-
-    autoAcceptUntrustedCertificates: boolean;
-    rejectSHA1SignedCertificates: boolean;
-    minimumCertificateKeySize: number;
-    suppressNonceValidationErrors: boolean;
-    certificateStoreRootPath: string;
-
-    operationTimeoutMilliseconds: number;
-    defaultSessionTimeoutMilliseconds: number;
-    minSubscriptionLifetimeMilliseconds: number;
-
-    maxStringLength: number;
-    maxByteStringLength: number;
-    maxArrayLength: number;
-    maxMessageSize: number;
-    maxBufferSize: number;
-    channelLifetime: number;
-    securityTokenLifetime: number;
-
-    disableHiResClock: boolean;
-
-    defaultUseSecurity: boolean;
-    defaultUseAnonymous: boolean;
-    defaultSecurityPolicy: string;
-    defaultSecurityMode: string;
-};
-
-type ApiResponse<T> = {
-    success: boolean;
-    message?: string;
-    data?: T;
-};
+type OpcCollectorOptions = OpcCollectorOptionsDto;
 
 export default class Page {
     init(): void {
@@ -116,7 +68,7 @@ export default class Page {
             alert("옵션 저장 중 오류가 발생했습니다.");
         }
     }
-     
+
 
     private setForm(data: OpcCollectorOptions): void {
         this.setChecked("enableAutoReload", data.enableAutoReload);

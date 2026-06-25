@@ -12,6 +12,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\webflex-components.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Scripts\src\css\webflex-layout.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Include="Scripts\src\css\webflex-theme.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\ts\framework\page.ts" />
     <Content Include="Scripts\src\ts\views\main\main.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
@@ -52,7 +64,25 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="Scripts\src\ts\viewmodels\currentValueViewModel.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\viewmodels\opcViewModels.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\dtos\apiResponse.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\dtos\currentValueDto.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\dtos\deviceDto.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\framework\common.ts" />
+    <TypeScriptCompile Include="Scripts\src\ts\dtos\opcCollectorDto.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\types\global.ts" />
   </ItemGroup>
 

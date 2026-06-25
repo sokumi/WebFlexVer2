@@ -1,27 +1,21 @@
-﻿type CurrentValueRow = {
-    groupId?: string | null;
-    tagId: string;
-    value?: string | null;
-    status?: string | number | null;
-    sourceTimestamp?: string | null;
-    receivedAt?: string | null;
-    updatedAt?: string | null;
-};
+﻿import type { CurrentValueDto } from "../../dtos/currentValueDto";
+
+type CurrentValueRow = CurrentValueDto;
 
 export default class Page {
-    private rows: CurrentValueRow[] = [];
-    private rowMap = new Map<string, CurrentValueRow>();
+    rows: CurrentValueRow[] = [];
+    rowMap = new Map<string, CurrentValueRow>();
 
-    private eventSource: EventSource | null = null;
-    private updateCount = 0;
+    eventSource: EventSource | null = null;
+    updateCount = 0;
 
-    private readonly rowHeight = 34;
-    private readonly buffer = 12;
+    readonly rowHeight = 34;
+    readonly buffer = 12;
 
-    private renderRequested = false;
-    private flashKeys = new Set<string>();
+    renderRequested = false;
+    flashKeys = new Set<string>();
 
-    private renderTimer: number | null = null;
+    renderTimer: number | null = null;
 
     init(): void {
         $("#currentValueScroll").on("scroll", () => {
@@ -32,7 +26,7 @@ export default class Page {
         this.connectStream();
     }
 
-    private async loadInitialData(): Promise<void> {
+    async loadInitialData(): Promise<void> {
         try {
             $("#lblStreamStatus").text("초기 조회 중");
 
@@ -62,7 +56,7 @@ export default class Page {
         }
     }
 
-    private connectStream(): void {
+    connectStream(): void {
         if (this.eventSource != null) {
             this.eventSource.close();
             this.eventSource = null;
@@ -98,7 +92,7 @@ export default class Page {
         });
     }
 
-    private applyUpdate(row: CurrentValueRow): void {
+    applyUpdate(row: CurrentValueRow): void {
         const key = this.makeKey(row.groupId, row.tagId);
         const existing = this.rowMap.get(key);
 
@@ -147,7 +141,7 @@ export default class Page {
     }
 
 
-    private requestRender(): void {
+    requestRender(): void {
         if (this.renderTimer != null) {
             return;
         }
@@ -168,7 +162,7 @@ export default class Page {
         }, 100);
     }
 
-    private renderVisibleRows(): void {
+    renderVisibleRows(): void {
         const scrollEl = document.getElementById("currentValueScroll") as HTMLDivElement | null;
         const tbody = document.getElementById("currentValueBody") as HTMLTableSectionElement | null;
 
@@ -213,7 +207,7 @@ export default class Page {
         $("#lblVisibleCount").text(`${startIndex + 1} ~ ${endIndex}`);
     }
 
-    private renderRow(row: CurrentValueRow): string {
+    renderRow(row: CurrentValueRow): string {
         const groupId = row.groupId ?? "";
         const statusText = this.formatStatus(row.status);
 
@@ -233,7 +227,7 @@ export default class Page {
 `;
     }
 
-    private formatStatus(status?: string | number | null): string {
+    formatStatus(status?: string | number | null): string {
         if (status == null || status === "") {
             return "";
         }
@@ -257,7 +251,7 @@ export default class Page {
         return String(status);
     }
 
-    private isGoodStatus(status?: string | number | null): boolean {
+    isGoodStatus(status?: string | number | null): boolean {
         if (status == null || status === "") {
             return true;
         }
@@ -273,11 +267,11 @@ export default class Page {
             normalized === "0x00000000";
     }
 
-    private makeKey(groupId: string | null | undefined, tagId: string): string {
+    makeKey(groupId: string | null | undefined, tagId: string): string {
         return `${groupId ?? ""}||${tagId}`;
     }
 
-    private formatDate(value?: string | null): string {
+    formatDate(value?: string | null): string {
         if (value == null || value === "") {
             return "";
         }
@@ -298,7 +292,7 @@ export default class Page {
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 
-    private escapeHtml(value: string): string {
+    escapeHtml(value: string): string {
         return value
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")

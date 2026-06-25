@@ -2,10 +2,10 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./Scripts/src/ts/framework/page.ts"
-/*!******************************************!*\
-  !*** ./Scripts/src/ts/framework/page.ts ***!
-  \******************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/framework/page.ts"
+/*!*****************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/framework/page.ts ***!
+  \*****************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -23,10 +23,10 @@ function runPage(Page) {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/views/main/main.ts"
-/*!*******************************************!*\
-  !*** ./Scripts/src/ts/views/main/main.ts ***!
-  \*******************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/views/main/main.ts"
+/*!******************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/views/main/main.ts ***!
+  \******************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -338,12 +338,12 @@ class Page {
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-/*!*************************************************!*\
-  !*** ./Scripts/.generated/views__main__main.ts ***!
-  \*************************************************/
+/*!************************************************************!*\
+  !*** ./WebFlex.UI/Scripts/.generated/views__main__main.ts ***!
+  \************************************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_ts_views_main_main__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/main/main */ "./Scripts/src/ts/views/main/main.ts");
-/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./Scripts/src/ts/framework/page.ts");
+/* harmony import */ var _src_ts_views_main_main__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/main/main */ "./WebFlex.UI/Scripts/src/ts/views/main/main.ts");
+/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./WebFlex.UI/Scripts/src/ts/framework/page.ts");
 
 
 (0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_main_main__WEBPACK_IMPORTED_MODULE_0__["default"]);

@@ -2,10 +2,10 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./Scripts/src/ts/framework/page.ts"
-/*!******************************************!*\
-  !*** ./Scripts/src/ts/framework/page.ts ***!
-  \******************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/framework/page.ts"
+/*!*****************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/framework/page.ts ***!
+  \*****************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -23,10 +23,10 @@ function runPage(Page) {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/views/opc/opc1030.ts"
-/*!*********************************************!*\
-  !*** ./Scripts/src/ts/views/opc/opc1030.ts ***!
-  \*********************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/views/opc/opc1030.ts"
+/*!********************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/views/opc/opc1030.ts ***!
+  \********************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -317,12 +317,12 @@ class Page {
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-/*!***************************************************!*\
-  !*** ./Scripts/.generated/views__opc__opc1030.ts ***!
-  \***************************************************/
+/*!**************************************************************!*\
+  !*** ./WebFlex.UI/Scripts/.generated/views__opc__opc1030.ts ***!
+  \**************************************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_ts_views_opc_opc1030__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/opc/opc1030 */ "./Scripts/src/ts/views/opc/opc1030.ts");
-/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./Scripts/src/ts/framework/page.ts");
+/* harmony import */ var _src_ts_views_opc_opc1030__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/opc/opc1030 */ "./WebFlex.UI/Scripts/src/ts/views/opc/opc1030.ts");
+/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./WebFlex.UI/Scripts/src/ts/framework/page.ts");
 
 
 (0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_opc_opc1030__WEBPACK_IMPORTED_MODULE_0__["default"]);

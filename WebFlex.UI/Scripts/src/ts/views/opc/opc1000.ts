@@ -1,22 +1,8 @@
-﻿type ApiResponse<T> = {
-    success: boolean;
-    message?: string;
-    data?: T;
-};
+﻿import type { ApiResponse } from "../../dtos/apiResponse";
+import type { DeviceDto, DeviceSummaryDto } from "../../dtos/deviceDto";
 
-type DeviceRow = {
-    id: string;
-    deviceCode: string;
-    deviceName: string;
-    deviceType: string;
-};
-
-type DeviceSummaryRow = {
-    deviceId: string;
-    deviceName: string;
-    subscriptionStatus: string;
-    todayInsertedCount: number;
-};
+type DeviceRow = DeviceDto;
+type DeviceSummaryRow = DeviceSummaryDto;
 
 export default class Page {
     devices: DeviceRow[] = [];

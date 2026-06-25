@@ -1,0 +1,132 @@
+.wf-app {
+    min-height: 100vh;
+    background: var(--wf-bg);
+}
+
+.wf-sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: var(--wf-sidebar-width);
+    background: var(--wf-sidebar-bg);
+    border-right: 1px solid var(--wf-border);
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+}
+
+.wf-brand {
+    height: var(--wf-topbar-height);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 18px;
+    border-bottom: 1px solid var(--wf-border);
+    font-weight: 700;
+}
+
+.wf-brand-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--wf-blue);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wf-brand-text small {
+    display: block;
+    color: var(--wf-text-muted);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.wf-nav {
+    flex: 1;
+    padding: 12px;
+}
+
+.wf-nav-link {
+    height: 38px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    border-radius: var(--wf-radius-md);
+    color: var(--wf-text-muted);
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 4px;
+}
+
+    .wf-nav-link:hover,
+    .wf-nav-link.active {
+        background: var(--wf-blue-soft);
+        color: var(--wf-blue);
+    }
+
+    .wf-nav-link svg {
+        width: 18px;
+        height: 18px;
+    }
+
+.wf-sidebar-status {
+    padding: 14px 16px;
+    border-top: 1px solid var(--wf-border);
+    color: var(--wf-text-muted);
+    font-size: 12px;
+}
+
+.wf-main {
+    min-height: 100vh;
+    margin-left: var(--wf-sidebar-width);
+}
+
+.wf-topbar {
+    height: var(--wf-topbar-height);
+    background: var(--wf-topbar-bg);
+    border-bottom: 1px solid var(--wf-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+.wf-page {
+    padding: 20px 22px 32px;
+}
+
+.wf-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.wf-page-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.wf-breadcrumb {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--wf-text-muted);
+    font-size: 13px;
+}
+
+@media (max-width: 991px) {
+    .wf-sidebar {
+        transform: translateX(-100%);
+    }
+
+    .wf-main {
+        margin-left: 0;
+    }
+}

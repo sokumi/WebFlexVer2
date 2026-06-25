@@ -2,17 +2,17 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./Scripts/src/ts/framework/common.ts"
-/*!********************************************!*\
-  !*** ./Scripts/src/ts/framework/common.ts ***!
-  \********************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/framework/common.ts"
+/*!*******************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/framework/common.ts ***!
+  \*******************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   api: () => (/* binding */ api)
 /* harmony export */ });
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./WebFlex.UI/node_modules/axios/lib/axios.js");
 
 // ─── axios 인스턴스 ───────────────────────────────────────────
 const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
@@ -48,10 +48,10 @@ const api = {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/framework/page.ts"
-/*!******************************************!*\
-  !*** ./Scripts/src/ts/framework/page.ts ***!
-  \******************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/framework/page.ts"
+/*!*****************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/framework/page.ts ***!
+  \*****************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -69,17 +69,17 @@ function runPage(Page) {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/views/device/dvc1010.ts"
-/*!************************************************!*\
-  !*** ./Scripts/src/ts/views/device/dvc1010.ts ***!
-  \************************************************/
+/***/ "./WebFlex.UI/Scripts/src/ts/views/device/dvc1010.ts"
+/*!***********************************************************!*\
+  !*** ./WebFlex.UI/Scripts/src/ts/views/device/dvc1010.ts ***!
+  \***********************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
+/* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./WebFlex.UI/Scripts/src/ts/framework/common.ts");
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (class {
     constructor() {
@@ -381,21 +381,21 @@ __webpack_require__.dn(__WEBPACK_DEFAULT_EXPORT__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/adapters/adapters.js"
-/*!*****************************************************!*\
-  !*** ./node_modules/axios/lib/adapters/adapters.js ***!
-  \*****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/adapters/adapters.js"
+/*!****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/adapters/adapters.js ***!
+  \****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _http_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./http.js */ "./node_modules/axios/lib/helpers/null.js");
-/* harmony import */ var _xhr_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./xhr.js */ "./node_modules/axios/lib/adapters/xhr.js");
-/* harmony import */ var _fetch_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fetch.js */ "./node_modules/axios/lib/adapters/fetch.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _http_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./http.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/null.js");
+/* harmony import */ var _xhr_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./xhr.js */ "./WebFlex.UI/node_modules/axios/lib/adapters/xhr.js");
+/* harmony import */ var _fetch_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./fetch.js */ "./WebFlex.UI/node_modules/axios/lib/adapters/fetch.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
 
 
 
@@ -532,10 +532,10 @@ function getAdapter(adapters, config) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/adapters/fetch.js"
-/*!**************************************************!*\
-  !*** ./node_modules/axios/lib/adapters/fetch.js ***!
-  \**************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/adapters/fetch.js"
+/*!*************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/adapters/fetch.js ***!
+  \*************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -543,18 +543,18 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__),
 /* harmony export */   getFetch: () => (/* binding */ getFetch)
 /* harmony export */ });
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _helpers_composeSignals_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../helpers/composeSignals.js */ "./node_modules/axios/lib/helpers/composeSignals.js");
-/* harmony import */ var _helpers_trackStream_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../helpers/trackStream.js */ "./node_modules/axios/lib/helpers/trackStream.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _helpers_progressEventReducer_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/progressEventReducer.js */ "./node_modules/axios/lib/helpers/progressEventReducer.js");
-/* harmony import */ var _helpers_resolveConfig_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../helpers/resolveConfig.js */ "./node_modules/axios/lib/helpers/resolveConfig.js");
-/* harmony import */ var _core_settle_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../core/settle.js */ "./node_modules/axios/lib/core/settle.js");
-/* harmony import */ var _helpers_estimateDataURLDecodedBytes_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../helpers/estimateDataURLDecodedBytes.js */ "./node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js");
-/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../env/data.js */ "./node_modules/axios/lib/env/data.js");
-/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _helpers_composeSignals_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../helpers/composeSignals.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/composeSignals.js");
+/* harmony import */ var _helpers_trackStream_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../helpers/trackStream.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/trackStream.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _helpers_progressEventReducer_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/progressEventReducer.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/progressEventReducer.js");
+/* harmony import */ var _helpers_resolveConfig_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../helpers/resolveConfig.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/resolveConfig.js");
+/* harmony import */ var _core_settle_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../core/settle.js */ "./WebFlex.UI/node_modules/axios/lib/core/settle.js");
+/* harmony import */ var _helpers_estimateDataURLDecodedBytes_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../helpers/estimateDataURLDecodedBytes.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js");
+/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../env/data.js */ "./WebFlex.UI/node_modules/axios/lib/env/data.js");
+/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
 
 
 
@@ -1183,27 +1183,27 @@ const adapter = getFetch();
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/adapters/xhr.js"
-/*!************************************************!*\
-  !*** ./node_modules/axios/lib/adapters/xhr.js ***!
-  \************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/adapters/xhr.js"
+/*!***********************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/adapters/xhr.js ***!
+  \***********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _core_settle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/settle.js */ "./node_modules/axios/lib/core/settle.js");
-/* harmony import */ var _defaults_transitional_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../defaults/transitional.js */ "./node_modules/axios/lib/defaults/transitional.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./node_modules/axios/lib/cancel/CanceledError.js");
-/* harmony import */ var _helpers_parseProtocol_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../helpers/parseProtocol.js */ "./node_modules/axios/lib/helpers/parseProtocol.js");
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _helpers_progressEventReducer_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../helpers/progressEventReducer.js */ "./node_modules/axios/lib/helpers/progressEventReducer.js");
-/* harmony import */ var _helpers_resolveConfig_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../helpers/resolveConfig.js */ "./node_modules/axios/lib/helpers/resolveConfig.js");
-/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _core_settle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/settle.js */ "./WebFlex.UI/node_modules/axios/lib/core/settle.js");
+/* harmony import */ var _defaults_transitional_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../defaults/transitional.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/transitional.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js");
+/* harmony import */ var _helpers_parseProtocol_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../helpers/parseProtocol.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/parseProtocol.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _helpers_progressEventReducer_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../helpers/progressEventReducer.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/progressEventReducer.js");
+/* harmony import */ var _helpers_resolveConfig_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ../helpers/resolveConfig.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/resolveConfig.js");
+/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
 
 
 
@@ -1435,33 +1435,33 @@ const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/axios.js"
-/*!*****************************************!*\
-  !*** ./node_modules/axios/lib/axios.js ***!
-  \*****************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/axios.js"
+/*!****************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/axios.js ***!
+  \****************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _helpers_bind_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/bind.js */ "./node_modules/axios/lib/helpers/bind.js");
-/* harmony import */ var _core_Axios_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./core/Axios.js */ "./node_modules/axios/lib/core/Axios.js");
-/* harmony import */ var _core_mergeConfig_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./core/mergeConfig.js */ "./node_modules/axios/lib/core/mergeConfig.js");
-/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./defaults/index.js */ "./node_modules/axios/lib/defaults/index.js");
-/* harmony import */ var _helpers_formDataToJSON_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./helpers/formDataToJSON.js */ "./node_modules/axios/lib/helpers/formDataToJSON.js");
-/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./cancel/CanceledError.js */ "./node_modules/axios/lib/cancel/CanceledError.js");
-/* harmony import */ var _cancel_CancelToken_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./cancel/CancelToken.js */ "./node_modules/axios/lib/cancel/CancelToken.js");
-/* harmony import */ var _cancel_isCancel_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./cancel/isCancel.js */ "./node_modules/axios/lib/cancel/isCancel.js");
-/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./env/data.js */ "./node_modules/axios/lib/env/data.js");
-/* harmony import */ var _helpers_toFormData_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./helpers/toFormData.js */ "./node_modules/axios/lib/helpers/toFormData.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _helpers_spread_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./helpers/spread.js */ "./node_modules/axios/lib/helpers/spread.js");
-/* harmony import */ var _helpers_isAxiosError_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./helpers/isAxiosError.js */ "./node_modules/axios/lib/helpers/isAxiosError.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _adapters_adapters_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./adapters/adapters.js */ "./node_modules/axios/lib/adapters/adapters.js");
-/* harmony import */ var _helpers_HttpStatusCode_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./helpers/HttpStatusCode.js */ "./node_modules/axios/lib/helpers/HttpStatusCode.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _helpers_bind_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./helpers/bind.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/bind.js");
+/* harmony import */ var _core_Axios_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./core/Axios.js */ "./WebFlex.UI/node_modules/axios/lib/core/Axios.js");
+/* harmony import */ var _core_mergeConfig_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./core/mergeConfig.js */ "./WebFlex.UI/node_modules/axios/lib/core/mergeConfig.js");
+/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./defaults/index.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/index.js");
+/* harmony import */ var _helpers_formDataToJSON_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./helpers/formDataToJSON.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/formDataToJSON.js");
+/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./cancel/CanceledError.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js");
+/* harmony import */ var _cancel_CancelToken_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./cancel/CancelToken.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CancelToken.js");
+/* harmony import */ var _cancel_isCancel_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./cancel/isCancel.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/isCancel.js");
+/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./env/data.js */ "./WebFlex.UI/node_modules/axios/lib/env/data.js");
+/* harmony import */ var _helpers_toFormData_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./helpers/toFormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ./core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _helpers_spread_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./helpers/spread.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/spread.js");
+/* harmony import */ var _helpers_isAxiosError_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./helpers/isAxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/isAxiosError.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _adapters_adapters_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ./adapters/adapters.js */ "./WebFlex.UI/node_modules/axios/lib/adapters/adapters.js");
+/* harmony import */ var _helpers_HttpStatusCode_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./helpers/HttpStatusCode.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/HttpStatusCode.js");
 
 
 
@@ -1555,17 +1555,17 @@ axios.default = axios;
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/cancel/CancelToken.js"
-/*!******************************************************!*\
-  !*** ./node_modules/axios/lib/cancel/CancelToken.js ***!
-  \******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/cancel/CancelToken.js"
+/*!*****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/cancel/CancelToken.js ***!
+  \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _CanceledError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./CanceledError.js */ "./node_modules/axios/lib/cancel/CanceledError.js");
+/* harmony import */ var _CanceledError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./CanceledError.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js");
 
 
 
@@ -1705,17 +1705,17 @@ class CancelToken {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/cancel/CanceledError.js"
-/*!********************************************************!*\
-  !*** ./node_modules/axios/lib/cancel/CanceledError.js ***!
-  \********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js"
+/*!*******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js ***!
+  \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
 
 
 
@@ -1742,10 +1742,10 @@ class CanceledError extends _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_0__["de
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/cancel/isCancel.js"
-/*!***************************************************!*\
-  !*** ./node_modules/axios/lib/cancel/isCancel.js ***!
-  \***************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/cancel/isCancel.js"
+/*!**************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/cancel/isCancel.js ***!
+  \**************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -1761,25 +1761,25 @@ function isCancel(value) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/Axios.js"
-/*!**********************************************!*\
-  !*** ./node_modules/axios/lib/core/Axios.js ***!
-  \**********************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/Axios.js"
+/*!*********************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/Axios.js ***!
+  \*********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _helpers_buildURL_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/buildURL.js */ "./node_modules/axios/lib/helpers/buildURL.js");
-/* harmony import */ var _InterceptorManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./InterceptorManager.js */ "./node_modules/axios/lib/core/InterceptorManager.js");
-/* harmony import */ var _dispatchRequest_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./dispatchRequest.js */ "./node_modules/axios/lib/core/dispatchRequest.js");
-/* harmony import */ var _mergeConfig_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./mergeConfig.js */ "./node_modules/axios/lib/core/mergeConfig.js");
-/* harmony import */ var _buildFullPath_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./buildFullPath.js */ "./node_modules/axios/lib/core/buildFullPath.js");
-/* harmony import */ var _helpers_validator_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/validator.js */ "./node_modules/axios/lib/helpers/validator.js");
-/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _defaults_transitional_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../defaults/transitional.js */ "./node_modules/axios/lib/defaults/transitional.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _helpers_buildURL_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/buildURL.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/buildURL.js");
+/* harmony import */ var _InterceptorManager_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./InterceptorManager.js */ "./WebFlex.UI/node_modules/axios/lib/core/InterceptorManager.js");
+/* harmony import */ var _dispatchRequest_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./dispatchRequest.js */ "./WebFlex.UI/node_modules/axios/lib/core/dispatchRequest.js");
+/* harmony import */ var _mergeConfig_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./mergeConfig.js */ "./WebFlex.UI/node_modules/axios/lib/core/mergeConfig.js");
+/* harmony import */ var _buildFullPath_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./buildFullPath.js */ "./WebFlex.UI/node_modules/axios/lib/core/buildFullPath.js");
+/* harmony import */ var _helpers_validator_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/validator.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/validator.js");
+/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _defaults_transitional_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../defaults/transitional.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/transitional.js");
 
 
 
@@ -2067,18 +2067,18 @@ _utils_js__WEBPACK_IMPORTED_MODULE_0__["default"].forEach(['post', 'put', 'patch
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/AxiosError.js"
-/*!***************************************************!*\
-  !*** ./node_modules/axios/lib/core/AxiosError.js ***!
-  \***************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js"
+/*!**************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js ***!
+  \**************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
 
 
 
@@ -2259,19 +2259,19 @@ AxiosError.ERR_FORM_DATA_DEPTH_EXCEEDED = 'ERR_FORM_DATA_DEPTH_EXCEEDED';
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/AxiosHeaders.js"
-/*!*****************************************************!*\
-  !*** ./node_modules/axios/lib/core/AxiosHeaders.js ***!
-  \*****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js"
+/*!****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js ***!
+  \****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _helpers_parseHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/parseHeaders.js */ "./node_modules/axios/lib/helpers/parseHeaders.js");
-/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _helpers_parseHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/parseHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/parseHeaders.js");
+/* harmony import */ var _helpers_sanitizeHeaderValue_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/sanitizeHeaderValue.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/sanitizeHeaderValue.js");
 
 
 
@@ -2627,17 +2627,17 @@ _utils_js__WEBPACK_IMPORTED_MODULE_0__["default"].freezeMethods(AxiosHeaders);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/InterceptorManager.js"
-/*!***********************************************************!*\
-  !*** ./node_modules/axios/lib/core/InterceptorManager.js ***!
-  \***********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/InterceptorManager.js"
+/*!**********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/InterceptorManager.js ***!
+  \**********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -2714,19 +2714,19 @@ class InterceptorManager {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/buildFullPath.js"
-/*!******************************************************!*\
-  !*** ./node_modules/axios/lib/core/buildFullPath.js ***!
-  \******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/buildFullPath.js"
+/*!*****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/buildFullPath.js ***!
+  \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ buildFullPath)
 /* harmony export */ });
-/* harmony import */ var _AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _helpers_isAbsoluteURL_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/isAbsoluteURL.js */ "./node_modules/axios/lib/helpers/isAbsoluteURL.js");
-/* harmony import */ var _helpers_combineURLs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/combineURLs.js */ "./node_modules/axios/lib/helpers/combineURLs.js");
+/* harmony import */ var _AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _helpers_isAbsoluteURL_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../helpers/isAbsoluteURL.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/isAbsoluteURL.js");
+/* harmony import */ var _helpers_combineURLs_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../helpers/combineURLs.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/combineURLs.js");
 
 
 
@@ -2781,22 +2781,22 @@ function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls, config) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/dispatchRequest.js"
-/*!********************************************************!*\
-  !*** ./node_modules/axios/lib/core/dispatchRequest.js ***!
-  \********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/dispatchRequest.js"
+/*!*******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/dispatchRequest.js ***!
+  \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ dispatchRequest)
 /* harmony export */ });
-/* harmony import */ var _transformData_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transformData.js */ "./node_modules/axios/lib/core/transformData.js");
-/* harmony import */ var _cancel_isCancel_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../cancel/isCancel.js */ "./node_modules/axios/lib/cancel/isCancel.js");
-/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../defaults/index.js */ "./node_modules/axios/lib/defaults/index.js");
-/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./node_modules/axios/lib/cancel/CanceledError.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _adapters_adapters_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../adapters/adapters.js */ "./node_modules/axios/lib/adapters/adapters.js");
+/* harmony import */ var _transformData_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./transformData.js */ "./WebFlex.UI/node_modules/axios/lib/core/transformData.js");
+/* harmony import */ var _cancel_isCancel_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../cancel/isCancel.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/isCancel.js");
+/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../defaults/index.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/index.js");
+/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _adapters_adapters_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../adapters/adapters.js */ "./WebFlex.UI/node_modules/axios/lib/adapters/adapters.js");
 
 
 
@@ -2890,18 +2890,18 @@ function dispatchRequest(config) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/mergeConfig.js"
-/*!****************************************************!*\
-  !*** ./node_modules/axios/lib/core/mergeConfig.js ***!
-  \****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/mergeConfig.js"
+/*!***************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/mergeConfig.js ***!
+  \***************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ mergeConfig)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
 
 
 
@@ -3064,17 +3064,17 @@ function mergeConfig(config1, config2) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/settle.js"
-/*!***********************************************!*\
-  !*** ./node_modules/axios/lib/core/settle.js ***!
-  \***********************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/settle.js"
+/*!**********************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/settle.js ***!
+  \**********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ settle)
 /* harmony export */ });
-/* harmony import */ var _AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _AxiosError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
 
 
 
@@ -3106,19 +3106,19 @@ function settle(resolve, reject, response) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/core/transformData.js"
-/*!******************************************************!*\
-  !*** ./node_modules/axios/lib/core/transformData.js ***!
-  \******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/core/transformData.js"
+/*!*****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/core/transformData.js ***!
+  \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ transformData)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../defaults/index.js */ "./node_modules/axios/lib/defaults/index.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _defaults_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../defaults/index.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/index.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
 
 
 
@@ -3151,23 +3151,23 @@ function transformData(fns, response) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/defaults/index.js"
-/*!**************************************************!*\
-  !*** ./node_modules/axios/lib/defaults/index.js ***!
-  \**************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/defaults/index.js"
+/*!*************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/defaults/index.js ***!
+  \*************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _transitional_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transitional.js */ "./node_modules/axios/lib/defaults/transitional.js");
-/* harmony import */ var _helpers_toFormData_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../helpers/toFormData.js */ "./node_modules/axios/lib/helpers/toFormData.js");
-/* harmony import */ var _helpers_toURLEncodedForm_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../helpers/toURLEncodedForm.js */ "./node_modules/axios/lib/helpers/toURLEncodedForm.js");
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
-/* harmony import */ var _helpers_formDataToJSON_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/formDataToJSON.js */ "./node_modules/axios/lib/helpers/formDataToJSON.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _transitional_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./transitional.js */ "./WebFlex.UI/node_modules/axios/lib/defaults/transitional.js");
+/* harmony import */ var _helpers_toFormData_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../helpers/toFormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js");
+/* harmony import */ var _helpers_toURLEncodedForm_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../helpers/toURLEncodedForm.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toURLEncodedForm.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _helpers_formDataToJSON_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../helpers/formDataToJSON.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/formDataToJSON.js");
 
 
 
@@ -3349,10 +3349,10 @@ _utils_js__WEBPACK_IMPORTED_MODULE_0__["default"].forEach(['delete', 'get', 'hea
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/defaults/transitional.js"
-/*!*********************************************************!*\
-  !*** ./node_modules/axios/lib/defaults/transitional.js ***!
-  \*********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/defaults/transitional.js"
+/*!********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/defaults/transitional.js ***!
+  \********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3373,10 +3373,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/env/data.js"
-/*!********************************************!*\
-  !*** ./node_modules/axios/lib/env/data.js ***!
-  \********************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/env/data.js"
+/*!*******************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/env/data.js ***!
+  \*******************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3387,17 +3387,17 @@ const VERSION = "1.18.0";
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/AxiosURLSearchParams.js"
-/*!****************************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/AxiosURLSearchParams.js ***!
-  \****************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/AxiosURLSearchParams.js"
+/*!***************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/AxiosURLSearchParams.js ***!
+  \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./toFormData.js */ "./node_modules/axios/lib/helpers/toFormData.js");
+/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./toFormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js");
 
 
 
@@ -3463,10 +3463,10 @@ prototype.toString = function toString(encoder) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/HttpStatusCode.js"
-/*!**********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/HttpStatusCode.js ***!
-  \**********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/HttpStatusCode.js"
+/*!*********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/HttpStatusCode.js ***!
+  \*********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3554,10 +3554,10 @@ Object.entries(HttpStatusCode).forEach(([key, value]) => {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/bind.js"
-/*!************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/bind.js ***!
-  \************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/bind.js"
+/*!***********************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/bind.js ***!
+  \***********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3582,10 +3582,10 @@ function bind(fn, thisArg) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/buildURL.js"
-/*!****************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/buildURL.js ***!
-  \****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/buildURL.js"
+/*!***************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/buildURL.js ***!
+  \***************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3593,8 +3593,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ buildURL),
 /* harmony export */   encode: () => (/* binding */ encode)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _AxiosURLSearchParams_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosURLSearchParams.js */ "./node_modules/axios/lib/helpers/AxiosURLSearchParams.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _AxiosURLSearchParams_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./AxiosURLSearchParams.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/AxiosURLSearchParams.js");
 
 
 
@@ -3667,10 +3667,10 @@ function buildURL(url, params, options) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/combineURLs.js"
-/*!*******************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/combineURLs.js ***!
-  \*******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/combineURLs.js"
+/*!******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/combineURLs.js ***!
+  \******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3696,19 +3696,19 @@ function combineURLs(baseURL, relativeURL) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/composeSignals.js"
-/*!**********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/composeSignals.js ***!
-  \**********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/composeSignals.js"
+/*!*********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/composeSignals.js ***!
+  \*********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./node_modules/axios/lib/cancel/CanceledError.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _cancel_CanceledError_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../cancel/CanceledError.js */ "./WebFlex.UI/node_modules/axios/lib/cancel/CanceledError.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -3770,18 +3770,18 @@ const composeSignals = (signals, timeout) => {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/cookies.js"
-/*!***************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/cookies.js ***!
-  \***************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/cookies.js"
+/*!**************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/cookies.js ***!
+  \**************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
 
 
 
@@ -3846,10 +3846,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js"
-/*!***********************************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js ***!
-  \***********************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js"
+/*!**********************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/estimateDataURLDecodedBytes.js ***!
+  \**********************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -3965,19 +3965,19 @@ function estimateDataURLDecodedBytes(url) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/formDataToJSON.js"
-/*!**********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/formDataToJSON.js ***!
-  \**********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/formDataToJSON.js"
+/*!*********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/formDataToJSON.js ***!
+  \*********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./toFormData.js */ "./node_modules/axios/lib/helpers/toFormData.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./toFormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js");
 
 
 
@@ -4101,10 +4101,10 @@ function formDataToJSON(formData) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/isAbsoluteURL.js"
-/*!*********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/isAbsoluteURL.js ***!
-  \*********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/isAbsoluteURL.js"
+/*!********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/isAbsoluteURL.js ***!
+  \********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4134,17 +4134,17 @@ function isAbsoluteURL(url) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/isAxiosError.js"
-/*!********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/isAxiosError.js ***!
-  \********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/isAxiosError.js"
+/*!*******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/isAxiosError.js ***!
+  \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ isAxiosError)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -4163,17 +4163,17 @@ function isAxiosError(payload) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/isURLSameOrigin.js"
-/*!***********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/isURLSameOrigin.js ***!
-  \***********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/isURLSameOrigin.js"
+/*!**********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/isURLSameOrigin.js ***!
+  \**********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
 
 
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (_platform_index_js__WEBPACK_IMPORTED_MODULE_0__["default"].hasStandardBrowserEnv
@@ -4194,10 +4194,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/null.js"
-/*!************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/null.js ***!
-  \************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/null.js"
+/*!***********************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/null.js ***!
+  \***********************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4210,17 +4210,17 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/parseHeaders.js"
-/*!********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/parseHeaders.js ***!
-  \********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/parseHeaders.js"
+/*!*******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/parseHeaders.js ***!
+  \*******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -4295,10 +4295,10 @@ __webpack_require__.dn(__WEBPACK_DEFAULT_EXPORT__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/parseProtocol.js"
-/*!*********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/parseProtocol.js ***!
-  \*********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/parseProtocol.js"
+/*!********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/parseProtocol.js ***!
+  \********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4315,10 +4315,10 @@ function parseProtocol(url) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/progressEventReducer.js"
-/*!****************************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/progressEventReducer.js ***!
-  \****************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/progressEventReducer.js"
+/*!***************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/progressEventReducer.js ***!
+  \***************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4327,9 +4327,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   progressEventDecorator: () => (/* binding */ progressEventDecorator),
 /* harmony export */   progressEventReducer: () => (/* binding */ progressEventReducer)
 /* harmony export */ });
-/* harmony import */ var _speedometer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./speedometer.js */ "./node_modules/axios/lib/helpers/speedometer.js");
-/* harmony import */ var _throttle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./throttle.js */ "./node_modules/axios/lib/helpers/throttle.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _speedometer_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./speedometer.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/speedometer.js");
+/* harmony import */ var _throttle_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./throttle.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/throttle.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -4388,24 +4388,24 @@ const asyncDecorator =
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/resolveConfig.js"
-/*!*********************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/resolveConfig.js ***!
-  \*********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/resolveConfig.js"
+/*!********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/resolveConfig.js ***!
+  \********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _isURLSameOrigin_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./isURLSameOrigin.js */ "./node_modules/axios/lib/helpers/isURLSameOrigin.js");
-/* harmony import */ var _cookies_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./cookies.js */ "./node_modules/axios/lib/helpers/cookies.js");
-/* harmony import */ var _core_buildFullPath_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/buildFullPath.js */ "./node_modules/axios/lib/core/buildFullPath.js");
-/* harmony import */ var _core_mergeConfig_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../core/mergeConfig.js */ "./node_modules/axios/lib/core/mergeConfig.js");
-/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./node_modules/axios/lib/core/AxiosHeaders.js");
-/* harmony import */ var _buildURL_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./buildURL.js */ "./node_modules/axios/lib/helpers/buildURL.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _isURLSameOrigin_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./isURLSameOrigin.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/isURLSameOrigin.js");
+/* harmony import */ var _cookies_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./cookies.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/cookies.js");
+/* harmony import */ var _core_buildFullPath_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../core/buildFullPath.js */ "./WebFlex.UI/node_modules/axios/lib/core/buildFullPath.js");
+/* harmony import */ var _core_mergeConfig_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../core/mergeConfig.js */ "./WebFlex.UI/node_modules/axios/lib/core/mergeConfig.js");
+/* harmony import */ var _core_AxiosHeaders_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../core/AxiosHeaders.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosHeaders.js");
+/* harmony import */ var _buildURL_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./buildURL.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/buildURL.js");
 
 
 
@@ -4524,10 +4524,10 @@ function resolveConfig(config) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/sanitizeHeaderValue.js"
-/*!***************************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/sanitizeHeaderValue.js ***!
-  \***************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/sanitizeHeaderValue.js"
+/*!**************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/sanitizeHeaderValue.js ***!
+  \**************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4536,7 +4536,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   sanitizeHeaderValue: () => (/* binding */ sanitizeHeaderValue),
 /* harmony export */   toByteStringHeaderObject: () => (/* binding */ toByteStringHeaderObject)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
 
 
 
@@ -4601,10 +4601,10 @@ function toByteStringHeaderObject(headers) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/speedometer.js"
-/*!*******************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/speedometer.js ***!
-  \*******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/speedometer.js"
+/*!******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/speedometer.js ***!
+  \******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4670,10 +4670,10 @@ function speedometer(samplesCount, min) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/spread.js"
-/*!**************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/spread.js ***!
-  \**************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/spread.js"
+/*!*************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/spread.js ***!
+  \*************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4712,10 +4712,10 @@ function spread(callback) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/throttle.js"
-/*!****************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/throttle.js ***!
-  \****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/throttle.js"
+/*!***************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/throttle.js ***!
+  \***************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4770,10 +4770,10 @@ function throttle(fn, freq) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/toFormData.js"
-/*!******************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/toFormData.js ***!
-  \******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js"
+/*!*****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js ***!
+  \*****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -4781,9 +4781,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   DEFAULT_FORM_DATA_MAX_DEPTH: () => (/* binding */ DEFAULT_FORM_DATA_MAX_DEPTH),
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
-/* harmony import */ var _platform_node_classes_FormData_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../platform/node/classes/FormData.js */ "./node_modules/axios/lib/helpers/null.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _platform_node_classes_FormData_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../platform/node/classes/FormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/null.js");
 
 
 
@@ -5067,19 +5067,19 @@ function toFormData(obj, formData, options) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/toURLEncodedForm.js"
-/*!************************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/toURLEncodedForm.js ***!
-  \************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/toURLEncodedForm.js"
+/*!***********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/toURLEncodedForm.js ***!
+  \***********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (/* binding */ toURLEncodedForm)
 /* harmony export */ });
-/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./node_modules/axios/lib/utils.js");
-/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./toFormData.js */ "./node_modules/axios/lib/helpers/toFormData.js");
-/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../platform/index.js */ "./node_modules/axios/lib/platform/index.js");
+/* harmony import */ var _utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils.js */ "./WebFlex.UI/node_modules/axios/lib/utils.js");
+/* harmony import */ var _toFormData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./toFormData.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/toFormData.js");
+/* harmony import */ var _platform_index_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../platform/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/index.js");
 
 
 
@@ -5103,10 +5103,10 @@ function toURLEncodedForm(data, options) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/trackStream.js"
-/*!*******************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/trackStream.js ***!
-  \*******************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/trackStream.js"
+/*!******************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/trackStream.js ***!
+  \******************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -5208,18 +5208,18 @@ const trackStream = (stream, chunkSize, onProgress, onFinish) => {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/helpers/validator.js"
-/*!*****************************************************!*\
-  !*** ./node_modules/axios/lib/helpers/validator.js ***!
-  \*****************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/helpers/validator.js"
+/*!****************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/helpers/validator.js ***!
+  \****************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../env/data.js */ "./node_modules/axios/lib/env/data.js");
-/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./node_modules/axios/lib/core/AxiosError.js");
+/* harmony import */ var _env_data_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../env/data.js */ "./WebFlex.UI/node_modules/axios/lib/env/data.js");
+/* harmony import */ var _core_AxiosError_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../core/AxiosError.js */ "./WebFlex.UI/node_modules/axios/lib/core/AxiosError.js");
 
 
 
@@ -5336,10 +5336,10 @@ function assertOptions(options, schema, allowUnknown) {
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/browser/classes/Blob.js"
-/*!*****************************************************************!*\
-  !*** ./node_modules/axios/lib/platform/browser/classes/Blob.js ***!
-  \*****************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/Blob.js"
+/*!****************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/Blob.js ***!
+  \****************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -5353,10 +5353,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/browser/classes/FormData.js"
-/*!*********************************************************************!*\
-  !*** ./node_modules/axios/lib/platform/browser/classes/FormData.js ***!
-  \*********************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/FormData.js"
+/*!********************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/FormData.js ***!
+  \********************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -5370,17 +5370,17 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/browser/classes/URLSearchParams.js"
-/*!****************************************************************************!*\
-  !*** ./node_modules/axios/lib/platform/browser/classes/URLSearchParams.js ***!
-  \****************************************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/URLSearchParams.js"
+/*!***************************************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/URLSearchParams.js ***!
+  \***************************************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _helpers_AxiosURLSearchParams_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../helpers/AxiosURLSearchParams.js */ "./node_modules/axios/lib/helpers/AxiosURLSearchParams.js");
+/* harmony import */ var _helpers_AxiosURLSearchParams_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../../helpers/AxiosURLSearchParams.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/AxiosURLSearchParams.js");
 
 
 
@@ -5389,19 +5389,19 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/browser/index.js"
-/*!**********************************************************!*\
-  !*** ./node_modules/axios/lib/platform/browser/index.js ***!
-  \**********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/browser/index.js"
+/*!*********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/browser/index.js ***!
+  \*********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _classes_URLSearchParams_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./classes/URLSearchParams.js */ "./node_modules/axios/lib/platform/browser/classes/URLSearchParams.js");
-/* harmony import */ var _classes_FormData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./classes/FormData.js */ "./node_modules/axios/lib/platform/browser/classes/FormData.js");
-/* harmony import */ var _classes_Blob_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./classes/Blob.js */ "./node_modules/axios/lib/platform/browser/classes/Blob.js");
+/* harmony import */ var _classes_URLSearchParams_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./classes/URLSearchParams.js */ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/URLSearchParams.js");
+/* harmony import */ var _classes_FormData_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./classes/FormData.js */ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/FormData.js");
+/* harmony import */ var _classes_Blob_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./classes/Blob.js */ "./WebFlex.UI/node_modules/axios/lib/platform/browser/classes/Blob.js");
 
 
 
@@ -5419,10 +5419,10 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/common/utils.js"
-/*!*********************************************************!*\
-  !*** ./node_modules/axios/lib/platform/common/utils.js ***!
-  \*********************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/common/utils.js"
+/*!********************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/common/utils.js ***!
+  \********************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -5483,18 +5483,18 @@ const origin = (hasBrowserEnv && window.location.href) || 'http://localhost';
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/platform/index.js"
-/*!**************************************************!*\
-  !*** ./node_modules/axios/lib/platform/index.js ***!
-  \**************************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/platform/index.js"
+/*!*************************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/platform/index.js ***!
+  \*************************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _node_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node/index.js */ "./node_modules/axios/lib/platform/browser/index.js");
-/* harmony import */ var _common_utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./common/utils.js */ "./node_modules/axios/lib/platform/common/utils.js");
+/* harmony import */ var _node_index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./node/index.js */ "./WebFlex.UI/node_modules/axios/lib/platform/browser/index.js");
+/* harmony import */ var _common_utils_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./common/utils.js */ "./WebFlex.UI/node_modules/axios/lib/platform/common/utils.js");
 
 
 
@@ -5506,17 +5506,17 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ },
 
-/***/ "./node_modules/axios/lib/utils.js"
-/*!*****************************************!*\
-  !*** ./node_modules/axios/lib/utils.js ***!
-  \*****************************************/
+/***/ "./WebFlex.UI/node_modules/axios/lib/utils.js"
+/*!****************************************************!*\
+  !*** ./WebFlex.UI/node_modules/axios/lib/utils.js ***!
+  \****************************************************/
 (__unused_webpack___webpack_module__, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
-/* harmony import */ var _helpers_bind_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/bind.js */ "./node_modules/axios/lib/helpers/bind.js");
+/* harmony import */ var _helpers_bind_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./helpers/bind.js */ "./WebFlex.UI/node_modules/axios/lib/helpers/bind.js");
 
 
 
@@ -6623,12 +6623,12 @@ const isSafeIterable = (thing) =>
 var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
 (() => {
-/*!******************************************************!*\
-  !*** ./Scripts/.generated/views__device__dvc1010.ts ***!
-  \******************************************************/
+/*!*****************************************************************!*\
+  !*** ./WebFlex.UI/Scripts/.generated/views__device__dvc1010.ts ***!
+  \*****************************************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_ts_views_device_dvc1010__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/device/dvc1010 */ "./Scripts/src/ts/views/device/dvc1010.ts");
-/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./Scripts/src/ts/framework/page.ts");
+/* harmony import */ var _src_ts_views_device_dvc1010__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/device/dvc1010 */ "./WebFlex.UI/Scripts/src/ts/views/device/dvc1010.ts");
+/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./WebFlex.UI/Scripts/src/ts/framework/page.ts");
 
 
 (0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_device_dvc1010__WEBPACK_IMPORTED_MODULE_0__["default"]);
