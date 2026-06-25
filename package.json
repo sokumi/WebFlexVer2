@@ -1,8 +1,25 @@
 {
+  "scripts": {
+    "build": "webpack --config WebFlex.UI/webpack.config.js --mode production",
+    "build:dev": "webpack --config WebFlex.UI/webpack.config.js --mode development",
+    "watch": "webpack --config WebFlex.UI/webpack.config.js --mode development --watch"
+  },
   "dependencies": {
-    "jquery": "^4.0.0"
+    "@tabler/core": "latest",
+    "bootstrap": "latest",
+    "echarts": "latest",
+    "jquery": "^4.0.0",
+    "lucide": "latest",
+    "tabulator-tables": "latest"
   },
   "devDependencies": {
-    "@types/jquery": "^4.0.1"
+    "@types/jquery": "^4.0.1",
+    "clean-webpack-plugin": "latest",
+    "css-loader": "latest",
+    "style-loader": "latest",
+    "ts-loader": "latest",
+    "typescript": "latest",
+    "webpack": "latest",
+    "webpack-cli": "latest"
   }
 }
