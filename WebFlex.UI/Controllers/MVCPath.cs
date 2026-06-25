@@ -31,5 +31,8 @@ public static class MVCPath {
     // test
     internal static class Test {
         public const string TST1000 = "~/Views/Test/TST1000.cshtml";
+
+        public const string TST2000 = "~/Views/Test/TST2000.cshtml";
+        public const string TST2010 = "~/Views/Test/TST2010.cshtml";
     }
 }

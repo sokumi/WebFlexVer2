@@ -190,7 +190,7 @@ export default class Page {
     private async loadSummary(): Promise<void> {
         try {
             const result = await api.get<TestSummaryDto>({
-                url: "/test/summary"
+                url: "/test/main/summary"
             });
 
             if (!result.success || result.data == null) {
@@ -210,7 +210,7 @@ export default class Page {
     private async loadGrid(): Promise<void> {
         try {
             const result = await api.get<TestGridRowDto[]>({
-                url: "/test/grid"
+                url: "/test/main/grid"
             });
 
             if (!result.success) {
@@ -241,7 +241,7 @@ export default class Page {
 
         try {
             const result = await api.post<TestSaveRequest, TestSaveRequest>({
-                url: "/test/save",
+                url: "/test/main/save",
                 data: request
             });
 

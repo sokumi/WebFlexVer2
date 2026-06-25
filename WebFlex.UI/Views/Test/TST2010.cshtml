@@ -1,0 +1,189 @@
+﻿@{
+    ViewData["Title"] = "디바이스 태그 테스트";
+}
+
+<div class="wf-test-devicetag-page">
+    <section class="wf-page-header">
+        <div>
+            <div class="wf-breadcrumb">
+                <span>Test</span>
+                <span>/</span>
+                <span>TST2010</span>
+            </div>
+            <h2 class="wf-page-title">디바이스 태그 테스트</h2>
+        </div>
+
+        <div class="wf-test-devicetag-actions">
+            <button id="btnBrowse" type="button" class="btn btn-primary btn-sm">
+                노드 조회
+            </button>
+            <button id="btnSave" type="button" class="btn btn-outline-primary btn-sm">
+                선택 태그 저장
+            </button>
+            <button id="btnDelete" type="button" class="btn btn-outline-danger btn-sm">
+                태그 삭제
+            </button>
+            <button id="btnSearch" type="button" class="btn btn-outline-secondary btn-sm">
+                태그 조회
+            </button>
+        </div>
+    </section>
+
+    <section class="wf-stat-grid wf-test-devicetag-summary">
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="server"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Device</div>
+                <div id="lblDeviceCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="network"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Nodes</div>
+                <div id="lblNodeCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="circle-dot"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Variables</div>
+                <div id="lblVariableNodeCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="tag"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Tags</div>
+                <div id="lblTagCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+    </section>
+
+    <section id="testAlert" class="wf-test-alert d-none">
+        <span id="testAlertMessage"></span>
+    </section>
+
+    <section class="wf-card">
+        <div class="wf-card-header">
+            <div>
+                <h3 class="wf-card-title">디바이스 선택 / 태그 조회 조건</h3>
+                <div class="wf-card-subtitle">디바이스를 선택한 뒤 노드를 조회하고 태그를 저장합니다.</div>
+            </div>
+        </div>
+
+        <div class="wf-card-body">
+            <div class="wf-devicetag-search-form">
+                <div class="wf-form-field">
+                    <label for="selDevice" class="form-label">디바이스</label>
+                    <select id="selDevice" class="form-select">
+                        <option value="">디바이스 선택</option>
+                    </select>
+                </div>
+
+                <div class="wf-form-field">
+                    <label for="txtTagKeyword" class="form-label">태그 검색어</label>
+                    <input id="txtTagKeyword" type="text" class="form-control" placeholder="태그명 / NodeId" />
+                </div>
+
+                <div class="wf-form-field wf-form-check-field">
+                    <label class="form-check">
+                        <input id="chkOnlyCollectable" type="checkbox" class="form-check-input" checked />
+                        <span class="form-check-label">수집 가능한 노드만</span>
+                    </label>
+                </div>
+
+                <div class="wf-form-field wf-form-check-field">
+                    <label class="form-check">
+                        <input id="chkOnlyCollectTag" type="checkbox" class="form-check-input" />
+                        <span class="form-check-label">수집 태그만</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="wf-devicetag-layout">
+        <article class="wf-card wf-devicetag-node-card">
+            <div class="wf-card-header">
+                <div>
+                    <h3 class="wf-card-title">OPC 노드 목록</h3>
+                    <div class="wf-card-subtitle">Variable 노드만 태그로 저장할 수 있습니다.</div>
+                </div>
+
+                <div class="wf-devicetag-card-actions">
+                    <button id="btnSelectAll" type="button" class="btn btn-outline-secondary btn-sm">
+                        Variable 전체 선택
+                    </button>
+                    <button id="btnClearSelect" type="button" class="btn btn-outline-secondary btn-sm">
+                        선택 해제
+                    </button>
+                </div>
+            </div>
+
+            <div class="wf-card-body">
+                <div id="nodeList" class="wf-node-tree">
+                    <div class="wf-empty-message">
+                        디바이스를 선택한 뒤 노드 조회 버튼을 클릭하세요.
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <article class="wf-card wf-devicetag-selected-card">
+            <div class="wf-card-header">
+                <div>
+                    <h3 class="wf-card-title">선택된 노드</h3>
+                    <div class="wf-card-subtitle">저장 대상 Variable 노드 목록입니다.</div>
+                </div>
+
+                <span id="lblSelectedCount" class="wf-status">0개 선택</span>
+            </div>
+
+            <div class="wf-card-body">
+                <div class="wf-grid-wrap">
+                    <div id="gridSelectedNode" class="wf-grid"></div>
+                </div>
+            </div>
+        </article>
+    </section>
+
+    <section class="wf-card">
+        <div class="wf-card-header">
+            <div>
+                <h3 class="wf-card-title">저장된 태그 목록</h3>
+                <div class="wf-card-subtitle">선택한 디바이스에 저장된 태그입니다.</div>
+            </div>
+
+            <div class="wf-devicetag-card-actions">
+                <button id="btnTagSelectAll" type="button" class="btn btn-outline-secondary btn-sm">
+                    전체 선택
+                </button>
+                <button id="btnTagClearSelect" type="button" class="btn btn-outline-secondary btn-sm">
+                    선택 해제
+                </button>
+            </div>
+        </div>
+
+        <div class="wf-card-body">
+            <div class="wf-grid-wrap">
+                <div id="gridTag" class="wf-grid"></div>
+            </div>
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/test/tst2010.js" asp-append-version="true"></script>
+}

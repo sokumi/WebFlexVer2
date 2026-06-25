@@ -79,20 +79,35 @@ a {
 /*!**************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./Scripts/src/css/webflex-layout.css ***!
   \**************************************************************************************/
+html,
+body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    margin: 0;
+}
+
 .wf-app {
-    min-height: 100vh;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
     background: var(--wf-bg);
+    display: flex;
 }
 
 .wf-sidebar {
-    position: fixed;
-    inset: 0 auto 0 0;
     width: var(--wf-sidebar-width);
+    height: 100vh;
+    flex: 0 0 var(--wf-sidebar-width);
     background: var(--wf-sidebar-bg);
     border-right: 1px solid var(--wf-border);
     z-index: 30;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .wf-brand {
@@ -124,8 +139,11 @@ a {
 }
 
 .wf-nav {
-    flex: 1;
+    flex: 1 1 auto;
+    min-height: 0;
     padding: 12px;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .wf-nav-link {
@@ -160,25 +178,33 @@ a {
 }
 
 .wf-main {
-    min-height: 100vh;
-    margin-left: var(--wf-sidebar-width);
+    height: 100vh;
+    min-width: 0;
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-rows: var(--wf-topbar-height) minmax(0, 1fr);
+    overflow: hidden;
 }
 
 .wf-topbar {
     height: var(--wf-topbar-height);
+    min-height: var(--wf-topbar-height);
     background: var(--wf-topbar-bg);
     border-bottom: 1px solid var(--wf-border);
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 22px;
-    position: sticky;
-    top: 0;
     z-index: 20;
+    overflow: hidden;
 }
 
 .wf-page {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
     padding: 20px 22px 32px;
+    background: var(--wf-bg);
 }
 
 .wf-page-header {
@@ -204,11 +230,14 @@ a {
 
 @media (max-width: 991px) {
     .wf-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
         transform: translateX(-100%);
+        transition: transform 0.2s ease;
     }
 
     .wf-main {
-        margin-left: 0;
+        flex: 1 1 auto;
     }
 }
 
@@ -247,6 +276,7 @@ a {
 
 .wf-sidebar.is-collapsed {
     width: 72px;
+    flex-basis: 72px;
 }
 
     .wf-sidebar.is-collapsed .wf-brand-text,
@@ -256,9 +286,7 @@ a {
         display: none;
     }
 
-    .wf-sidebar.is-collapsed + .wf-main {
-        margin-left: 72px;
-    }
+
 
     .wf-sidebar.is-collapsed .wf-brand,
     .wf-sidebar.is-collapsed .wf-nav-link {
@@ -270,9 +298,6 @@ a {
         transform: translateX(0);
     }
 
-        .wf-sidebar.is-open + .wf-main {
-            margin-left: 0;
-        }
 }
 /*!******************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./Scripts/src/css/webflex-components.css ***!

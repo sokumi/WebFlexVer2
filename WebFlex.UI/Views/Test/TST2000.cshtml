@@ -1,37 +1,62 @@
 ﻿@{
-    ViewData["Title"] = "UI 테스트";
+    ViewData["Title"] = "디바이스 등록 테스트";
 }
 
-<div class="wf-test-page">
+<div class="wf-test-device-page">
     <section class="wf-page-header">
         <div>
             <div class="wf-breadcrumb">
                 <span>Test</span>
                 <span>/</span>
-                <span>TST1000</span>
+                <span>TST2000</span>
             </div>
-            <h2 class="wf-page-title">UI 컴포넌트 테스트</h2>
+            <h2 class="wf-page-title">디바이스 등록 테스트</h2>
         </div>
 
-        <div class="wf-test-actions">
-            <button id="btnReload" type="button" class="btn btn-primary btn-sm">
-                다시 조회
+        <div class="wf-test-device-actions">
+            <button id="btnNew" type="button" class="btn btn-outline-secondary btn-sm">
+                신규
             </button>
-
-            <button id="btnOpenModal" type="button" class="btn btn-outline-secondary btn-sm">
-                모달 열기
+            <button id="btnSave" type="button" class="btn btn-primary btn-sm">
+                저장
+            </button>
+            <button id="btnDelete" type="button" class="btn btn-outline-danger btn-sm">
+                삭제
+            </button>
+            <button id="btnSearch" type="button" class="btn btn-outline-secondary btn-sm">
+                조회
             </button>
         </div>
     </section>
 
-    <section class="wf-stat-grid wf-test-summary">
+    <section class="wf-stat-grid wf-test-device-summary">
         <article class="wf-stat-card">
             <span class="wf-stat-icon">
                 <i data-lucide="server"></i>
             </span>
             <div>
-                <div class="wf-stat-label">Device</div>
-                <div id="lblDeviceCount" class="wf-stat-value">0</div>
+                <div class="wf-stat-label">Total Device</div>
+                <div id="lblTotalCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="power"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Enabled</div>
+                <div id="lblEnabledCount" class="wf-stat-value">0</div>
+            </div>
+        </article>
+
+        <article class="wf-stat-card">
+            <span class="wf-stat-icon">
+                <i data-lucide="radio-tower"></i>
+            </span>
+            <div>
+                <div class="wf-stat-label">Collect</div>
+                <div id="lblCollectCount" class="wf-stat-value">0</div>
             </div>
         </article>
 
@@ -40,28 +65,8 @@
                 <i data-lucide="tag"></i>
             </span>
             <div>
-                <div class="wf-stat-label">Tag</div>
+                <div class="wf-stat-label">Tags</div>
                 <div id="lblTagCount" class="wf-stat-value">0</div>
-            </div>
-        </article>
-
-        <article class="wf-stat-card">
-            <span class="wf-stat-icon">
-                <i data-lucide="circle-check"></i>
-            </span>
-            <div>
-                <div class="wf-stat-label">Good</div>
-                <div id="lblGoodCount" class="wf-stat-value">0</div>
-            </div>
-        </article>
-
-        <article class="wf-stat-card">
-            <span class="wf-stat-icon">
-                <i data-lucide="circle-alert"></i>
-            </span>
-            <div>
-                <div class="wf-stat-label">Bad</div>
-                <div id="lblBadCount" class="wf-stat-value">0</div>
             </div>
         </article>
     </section>
@@ -70,101 +75,168 @@
         <span id="testAlertMessage"></span>
     </section>
 
-    <section class="wf-test-layout">
-        <article class="wf-card">
-            <div class="wf-card-header">
-                <div>
-                    <h3 class="wf-card-title">입력 폼 테스트</h3>
-                    <div class="wf-card-subtitle">API POST, form-control, checkbox 예시</div>
-                </div>
-                <span class="wf-status good">Ready</span>
-            </div>
-
-            <div class="wf-card-body">
-                <form id="frmTest" autocomplete="off">
-                    <div class="mb-3">
-                        <label for="txtName" class="form-label">이름</label>
-                        <input id="txtName" class="form-control" type="text" placeholder="테스트 이름 입력" />
-                    </div>
-
-                    <div class="mb-3">
-                        <label for="txtDescription" class="form-label">설명</label>
-                        <textarea id="txtDescription" class="form-control" rows="3" placeholder="설명 입력"></textarea>
-                    </div>
-
-                    <label class="form-check mb-3">
-                        <input id="chkIsEnabled" class="form-check-input" type="checkbox" checked />
-                        <span class="form-check-label">사용 여부</span>
-                    </label>
-
-                    <button id="btnSave" class="btn btn-primary" type="submit">
-                        저장 테스트
-                    </button>
-                </form>
-            </div>
-        </article>
-
-        <article class="wf-card">
-            <div class="wf-card-header">
-                <div>
-                    <h3 class="wf-card-title">차트 테스트</h3>
-                    <div class="wf-card-subtitle">Apache ECharts 기본 사용 예시</div>
-                </div>
-            </div>
-
-            <div class="wf-card-body">
-                <div id="testChart" class="wf-test-chart"></div>
-            </div>
-        </article>
-    </section>
-
-    <section class="wf-card mt-3">
+    <section class="wf-card">
         <div class="wf-card-header">
             <div>
-                <h3 class="wf-card-title">Tabulator 그리드 테스트</h3>
-                <div class="wf-card-subtitle">WebFlexGrid wrapper 사용 예시</div>
-            </div>
-
-            <div class="wf-test-grid-actions">
-                <button id="btnClearGrid" type="button" class="btn btn-outline-secondary btn-sm">
-                    비우기
-                </button>
-                <button id="btnLoadGrid" type="button" class="btn btn-primary btn-sm">
-                    그리드 조회
-                </button>
+                <h3 class="wf-card-title">조회 조건</h3>
+                <div class="wf-card-subtitle">디바이스명, 주소, 타입, 수집 여부 기준으로 조회합니다.</div>
             </div>
         </div>
 
         <div class="wf-card-body">
-            <div class="wf-grid-wrap">
-                <div id="gridTest" class="wf-grid"></div>
+            <div class="wf-search-form">
+                <div class="wf-form-field">
+                    <label for="txtSearchKeyword" class="form-label">검색어</label>
+                    <input id="txtSearchKeyword" type="text" class="form-control" placeholder="디바이스명 / 주소 / Endpoint" />
+                </div>
+
+                <div class="wf-form-field">
+                    <label for="selSearchDeviceType" class="form-label">디바이스 타입</label>
+                    <select id="selSearchDeviceType" class="form-select">
+                        <option value="">전체</option>
+                    </select>
+                </div>
+
+                <div class="wf-form-field wf-form-check-field">
+                    <label class="form-check">
+                        <input id="chkSearchOnlyCollect" type="checkbox" class="form-check-input" />
+                        <span class="form-check-label">수집 사용만 조회</span>
+                    </label>
+                </div>
+
+                <div class="wf-search-buttons">
+                    <button id="btnSearchInPanel" type="button" class="btn btn-primary">
+                        조회
+                    </button>
+                </div>
             </div>
         </div>
     </section>
-</div>
 
-<div class="modal fade" id="testModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content wf-modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">테스트 모달</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+    <section class="wf-test-device-layout">
+        <article class="wf-card wf-test-device-grid-card">
+            <div class="wf-card-header">
+                <div>
+                    <h3 class="wf-card-title">디바이스 목록</h3>
+                    <div class="wf-card-subtitle">행을 선택하면 오른쪽 상세 폼에 바인딩됩니다.</div>
+                </div>
+
+                <span id="lblSelectedDevice" class="wf-status">선택 없음</span>
             </div>
-            <div class="modal-body">
-                Bootstrap Modal 동작 테스트입니다.
+
+            <div class="wf-card-body">
+                <div class="wf-grid-wrap">
+                    <div id="gridDevice" class="wf-grid"></div>
+                </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    닫기
-                </button>
-                <button id="btnModalConfirm" type="button" class="btn btn-primary">
-                    확인
-                </button>
+        </article>
+
+        <article class="wf-card wf-test-device-form-card">
+            <div class="wf-card-header">
+                <div>
+                    <h3 class="wf-card-title">디바이스 상세</h3>
+                    <div class="wf-card-subtitle">등록/수정할 디바이스 정보를 입력합니다.</div>
+                </div>
+
+                <span id="lblFormMode" class="wf-status good">신규</span>
             </div>
-        </div>
-    </div>
+
+            <div class="wf-card-body">
+                <input id="hidId" type="hidden" />
+
+                <div class="wf-device-form-grid">
+                    <div class="wf-form-field">
+                        <label for="txtDeviceCode" class="form-label">디바이스 코드</label>
+                        <input id="txtDeviceCode" type="text" class="form-control" disabled />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtDeviceName" class="form-label">디바이스명</label>
+                        <input id="txtDeviceName" type="text" class="form-control" placeholder="디바이스명" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="selDeviceType" class="form-label">디바이스 타입</label>
+                        <select id="selDeviceType" class="form-select"></select>
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtDeviceAddress" class="form-label">주소</label>
+                        <input id="txtDeviceAddress" type="text" class="form-control" placeholder="192.168.0.10" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtPort" class="form-label">포트</label>
+                        <input id="txtPort" type="number" class="form-control" value="4840" />
+                    </div>
+
+                    <div class="wf-form-field wf-device-endpoint-field">
+                        <label for="txtEndpointUrl" class="form-label">Endpoint URL</label>
+                        <div class="input-group">
+                            <input id="txtEndpointUrl" type="text" class="form-control" placeholder="비워두면 자동 생성" />
+                            <button id="btnPreviewEndpoint" type="button" class="btn btn-outline-secondary">
+                                자동 생성
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtPublishingIntervalMs" class="form-label">Publishing Interval</label>
+                        <input id="txtPublishingIntervalMs" type="number" class="form-control" value="1000" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtSamplingIntervalMs" class="form-label">Sampling Interval</label>
+                        <input id="txtSamplingIntervalMs" type="number" class="form-control" value="1000" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtSortOrder" class="form-label">정렬</label>
+                        <input id="txtSortOrder" type="number" class="form-control" value="0" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtUserName" class="form-label">사용자명</label>
+                        <input id="txtUserName" type="text" class="form-control" />
+                    </div>
+
+                    <div class="wf-form-field">
+                        <label for="txtPassword" class="form-label">비밀번호</label>
+                        <input id="txtPassword" type="password" class="form-control" />
+                    </div>
+
+                    <div class="wf-device-switches">
+                        <label class="form-check form-switch">
+                            <input id="chkCollect" type="checkbox" class="form-check-input" checked />
+                            <span class="form-check-label">수집 사용</span>
+                        </label>
+
+                        <label class="form-check form-switch">
+                            <input id="chkEnabled" type="checkbox" class="form-check-input" checked />
+                            <span class="form-check-label">사용 여부</span>
+                        </label>
+
+                        <label class="form-check form-switch">
+                            <input id="chkUseSecurity" type="checkbox" class="form-check-input" />
+                            <span class="form-check-label">보안 사용</span>
+                        </label>
+
+                        <label class="form-check form-switch">
+                            <input id="chkUseAnonymous" type="checkbox" class="form-check-input" checked />
+                            <span class="form-check-label">익명 접속</span>
+                        </label>
+                    </div>
+
+                    <div class="wf-form-field wf-device-description-field">
+                        <label for="txtDescription" class="form-label">설명</label>
+                        <textarea id="txtDescription" class="form-control" rows="4" placeholder="디바이스 설명"></textarea>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </section>
 </div>
 
 @section Scripts {
-    <script src="~/1.0.0/js/views/test/tst1000.js" asp-append-version="true"></script>
+    <script src="~/1.0.0/js/views/test/tst2000.js" asp-append-version="true"></script>
 }

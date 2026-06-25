@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\views\test\tst2010.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\test\tst2000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -41,6 +45,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\views\test\tst2010.ts" />
     <Content Include="Scripts\src\ts\views\test\tst2000.ts" />
     <Content Include="Scripts\src\ts\views\test\tst1000.ts" />
     <Content Include="Scripts\src\ts\views\main\main.ts" />
