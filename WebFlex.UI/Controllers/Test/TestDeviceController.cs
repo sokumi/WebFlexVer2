@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Newtonsoft.Json.Linq;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.DTO;
@@ -59,30 +61,31 @@ public class TestDeviceController : Controller {
         }
 
         var rows = await query
-            .OrderBy(x => x.DEVICE_NAME)
-            .Select(x => new DeviceDto {
-                Id = x.ID,
-                DeviceCode = x.ID,
-                DeviceName = x.DEVICE_NAME,
-                DeviceAddress = x.DEVICE_ADDRESS ?? "",
-                Port = x.PORT,
-                EndpointUrl = x.ENDPOINT_URL,
-                DeviceType = x.DEVICE_TYPE ?? "",
-                IsCollectEnabled = x.IS_COLLECTENABLED,
-                UseSecurity = x.USESECURITY,
-                SecurityPolicy = x.SECURITYPOLICY,
-                SecurityMode = x.SECURITYMODE,
-                UseAnonymous = x.USE_ANONYMOUS,
-                UserName = x.USER_NAME,
-                Password = x.PASSWORD,
-                PublishingIntervalMs = x.PUBLISHINGINTERVALMS,
-                SamplingIntervalMs = x.SAMPLINGINTERVALMS,
-                QueueSize = 1,
-                SortOrder = 0,
-                Description = x.DESCRIPTION,
-                IsEnabled = x.IsEnabled
-            })
-            .ToListAsync();
+    .OrderBy(x => x.DEVICE_NAME)
+    .Select(x => new {
+        id = x.ID,
+        deviceCode = x.ID,
+        deviceName = x.DEVICE_NAME,
+        deviceAddress = x.DEVICE_ADDRESS ?? "",
+        port = x.PORT ?? 0,
+        endpointUrl = x.ENDPOINT_URL,
+        deviceType = x.DEVICE_TYPE ?? "",
+        isCollectEnabled = x.IS_COLLECTENABLED,
+        useSecurity = x.USESECURITY,
+        securityPolicy = x.SECURITYPOLICY,
+        securityMode = x.SECURITYMODE,
+        useAnonymous = x.USE_ANONYMOUS,
+        userName = x.USER_NAME,
+        password = x.PASSWORD,
+        publishingIntervalMs = x.PUBLISHINGINTERVALMS ?? 1000,
+        samplingIntervalMs = x.SAMPLINGINTERVALMS ?? 1000,
+        queueSize = 1,
+        sortOrder = 0,
+        description = x.DESCRIPTION,
+        isEnabled = x.IsEnabled,
+        tagCount = _db.Set<OpcTag>().Count(t => t.DEVICE_ID == x.ID)
+    })
+    .ToListAsync();
 
         return Json(new {
             success = true,
@@ -98,14 +101,17 @@ public class TestDeviceController : Controller {
             message = "조회되었습니다.",
             data = new[] {
                 new { value = "OPCUA", text = "OPC UA" },
-                new { value = "MODBUS_TCP", text = "Modbus TCP" },
-                new { value = "MQTT", text = "MQTT" }
+                new { value = "MODBUS_TCP", text = "Modbus TCP" }
             }
         });
     }
 
     [HttpPost, ActionName("save")]
     public async Task<IActionResult> Save([FromBody] DeviceSaveRequest request) {
+
+
+
+
         if (string.IsNullOrWhiteSpace(request.DeviceName)) {
             return Json(new {
                 success = false,

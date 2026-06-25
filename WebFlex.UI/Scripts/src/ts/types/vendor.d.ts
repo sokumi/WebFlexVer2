@@ -17,6 +17,8 @@ declare module "*.css"; declare module "tabulator-tables" {
         redraw(force?: boolean): void;
         destroy(): void;
         getSelectedData(): unknown[];
+
+        on(eventName: string, callback: (...args: unknown[]) => void): void;
     }
 }
 

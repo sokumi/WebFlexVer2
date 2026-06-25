@@ -1,18 +1,10 @@
 ﻿import { api } from "../../framework/common";
+import { notify } from "../../framework/notify";
 import { WebFlexGrid } from "../../framework/grid/webflexGrid";
 import {
-    dateTimeFormatter,
     numberFormatter,
     textFormatter
 } from "../../framework/grid/webflexGridFormatters";
-
-type DeviceSummaryDto = {
-    totalCount: number;
-    enabledCount: number;
-    collectCount: number;
-    connectedCount: number;
-    tagCount: number;
-};
 
 type DeviceTypeDto = {
     value: string;
@@ -37,9 +29,7 @@ type DeviceRowDto = {
     samplingIntervalMs: number;
     sortOrder: number;
     description: string;
-    tagCount: number;
-    lastConnectedAt?: string | null;
-    status: string;
+    tagCount?: number | null;
 };
 
 type DeviceSaveRequest = {
@@ -69,12 +59,10 @@ type EndpointPreviewDto = {
     endpointUrl: string;
 };
 
-type TabulatorRowComponent = {
-    getData: () => unknown;
-};
 
 export default class Page {
     private grid: WebFlexGrid<DeviceRowDto> | null = null;
+    private rows: DeviceRowDto[] = [];
     private selectedId = "";
 
     public init(): void {
@@ -83,7 +71,11 @@ export default class Page {
         this.clearForm();
 
         void this.loadDeviceTypes();
-        void this.reloadAll();
+        void this.loadList();
+
+        window.addEventListener("webflex:layoutChanged", () => {
+            this.grid?.redraw(true);
+        });
     }
 
     private bindEvents(): void {
@@ -99,14 +91,18 @@ export default class Page {
             void this.delete();
         });
 
-        $("#btnSearch, #btnSearchInPanel").on("click", () => {
+        $("#btnSearch").on("click", () => {
             void this.loadList();
         });
 
-        $("#txtSearchKeyword").on("keydown", event => {
+        $("#txtGridKeyword").on("keydown", event => {
             if (event.key === "Enter") {
                 void this.loadList();
             }
+        });
+
+        $("#txtGridKeyword").on("input", () => {
+            this.applyClientFilter();
         });
 
         $("#btnPreviewEndpoint").on("click", () => {
@@ -121,7 +117,7 @@ export default class Page {
     private initGrid(): void {
         this.grid = new WebFlexGrid<DeviceRowDto>({
             selector: "#gridDevice",
-            height: 520,
+            height: "100%",
             pagination: true,
             paginationSize: 12,
             selectableRows: 1,
@@ -129,31 +125,35 @@ export default class Page {
                 {
                     title: "코드",
                     field: "deviceCode",
-                    width: 110,
+                    width: 120,
                     formatter: textFormatter
                 },
                 {
                     title: "디바이스명",
                     field: "deviceName",
-                    minWidth: 180,
+                    minWidth: 190,
                     formatter: textFormatter
                 },
                 {
                     title: "타입",
                     field: "deviceType",
                     width: 120,
-                    formatter: textFormatter
+                    formatter: (cell: { getValue: () => any; }) => {
+                        const value = String(cell.getValue() ?? "");
+                        const className = value === "OPCUA" ? "good" : "warning";
+                        return `<span class="wf-status ${className}">${value}</span>`;
+                    }
                 },
                 {
                     title: "주소",
                     field: "deviceAddress",
-                    minWidth: 150,
+                    minWidth: 160,
                     formatter: textFormatter
                 },
                 {
                     title: "포트",
                     field: "port",
-                    width: 90,
+                    width: 100,
                     hozAlign: "right",
                     formatter: numberFormatter
                 },
@@ -170,8 +170,8 @@ export default class Page {
                     width: 90,
                     formatter: (cell: { getValue: () => boolean; }) => {
                         return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
                     }
                 },
                 {
@@ -180,67 +180,15 @@ export default class Page {
                     width: 90,
                     formatter: (cell: { getValue: () => boolean; }) => {
                         return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
                     }
-                },
-                {
-                    title: "상태",
-                    field: "status",
-                    width: 120,
-                    formatter: (cell: { getValue: () => any; }) => {
-                        const value = String(cell.getValue() ?? "");
-
-                        if (value === "Connected") {
-                            return `<span class="wf-status good">Connected</span>`;
-                        }
-
-                        if (value === "Ready") {
-                            return `<span class="wf-status">Ready</span>`;
-                        }
-
-                        return `<span class="wf-status bad">${value || "Stopped"}</span>`;
-                    }
-                },
-                {
-                    title: "마지막 연결",
-                    field: "lastConnectedAt",
-                    width: 170,
-                    formatter: dateTimeFormatter
                 }
             ],
-            options: {
-                rowClick: (_event: Event, row: TabulatorRowComponent) => {
-                    const data = row.getData() as DeviceRowDto;
-                    this.selectRow(data);
-                }
+            onRowClick: row => {
+                this.selectRow(row);
             }
         });
-    }
-
-    private async reloadAll(): Promise<void> {
-        await this.loadSummary();
-        await this.loadList();
-    }
-
-    private async loadSummary(): Promise<void> {
-        try {
-            const result = await api.get<DeviceSummaryDto>({
-                url: "/test/device/summary"
-            });
-
-            if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "요약 조회에 실패했습니다.");
-                return;
-            }
-
-            $("#lblTotalCount").text(result.data.totalCount.toLocaleString());
-            $("#lblEnabledCount").text(result.data.enabledCount.toLocaleString());
-            $("#lblCollectCount").text(result.data.collectCount.toLocaleString());
-            $("#lblTagCount").text(result.data.tagCount.toLocaleString());
-        } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "요약 조회 중 오류가 발생했습니다.");
-        }
     }
 
     private async loadDeviceTypes(): Promise<void> {
@@ -250,52 +198,67 @@ export default class Page {
             });
 
             if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "디바이스 타입 조회에 실패했습니다.");
+                notify.warning(result.message ?? "디바이스 타입 조회에 실패했습니다.");
                 return;
             }
 
-            const $searchType = $("#selSearchDeviceType");
             const $formType = $("#selDeviceType");
-
-            $searchType.empty();
             $formType.empty();
 
-            $searchType.append(`<option value="">전체</option>`);
-
             for (const item of result.data) {
-                $searchType.append(`<option value="${item.value}">${item.text}</option>`);
                 $formType.append(`<option value="${item.value}">${item.text}</option>`);
             }
 
             $formType.val("OPCUA");
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
         }
     }
 
     private async loadList(): Promise<void> {
         try {
-            const keyword = encodeURIComponent(String($("#txtSearchKeyword").val() ?? "").trim());
-            const deviceType = encodeURIComponent(String($("#selSearchDeviceType").val() ?? ""));
-            const onlyCollect = $("#chkSearchOnlyCollect").prop("checked") === true;
-
             const result = await api.get<DeviceRowDto[]>({
-                url: `/test/device/list?keyword=${keyword}&deviceType=${deviceType}&onlyCollect=${onlyCollect}`
+                url: "/test/device/list"
             });
 
             if (!result.success) {
-                this.showAlert(result.message ?? "디바이스 목록 조회에 실패했습니다.");
+                notify.warning(result.message ?? "디바이스 목록 조회에 실패했습니다.");
                 return;
             }
 
-            await this.grid?.setData(result.data ?? []);
-            this.showAlert("디바이스 목록을 조회했습니다.");
+            this.rows = result.data ?? [];
+            await this.applyClientFilter();
+
+            notify.success("디바이스 목록을 조회했습니다.");
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
         }
     }
 
+    private async applyClientFilter(): Promise<void> {
+        const keyword = String($("#txtGridKeyword").val() ?? "").trim().toLowerCase();
+
+        const filteredRows = keyword.length === 0
+            ? this.rows
+            : this.rows.filter(x =>
+                String(x.deviceCode ?? "").toLowerCase().includes(keyword) ||
+                String(x.deviceName ?? "").toLowerCase().includes(keyword) ||
+                String(x.deviceAddress ?? "").toLowerCase().includes(keyword) ||
+                String(x.endpointUrl ?? "").toLowerCase().includes(keyword)
+            );
+
+        await this.grid?.setData(filteredRows);
+        this.updateGridSummary(filteredRows.length, this.rows.length);
+    }
+
+    private updateGridSummary(visibleCount: number, totalCount: number): void {
+        $("#lblDeviceGridCount").text(`${totalCount.toLocaleString()}건`);
+        $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
+    }
+
     private selectRow(row: DeviceRowDto): void {
+        console.log("selected device row", row);
+
         this.selectedId = row.id;
 
         $("#hidId").val(row.id);
@@ -311,21 +274,12 @@ export default class Page {
         $("#chkUseAnonymous").prop("checked", row.useAnonymous);
         $("#txtUserName").val(row.userName ?? "");
         $("#txtPassword").val(row.password ?? "");
-        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs);
-        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs);
-        $("#txtSortOrder").val(row.sortOrder);
+        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs ?? 1000);
+        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs ?? 1000);
+        $("#txtSortOrder").val(row.sortOrder ?? 0);
         $("#txtDescription").val(row.description ?? "");
 
-        $("#lblSelectedDevice")
-            .removeClass("good bad")
-            .addClass(row.isEnabled ? "good" : "bad")
-            .text(row.deviceName);
-
-        $("#lblFormMode")
-            .removeClass("good bad")
-            .addClass("good")
-            .text("수정");
-
+        this.setEditMode(row.deviceName);
         this.applyEndpointPlaceholder();
     }
 
@@ -350,16 +304,26 @@ export default class Page {
         $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
 
-        $("#lblSelectedDevice")
-            .removeClass("good bad")
-            .text("선택 없음");
+        this.setCreateMode();
+        this.applyEndpointPlaceholder();
+    }
 
+    private setCreateMode(): void {
         $("#lblFormMode")
-            .removeClass("bad")
-            .addClass("good")
+            .removeClass("edit")
+            .addClass("create")
             .text("신규");
 
-        this.applyEndpointPlaceholder();
+        $("#lblSelectedDevice").text("선택 없음");
+    }
+
+    private setEditMode(deviceName: string): void {
+        $("#lblFormMode")
+            .removeClass("create")
+            .addClass("edit")
+            .text("수정");
+
+        $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
 
     private getFormData(): DeviceSaveRequest {
@@ -416,7 +380,7 @@ export default class Page {
         const errorMessage = this.validate(request);
 
         if (errorMessage != null) {
-            this.showAlert(errorMessage);
+            notify.warning(errorMessage);
             return;
         }
 
@@ -427,22 +391,22 @@ export default class Page {
             });
 
             if (!result.success) {
-                this.showAlert(result.message ?? "저장에 실패했습니다.");
+                notify.warning(result.message ?? "저장에 실패했습니다.");
                 return;
             }
 
-            this.showAlert(result.message ?? "저장되었습니다.");
+            notify.success(result.message ?? "저장되었습니다.");
 
-            await this.reloadAll();
+            await this.loadList();
             this.clearForm();
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
         }
     }
 
     private async delete(): Promise<void> {
         if (this.selectedId.length === 0) {
-            this.showAlert("삭제할 디바이스를 선택해 주세요.");
+            notify.warning("삭제할 디바이스를 선택해 주세요.");
             return;
         }
 
@@ -461,16 +425,16 @@ export default class Page {
             });
 
             if (!result.success) {
-                this.showAlert(result.message ?? "삭제에 실패했습니다.");
+                notify.warning(result.message ?? "삭제에 실패했습니다.");
                 return;
             }
 
-            this.showAlert(result.message ?? "삭제되었습니다.");
+            notify.success(result.message ?? "삭제되었습니다.");
 
-            await this.reloadAll();
+            await this.loadList();
             this.clearForm();
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
         }
     }
 
@@ -485,14 +449,14 @@ export default class Page {
             });
 
             if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "Endpoint 생성에 실패했습니다.");
+                notify.warning(result.message ?? "Endpoint 생성에 실패했습니다.");
                 return;
             }
 
             $("#txtEndpointUrl").val(result.data.endpointUrl);
-            this.showAlert("Endpoint URL을 생성했습니다.");
+            notify.success("Endpoint URL을 생성했습니다.");
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "Endpoint 생성 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "Endpoint 생성 중 오류가 발생했습니다.");
         }
     }
 
@@ -507,14 +471,5 @@ export default class Page {
         }
 
         $("#txtEndpointUrl").attr("placeholder", "비워두면 자동 생성");
-    }
-
-    private showAlert(message: string): void {
-        $("#testAlertMessage").text(message);
-        $("#testAlert").removeClass("d-none");
-
-        window.setTimeout(() => {
-            $("#testAlert").addClass("d-none");
-        }, 2500);
     }
 }

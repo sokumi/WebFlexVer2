@@ -76,6 +76,13 @@ class WebFlexGrid {
             ...options.options
         };
         this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(element, tableOptions);
+        if (options.onRowClick != null) {
+            this.table.on("rowClick", (event, row) => {
+                var _a;
+                const rowComponent = row;
+                (_a = options.onRowClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
+            });
+        }
     }
     get instance() {
         return this.table;
@@ -214,6 +221,106 @@ function escapeHtml(value) {
 
 /***/ },
 
+/***/ "./Scripts/src/ts/framework/notify.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/notify.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   notify: () => (/* binding */ notify)
+/* harmony export */ });
+const defaultDuration = 2500;
+function getHost() {
+    let host = document.getElementById("wfToastHost");
+    if (host != null) {
+        return host;
+    }
+    host = document.createElement("div");
+    host.id = "wfToastHost";
+    host.className = "wf-toast-host";
+    host.setAttribute("aria-live", "polite");
+    host.setAttribute("aria-atomic", "true");
+    document.body.appendChild(host);
+    return host;
+}
+function getIcon(type) {
+    if (type === "success") {
+        return "✓";
+    }
+    if (type === "warning") {
+        return "!";
+    }
+    if (type === "error") {
+        return "×";
+    }
+    return "i";
+}
+function removeToast(toast) {
+    toast.classList.add("is-hide");
+    window.setTimeout(() => {
+        toast.remove();
+    }, 180);
+}
+function show(message, options = {}) {
+    var _a, _b;
+    const type = (_a = options.type) !== null && _a !== void 0 ? _a : "info";
+    const duration = (_b = options.duration) !== null && _b !== void 0 ? _b : defaultDuration;
+    const host = getHost();
+    const toast = document.createElement("div");
+    toast.className = `wf-toast ${type}`;
+    toast.innerHTML = `
+        <span class="wf-toast-icon">${getIcon(type)}</span>
+        <span class="wf-toast-message"></span>
+        <button class="wf-toast-close" type="button" aria-label="알림 닫기">×</button>
+    `;
+    const messageElement = toast.querySelector(".wf-toast-message");
+    const closeButton = toast.querySelector(".wf-toast-close");
+    if (messageElement != null) {
+        messageElement.textContent = message;
+    }
+    closeButton === null || closeButton === void 0 ? void 0 : closeButton.addEventListener("click", () => {
+        removeToast(toast);
+    });
+    host.appendChild(toast);
+    if (duration > 0) {
+        window.setTimeout(() => {
+            removeToast(toast);
+        }, duration);
+    }
+}
+const notify = {
+    success(message, duration) {
+        show(message, {
+            type: "success",
+            duration
+        });
+    },
+    info(message, duration) {
+        show(message, {
+            type: "info",
+            duration
+        });
+    },
+    warning(message, duration) {
+        show(message, {
+            type: "warning",
+            duration
+        });
+    },
+    error(message, duration) {
+        show(message, {
+            type: "error",
+            duration
+        });
+    },
+    show
+};
+
+
+/***/ },
+
 /***/ "./Scripts/src/ts/framework/page.ts"
 /*!******************************************!*\
   !*** ./Scripts/src/ts/framework/page.ts ***!
@@ -246,14 +353,17 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ Page)
 /* harmony export */ });
 /* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
-/* harmony import */ var _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../framework/grid/webflexGrid */ "./Scripts/src/ts/framework/grid/webflexGrid.ts");
-/* harmony import */ var _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../framework/grid/webflexGridFormatters */ "./Scripts/src/ts/framework/grid/webflexGridFormatters.ts");
+/* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../framework/notify */ "./Scripts/src/ts/framework/notify.ts");
+/* harmony import */ var _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../framework/grid/webflexGrid */ "./Scripts/src/ts/framework/grid/webflexGrid.ts");
+/* harmony import */ var _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../framework/grid/webflexGridFormatters */ "./Scripts/src/ts/framework/grid/webflexGridFormatters.ts");
+
 
 
 
 class Page {
     constructor() {
         this.grid = null;
+        this.rows = [];
         this.selectedId = "";
     }
     init() {
@@ -261,7 +371,11 @@ class Page {
         this.bindEvents();
         this.clearForm();
         void this.loadDeviceTypes();
-        void this.reloadAll();
+        void this.loadList();
+        window.addEventListener("webflex:layoutChanged", () => {
+            var _a;
+            (_a = this.grid) === null || _a === void 0 ? void 0 : _a.redraw(true);
+        });
     }
     bindEvents() {
         $("#btnNew").on("click", () => {
@@ -273,13 +387,16 @@ class Page {
         $("#btnDelete").on("click", () => {
             void this.delete();
         });
-        $("#btnSearch, #btnSearchInPanel").on("click", () => {
+        $("#btnSearch").on("click", () => {
             void this.loadList();
         });
-        $("#txtSearchKeyword").on("keydown", event => {
+        $("#txtGridKeyword").on("keydown", event => {
             if (event.key === "Enter") {
                 void this.loadList();
             }
+        });
+        $("#txtGridKeyword").on("input", () => {
+            this.applyClientFilter();
         });
         $("#btnPreviewEndpoint").on("click", () => {
             void this.previewEndpoint();
@@ -289,9 +406,9 @@ class Page {
         });
     }
     initGrid() {
-        this.grid = new _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_1__.WebFlexGrid({
+        this.grid = new _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__.WebFlexGrid({
             selector: "#gridDevice",
-            height: 520,
+            height: "100%",
             pagination: true,
             paginationSize: 12,
             selectableRows: 1,
@@ -299,40 +416,45 @@ class Page {
                 {
                     title: "코드",
                     field: "deviceCode",
-                    width: 110,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.textFormatter
+                    width: 120,
+                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "디바이스명",
                     field: "deviceName",
-                    minWidth: 180,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.textFormatter
+                    minWidth: 190,
+                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "타입",
                     field: "deviceType",
                     width: 120,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.textFormatter
+                    formatter: (cell) => {
+                        var _a;
+                        const value = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
+                        const className = value === "OPCUA" ? "good" : "warning";
+                        return `<span class="wf-status ${className}">${value}</span>`;
+                    }
                 },
                 {
                     title: "주소",
                     field: "deviceAddress",
-                    minWidth: 150,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.textFormatter
+                    minWidth: 160,
+                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "포트",
                     field: "port",
-                    width: 90,
+                    width: 100,
                     hozAlign: "right",
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.numberFormatter
+                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
                 },
                 {
                     title: "태그",
                     field: "tagCount",
                     width: 90,
                     hozAlign: "right",
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.numberFormatter
+                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
                 },
                 {
                     title: "수집",
@@ -340,8 +462,8 @@ class Page {
                     width: 90,
                     formatter: (cell) => {
                         return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
                     }
                 },
                 {
@@ -350,63 +472,15 @@ class Page {
                     width: 90,
                     formatter: (cell) => {
                         return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
                     }
-                },
-                {
-                    title: "상태",
-                    field: "status",
-                    width: 120,
-                    formatter: (cell) => {
-                        var _a;
-                        const value = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
-                        if (value === "Connected") {
-                            return `<span class="wf-status good">Connected</span>`;
-                        }
-                        if (value === "Ready") {
-                            return `<span class="wf-status">Ready</span>`;
-                        }
-                        return `<span class="wf-status bad">${value || "Stopped"}</span>`;
-                    }
-                },
-                {
-                    title: "마지막 연결",
-                    field: "lastConnectedAt",
-                    width: 170,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_2__.dateTimeFormatter
                 }
             ],
-            options: {
-                rowClick: (_event, row) => {
-                    const data = row.getData();
-                    this.selectRow(data);
-                }
+            onRowClick: row => {
+                this.selectRow(row);
             }
         });
-    }
-    async reloadAll() {
-        await this.loadSummary();
-        await this.loadList();
-    }
-    async loadSummary() {
-        var _a;
-        try {
-            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: "/test/device/summary"
-            });
-            if (!result.success || result.data == null) {
-                this.showAlert((_a = result.message) !== null && _a !== void 0 ? _a : "요약 조회에 실패했습니다.");
-                return;
-            }
-            $("#lblTotalCount").text(result.data.totalCount.toLocaleString());
-            $("#lblEnabledCount").text(result.data.enabledCount.toLocaleString());
-            $("#lblCollectCount").text(result.data.collectCount.toLocaleString());
-            $("#lblTagCount").text(result.data.tagCount.toLocaleString());
-        }
-        catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "요약 조회 중 오류가 발생했습니다.");
-        }
     }
     async loadDeviceTypes() {
         var _a;
@@ -415,46 +489,60 @@ class Page {
                 url: "/test/device/types"
             });
             if (!result.success || result.data == null) {
-                this.showAlert((_a = result.message) !== null && _a !== void 0 ? _a : "디바이스 타입 조회에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "디바이스 타입 조회에 실패했습니다.");
                 return;
             }
-            const $searchType = $("#selSearchDeviceType");
             const $formType = $("#selDeviceType");
-            $searchType.empty();
             $formType.empty();
-            $searchType.append(`<option value="">전체</option>`);
             for (const item of result.data) {
-                $searchType.append(`<option value="${item.value}">${item.text}</option>`);
                 $formType.append(`<option value="${item.value}">${item.text}</option>`);
             }
             $formType.val("OPCUA");
         }
         catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
         }
     }
     async loadList() {
-        var _a, _b, _c, _d, _e;
+        var _a, _b;
         try {
-            const keyword = encodeURIComponent(String((_a = $("#txtSearchKeyword").val()) !== null && _a !== void 0 ? _a : "").trim());
-            const deviceType = encodeURIComponent(String((_b = $("#selSearchDeviceType").val()) !== null && _b !== void 0 ? _b : ""));
-            const onlyCollect = $("#chkSearchOnlyCollect").prop("checked") === true;
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: `/test/device/list?keyword=${keyword}&deviceType=${deviceType}&onlyCollect=${onlyCollect}`
+                url: "/test/device/list"
             });
             if (!result.success) {
-                this.showAlert((_c = result.message) !== null && _c !== void 0 ? _c : "디바이스 목록 조회에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "디바이스 목록 조회에 실패했습니다.");
                 return;
             }
-            await ((_d = this.grid) === null || _d === void 0 ? void 0 : _d.setData((_e = result.data) !== null && _e !== void 0 ? _e : []));
-            this.showAlert("디바이스 목록을 조회했습니다.");
+            this.rows = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            await this.applyClientFilter();
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success("디바이스 목록을 조회했습니다.");
         }
         catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
         }
     }
+    async applyClientFilter() {
+        var _a, _b;
+        const keyword = String((_a = $("#txtGridKeyword").val()) !== null && _a !== void 0 ? _a : "").trim().toLowerCase();
+        const filteredRows = keyword.length === 0
+            ? this.rows
+            : this.rows.filter(x => {
+                var _a, _b, _c, _d;
+                return String((_a = x.deviceCode) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) ||
+                    String((_b = x.deviceName) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) ||
+                    String((_c = x.deviceAddress) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword) ||
+                    String((_d = x.endpointUrl) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(keyword);
+            });
+        await ((_b = this.grid) === null || _b === void 0 ? void 0 : _b.setData(filteredRows));
+        this.updateGridSummary(filteredRows.length, this.rows.length);
+    }
+    updateGridSummary(visibleCount, totalCount) {
+        $("#lblDeviceGridCount").text(`${totalCount.toLocaleString()}건`);
+        $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
+    }
     selectRow(row) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f;
+        console.log("selected device row", row);
         this.selectedId = row.id;
         $("#hidId").val(row.id);
         $("#txtDeviceCode").val(row.deviceCode);
@@ -469,18 +557,11 @@ class Page {
         $("#chkUseAnonymous").prop("checked", row.useAnonymous);
         $("#txtUserName").val((_a = row.userName) !== null && _a !== void 0 ? _a : "");
         $("#txtPassword").val((_b = row.password) !== null && _b !== void 0 ? _b : "");
-        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs);
-        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs);
-        $("#txtSortOrder").val(row.sortOrder);
-        $("#txtDescription").val((_c = row.description) !== null && _c !== void 0 ? _c : "");
-        $("#lblSelectedDevice")
-            .removeClass("good bad")
-            .addClass(row.isEnabled ? "good" : "bad")
-            .text(row.deviceName);
-        $("#lblFormMode")
-            .removeClass("good bad")
-            .addClass("good")
-            .text("수정");
+        $("#txtPublishingIntervalMs").val((_c = row.publishingIntervalMs) !== null && _c !== void 0 ? _c : 1000);
+        $("#txtSamplingIntervalMs").val((_d = row.samplingIntervalMs) !== null && _d !== void 0 ? _d : 1000);
+        $("#txtSortOrder").val((_e = row.sortOrder) !== null && _e !== void 0 ? _e : 0);
+        $("#txtDescription").val((_f = row.description) !== null && _f !== void 0 ? _f : "");
+        this.setEditMode(row.deviceName);
         this.applyEndpointPlaceholder();
     }
     clearForm() {
@@ -502,14 +583,22 @@ class Page {
         $("#txtSamplingIntervalMs").val(1000);
         $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
-        $("#lblSelectedDevice")
-            .removeClass("good bad")
-            .text("선택 없음");
-        $("#lblFormMode")
-            .removeClass("bad")
-            .addClass("good")
-            .text("신규");
+        this.setCreateMode();
         this.applyEndpointPlaceholder();
+    }
+    setCreateMode() {
+        $("#lblFormMode")
+            .removeClass("edit")
+            .addClass("create")
+            .text("신규");
+        $("#lblSelectedDevice").text("선택 없음");
+    }
+    setEditMode(deviceName) {
+        $("#lblFormMode")
+            .removeClass("create")
+            .addClass("edit")
+            .text("수정");
+        $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
     getFormData() {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
@@ -558,7 +647,7 @@ class Page {
         const request = this.getFormData();
         const errorMessage = this.validate(request);
         if (errorMessage != null) {
-            this.showAlert(errorMessage);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning(errorMessage);
             return;
         }
         try {
@@ -567,21 +656,21 @@ class Page {
                 data: request
             });
             if (!result.success) {
-                this.showAlert((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
                 return;
             }
-            this.showAlert((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
-            await this.reloadAll();
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
+            await this.loadList();
             this.clearForm();
         }
         catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
         }
     }
     async delete() {
         var _a, _b;
         if (this.selectedId.length === 0) {
-            this.showAlert("삭제할 디바이스를 선택해 주세요.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("삭제할 디바이스를 선택해 주세요.");
             return;
         }
         if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) {
@@ -596,15 +685,15 @@ class Page {
                 data: request
             });
             if (!result.success) {
-                this.showAlert((_a = result.message) !== null && _a !== void 0 ? _a : "삭제에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "삭제에 실패했습니다.");
                 return;
             }
-            this.showAlert((_b = result.message) !== null && _b !== void 0 ? _b : "삭제되었습니다.");
-            await this.reloadAll();
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "삭제되었습니다.");
+            await this.loadList();
             this.clearForm();
         }
         catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
         }
     }
     async previewEndpoint() {
@@ -617,14 +706,14 @@ class Page {
                 url: `/test/device/endpoint-preview?deviceType=${deviceType}&address=${address}&port=${port}`
             });
             if (!result.success || result.data == null) {
-                this.showAlert((_d = result.message) !== null && _d !== void 0 ? _d : "Endpoint 생성에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_d = result.message) !== null && _d !== void 0 ? _d : "Endpoint 생성에 실패했습니다.");
                 return;
             }
             $("#txtEndpointUrl").val(result.data.endpointUrl);
-            this.showAlert("Endpoint URL을 생성했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success("Endpoint URL을 생성했습니다.");
         }
         catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "Endpoint 생성 중 오류가 발생했습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "Endpoint 생성 중 오류가 발생했습니다.");
         }
     }
     applyEndpointPlaceholder() {
@@ -637,13 +726,6 @@ class Page {
             return;
         }
         $("#txtEndpointUrl").attr("placeholder", "비워두면 자동 생성");
-    }
-    showAlert(message) {
-        $("#testAlertMessage").text(message);
-        $("#testAlert").removeClass("d-none");
-        window.setTimeout(() => {
-            $("#testAlert").addClass("d-none");
-        }, 2500);
     }
 }
 

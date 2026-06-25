@@ -8,6 +8,10 @@ export type WebFlexGridRow = Record<string, unknown>;
 
 export type WebFlexGridColumn = ColumnDefinition;
 
+export type WebFlexGridRowComponent<TRow extends object = WebFlexGridRow> = {
+    getData: () => TRow;
+};
+
 export type WebFlexGridOptions<TRow extends object = WebFlexGridRow> = {
     selector: string | HTMLElement;
     columns: WebFlexGridColumn[];
@@ -21,6 +25,8 @@ export type WebFlexGridOptions<TRow extends object = WebFlexGridRow> = {
     selectableRows?: boolean | number;
     placeholder?: string;
     options?: Options;
+
+    onRowClick?: (row: TRow, event: Event) => void;
 };
 
 type TabulatorInstance = {
@@ -30,6 +36,7 @@ type TabulatorInstance = {
     redraw: (force?: boolean) => void;
     destroy: () => void;
     getSelectedData: () => unknown[];
+    on: (eventName: string, callback: (...args: unknown[]) => void) => void;
 };
 
 export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
@@ -53,6 +60,13 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
         };
 
         this.table = new Tabulator(element, tableOptions);
+
+        if (options.onRowClick != null) {
+            this.table.on("rowClick", (event: unknown, row: unknown) => {
+                const rowComponent = row as WebFlexGridRowComponent<TRow>;
+                options.onRowClick?.(rowComponent.getData(), event as Event);
+            });
+        }
     }
 
     public get instance(): TabulatorInstance {

@@ -136,17 +136,7 @@
     color: var(--wf-text-muted);
     font-size: 13px;
     font-weight: 700;
-}
-
-.wf-test-alert {
-    border: 1px solid var(--wf-border);
-    border-radius: var(--wf-radius-md);
-    background: var(--wf-blue-soft);
-    color: var(--wf-blue);
-    padding: 10px 14px;
-    font-size: 13px;
-    font-weight: 700;
-}
+} 
 
 @media (max-width: 1399px) {
     .wf-devicetag-layout {

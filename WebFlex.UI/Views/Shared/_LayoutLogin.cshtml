@@ -36,6 +36,8 @@
 <body>
     @RenderBody()
 
+    <div id="wfToastHost" class="wf-toast-host" aria-live="polite" aria-atomic="true"></div>
+
     <script src="~/1.0.0/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

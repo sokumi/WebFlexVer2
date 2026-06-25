@@ -81526,6 +81526,107 @@ __webpack_require__.r(__webpack_exports__);
 // extracted by mini-css-extract-plugin
 
 
+/***/ },
+
+/***/ "./Scripts/src/ts/framework/notify.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/notify.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   notify: () => (/* binding */ notify)
+/* harmony export */ });
+const defaultDuration = 2500;
+function getHost() {
+    let host = document.getElementById("wfToastHost");
+    if (host != null) {
+        return host;
+    }
+    host = document.createElement("div");
+    host.id = "wfToastHost";
+    host.className = "wf-toast-host";
+    host.setAttribute("aria-live", "polite");
+    host.setAttribute("aria-atomic", "true");
+    document.body.appendChild(host);
+    return host;
+}
+function getIcon(type) {
+    if (type === "success") {
+        return "✓";
+    }
+    if (type === "warning") {
+        return "!";
+    }
+    if (type === "error") {
+        return "×";
+    }
+    return "i";
+}
+function removeToast(toast) {
+    toast.classList.add("is-hide");
+    window.setTimeout(() => {
+        toast.remove();
+    }, 180);
+}
+function show(message, options = {}) {
+    var _a, _b;
+    const type = (_a = options.type) !== null && _a !== void 0 ? _a : "info";
+    const duration = (_b = options.duration) !== null && _b !== void 0 ? _b : defaultDuration;
+    const host = getHost();
+    const toast = document.createElement("div");
+    toast.className = `wf-toast ${type}`;
+    toast.innerHTML = `
+        <span class="wf-toast-icon">${getIcon(type)}</span>
+        <span class="wf-toast-message"></span>
+        <button class="wf-toast-close" type="button" aria-label="알림 닫기">×</button>
+    `;
+    const messageElement = toast.querySelector(".wf-toast-message");
+    const closeButton = toast.querySelector(".wf-toast-close");
+    if (messageElement != null) {
+        messageElement.textContent = message;
+    }
+    closeButton === null || closeButton === void 0 ? void 0 : closeButton.addEventListener("click", () => {
+        removeToast(toast);
+    });
+    host.appendChild(toast);
+    if (duration > 0) {
+        window.setTimeout(() => {
+            removeToast(toast);
+        }, duration);
+    }
+}
+const notify = {
+    success(message, duration) {
+        show(message, {
+            type: "success",
+            duration
+        });
+    },
+    info(message, duration) {
+        show(message, {
+            type: "info",
+            duration
+        });
+    },
+    warning(message, duration) {
+        show(message, {
+            type: "warning",
+            duration
+        });
+    },
+    error(message, duration) {
+        show(message, {
+            type: "error",
+            duration
+        });
+    },
+    show
+};
+
+
 /***/ }
 
 /******/ 	});
@@ -81621,6 +81722,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _css_webflex_theme_css__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../css/webflex-theme.css */ "./Scripts/src/css/webflex-theme.css");
 /* harmony import */ var _css_webflex_layout_css__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../css/webflex-layout.css */ "./Scripts/src/css/webflex-layout.css");
 /* harmony import */ var _css_webflex_components_css__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../css/webflex-components.css */ "./Scripts/src/css/webflex-components.css");
+/* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./framework/notify */ "./Scripts/src/ts/framework/notify.ts");
+
 
 
 
@@ -81631,6 +81734,7 @@ __webpack_require__.r(__webpack_exports__);
 
 window.$ = (jquery__WEBPACK_IMPORTED_MODULE_0___default());
 window.jQuery = (jquery__WEBPACK_IMPORTED_MODULE_0___default());
+window.notify = _framework_notify__WEBPACK_IMPORTED_MODULE_9__.notify;
 function initWebFlexIcons() {
     (0,lucide__WEBPACK_IMPORTED_MODULE_4__.createIcons)({
         icons: lucide__WEBPACK_IMPORTED_MODULE_5__
@@ -81688,11 +81792,45 @@ function bindSidebarToggle() {
         sidebar.classList.toggle("is-collapsed");
     });
 }
+function initHeaderClock() {
+    const clock = document.getElementById("lblHeaderClock");
+    if (clock == null) {
+        return;
+    }
+    const updateClock = () => {
+        const now = new Date();
+        const hh = String(now.getHours()).padStart(2, "0");
+        const mm = String(now.getMinutes()).padStart(2, "0");
+        const ss = String(now.getSeconds()).padStart(2, "0");
+        clock.textContent = `${hh}:${mm}:${ss}`;
+    };
+    updateClock();
+    window.setInterval(updateClock, 1000);
+}
+function bindSearchPanelToggle() {
+    document.addEventListener("click", event => {
+        const target = event.target;
+        const button = target === null || target === void 0 ? void 0 : target.closest("[data-wf-search-toggle]");
+        if (button == null) {
+            return;
+        }
+        const panel = button.closest(".wf-search-panel");
+        if (panel == null) {
+            return;
+        }
+        panel.classList.toggle("is-collapsed");
+        const expanded = !panel.classList.contains("is-collapsed");
+        button.setAttribute("aria-expanded", String(expanded));
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+    });
+}
 document.addEventListener("DOMContentLoaded", () => {
     initWebFlexTheme();
     bindActiveMenu();
     bindSidebarToggle();
     bindThemeToggle();
+    bindSearchPanelToggle();
+    initHeaderClock();
     initWebFlexIcons();
 });
 console.log("WebFlex app loaded.");

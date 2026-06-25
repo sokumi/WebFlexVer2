@@ -3,6 +3,8 @@ import { Modal } from "bootstrap";
 
 import { api } from "../../framework/common";
 import { WebFlexGrid } from "../../framework/grid/webflexGrid";
+import { notify } from "../../framework/notify";
+
 import {
     dateTimeFormatter,
     numberFormatter,
@@ -33,9 +35,9 @@ type TestSaveRequest = {
 };
 
 export default class Page {
-    private grid: WebFlexGrid<TestGridRowDto> | null = null;
-    private chart: echarts.ECharts | null = null;
-    private modal: Modal | null = null;
+     grid: WebFlexGrid<TestGridRowDto> | null = null;
+     chart: echarts.ECharts | null = null;
+     modal: Modal | null = null;
 
     public init(): void {
         this.initGrid();
@@ -48,7 +50,7 @@ export default class Page {
         void this.loadGrid();
     }
 
-    private bindEvents(): void {
+     bindEvents(): void {
         $("#btnReload").on("click", () => {
             void this.reloadAll();
         });
@@ -80,7 +82,7 @@ export default class Page {
         });
     }
 
-    private initGrid(): void {
+     initGrid(): void {
         this.grid = new WebFlexGrid<TestGridRowDto>({
             selector: "#gridTest",
             height: 360,
@@ -128,7 +130,7 @@ export default class Page {
         });
     }
 
-    private initChart(): void {
+     initChart(): void {
         const element = document.getElementById("testChart");
 
         if (element == null) {
@@ -170,7 +172,7 @@ export default class Page {
         });
     }
 
-    private initModal(): void {
+     initModal(): void {
         const element = document.getElementById("testModal");
 
         if (element == null) {
@@ -180,14 +182,14 @@ export default class Page {
         this.modal = new Modal(element);
     }
 
-    private async reloadAll(): Promise<void> {
+     async reloadAll(): Promise<void> {
         await this.loadSummary();
         await this.loadGrid();
 
         this.showAlert("전체 데이터를 다시 조회했습니다.");
     }
 
-    private async loadSummary(): Promise<void> {
+     async loadSummary(): Promise<void> {
         try {
             const result = await api.get<TestSummaryDto>({
                 url: "/test/main/summary"
@@ -207,7 +209,7 @@ export default class Page {
         }
     }
 
-    private async loadGrid(): Promise<void> {
+     async loadGrid(): Promise<void> {
         try {
             const result = await api.get<TestGridRowDto[]>({
                 url: "/test/main/grid"
@@ -226,7 +228,7 @@ export default class Page {
         }
     }
 
-    private async saveForm(): Promise<void> {
+     async saveForm(): Promise<void> {
         const request: TestSaveRequest = {
             name: String($("#txtName").val() ?? "").trim(),
             description: String($("#txtDescription").val() ?? "").trim(),
@@ -251,12 +253,7 @@ export default class Page {
         }
     }
 
-    private showAlert(message: string): void {
-        $("#testAlertMessage").text(message);
-        $("#testAlert").removeClass("d-none");
-
-        window.setTimeout(() => {
-            $("#testAlert").addClass("d-none");
-        }, 2500);
+     showAlert(message: string): void {
+        notify.info(message);
     }
 }

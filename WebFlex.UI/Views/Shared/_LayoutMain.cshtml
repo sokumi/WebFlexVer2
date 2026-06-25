@@ -129,35 +129,58 @@
 
             </nav>
 
-            <div class="wf-sidebar-status">
-                <span class="wf-status good">Service Ready</span>
+            <div class="wf-sidebar-bottom">
+                <div class="wf-opc-status-card">
+                    <div class="wf-opc-status-title">
+                        <span class="wf-status-dot good"></span>
+                        <span>OPC 서버 연결됨</span>
+                    </div>
+                    <div class="wf-opc-status-sub">10.10.10.142:8083</div>
+                </div>
+
+                <button id="btnSidebarToggle" class="wf-sidebar-collapse" type="button" aria-label="메뉴 접기">
+                    <i data-lucide="chevron-left"></i>
+                    <span>접기</span>
+                </button>
             </div>
         </aside>
 
         <section class="wf-main">
             <header class="wf-topbar">
                 <div class="wf-topbar-left">
-                    <button id="btnSidebarToggle" class="wf-btn-icon" type="button" aria-label="메뉴">
-                        <i data-lucide="menu"></i>
-                    </button>
-
-                    <div>
+                    <div class="wf-topbar-title-block">
                         <div class="wf-breadcrumb">
-                            <span>WebFlex</span>
+                            <span>위젯 대시보드</span>
                             <span>/</span>
                             <span>@title</span>
                         </div>
-                        <h1 class="wf-page-title">@title</h1>
                     </div>
                 </div>
 
                 <div class="wf-topbar-right">
-                    <button class="wf-btn-icon" type="button" data-webflex-theme-toggle aria-label="테마 변경">
+                    <span id="lblHeaderClock" class="wf-header-clock">--:--:--</span>
+
+                    <span class="wf-header-status">
+                        <i data-lucide="wifi"></i>
+                        <span>Connected</span>
+                    </span>
+
+                    <button class="wf-btn-icon wf-header-icon" type="button" aria-label="알림">
+                        <i data-lucide="bell"></i>
+                        <span class="wf-notification-dot"></span>
+                    </button>
+
+                    <button class="wf-btn-icon wf-header-icon" type="button" data-webflex-theme-toggle aria-label="테마 변경">
                         <i data-lucide="moon"></i>
                     </button>
 
-                    <a class="btn btn-outline-secondary btn-sm" href="/auth/logout">
-                        로그아웃
+                    <div class="wf-user-chip">
+                        @* <span class="wf-user-avatar">A</span> *@
+                        <span>Admin</span>
+                    </div>
+
+                    <a class="wf-btn-icon wf-header-icon" href="/auth/logout" aria-label="로그아웃">
+                        <i data-lucide="log-out"></i>
                     </a>
                 </div>
             </header>
@@ -167,6 +190,8 @@
             </main>
         </section>
     </div>
+
+    <div id="wfToastHost" class="wf-toast-host" aria-live="polite" aria-atomic="true"></div>
 
     <script src="~/1.0.0/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

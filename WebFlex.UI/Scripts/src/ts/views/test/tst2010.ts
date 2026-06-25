@@ -199,7 +199,7 @@ export default class Page {
                     width: 54,
                     hozAlign: "center",
                     headerSort: false,
-                    formatter: cell => {
+                    formatter: (cell: { getValue: () => any; }) => {
                         const id = String(cell.getValue() ?? "");
                         const checked = this.selectedTagIds.includes(id) ? "checked" : "";
                         return `<input type="checkbox" class="wf-tag-check" data-id="${id}" ${checked} />`;
@@ -233,7 +233,7 @@ export default class Page {
                     title: "수집",
                     field: "isCollectEnabled",
                     width: 90,
-                    formatter: cell => {
+                    formatter: (cell: { getValue: () => boolean; }) => {
                         return cell.getValue() === true
                             ? `<span class="wf-status good">Y</span>`
                             : `<span class="wf-status bad">N</span>`;
@@ -243,7 +243,7 @@ export default class Page {
                     title: "DB저장",
                     field: "saveToDatabase",
                     width: 100,
-                    formatter: cell => {
+                    formatter: (cell: { getValue: () => boolean; }) => {
                         return cell.getValue() === true
                             ? `<span class="wf-status good">Y</span>`
                             : `<span class="wf-status bad">N</span>`;

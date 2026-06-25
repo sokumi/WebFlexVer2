@@ -1,8 +1,9 @@
-﻿import type { PageModel } from "../framework/page";
+﻿import type { notify } from "../framework/notify";
 
 declare global {
     interface Window {
-        viewModel: PageModel | null;
+        viewModel: unknown;
+        notify: typeof notify;
     }
 }
 

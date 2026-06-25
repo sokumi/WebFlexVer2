@@ -31,17 +31,18 @@ body {
 
 .wf-brand {
     height: var(--wf-topbar-height);
+    min-height: var(--wf-topbar-height);
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 18px;
     border-bottom: 1px solid var(--wf-border);
-    font-weight: 700;
+    font-weight: 800;
 }
 
 .wf-brand-icon {
-    width: 30px;
-    height: 30px;
+    width: 28px;
+    height: 28px;
     border-radius: 8px;
     background: var(--wf-blue);
     color: #ffffff;
@@ -50,31 +51,54 @@ body {
     justify-content: center;
 }
 
-.wf-brand-text small {
-    display: block;
-    color: var(--wf-text-muted);
-    font-size: 11px;
-    font-weight: 500;
+    .wf-brand-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+
+.wf-brand-text {
+    line-height: 1.1;
 }
+
+    .wf-brand-text small {
+        display: block;
+        margin-top: 2px;
+        color: var(--wf-text-muted);
+        font-size: 10px;
+        font-weight: 600;
+    }
 
 .wf-nav {
     flex: 1 1 auto;
     min-height: 0;
-    padding: 12px;
+    padding: 12px 10px;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
+.wf-nav-section {
+    margin-bottom: 16px;
+}
+
+.wf-nav-title {
+    padding: 8px 12px 6px;
+    font-size: 10px;
+    font-weight: 900;
+    color: var(--wf-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
 .wf-nav-link {
-    height: 38px;
+    height: 36px;
     display: flex;
     align-items: center;
     gap: 10px;
     padding: 0 12px;
-    border-radius: var(--wf-radius-md);
+    border-radius: 9px;
     color: var(--wf-text-muted);
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 700;
+    font-size: 13px;
     margin-bottom: 4px;
 }
 
@@ -85,16 +109,75 @@ body {
     }
 
     .wf-nav-link svg {
-        width: 18px;
-        height: 18px;
+        width: 17px;
+        height: 17px;
     }
 
-.wf-sidebar-status {
-    padding: 14px 16px;
+.wf-sidebar-bottom {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 10px;
+    padding: 12px;
     border-top: 1px solid var(--wf-border);
-    color: var(--wf-text-muted);
-    font-size: 12px;
 }
+
+.wf-opc-status-card {
+    border-radius: 12px;
+    background: var(--wf-surface-soft);
+    padding: 10px 12px;
+}
+
+.wf-opc-status-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--wf-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.wf-opc-status-sub {
+    margin-top: 4px;
+    padding-left: 13px;
+    color: var(--wf-text-muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.wf-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+    .wf-status-dot.good {
+        background: var(--wf-green);
+        box-shadow: 0 0 0 4px rgba(18, 184, 134, 0.12);
+    }
+
+.wf-sidebar-collapse {
+    width: 100%;
+    height: 30px;
+    border: 0;
+    background: transparent;
+    color: var(--wf-text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+    .wf-sidebar-collapse:hover {
+        color: var(--wf-blue);
+    }
+
+    .wf-sidebar-collapse svg {
+        width: 15px;
+        height: 15px;
+    }
 
 .wf-main {
     height: 100vh;
@@ -113,30 +196,30 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 22px;
+    padding: 0 14px 0 18px;
     z-index: 20;
     overflow: hidden;
 }
 
-.wf-page {
-    min-height: 0;
-    overflow-y: auto;
-    overflow-x: hidden;
-    padding: 20px 22px 32px;
-    background: var(--wf-bg);
-}
-
-.wf-page-header {
+.wf-topbar-left,
+.wf-topbar-right {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    gap: 10px;
+    min-width: 0;
 }
 
-.wf-page-title {
-    margin: 0;
-    font-size: 18px;
-    font-weight: 800;
+.wf-topbar-left {
+    flex: 1 1 auto;
+}
+
+.wf-topbar-right {
+    flex: 0 0 auto;
+    margin-left: auto;
+}
+
+.wf-topbar-title-block {
+    min-width: 0;
 }
 
 .wf-breadcrumb {
@@ -144,53 +227,101 @@ body {
     gap: 8px;
     align-items: center;
     color: var(--wf-text-muted);
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
-@media (max-width: 991px) {
-    .wf-sidebar {
-        position: fixed;
-        inset: 0 auto 0 0;
-        transform: translateX(-100%);
-        transition: transform 0.2s ease;
+    .wf-breadcrumb span:first-child {
+        color: var(--wf-text);
+        font-weight: 900;
     }
 
-    .wf-main {
-        flex: 1 1 auto;
-    }
-}
-
-
-.wf-nav-section {
-    margin-bottom: 16px;
-}
-
-.wf-nav-title {
-    padding: 8px 12px 6px;
+.wf-header-clock {
+    color: var(--wf-text-muted);
     font-size: 11px;
     font-weight: 800;
-    color: var(--wf-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
 }
 
-.wf-topbar-left,
-.wf-topbar-right {
+.wf-header-status {
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 9px;
+    border-radius: 999px;
+    background: rgba(18, 184, 134, 0.12);
+    color: var(--wf-green);
+    font-size: 11px;
+    font-weight: 900;
+}
+
+    .wf-header-status svg {
+        width: 13px;
+        height: 13px;
+    }
+
+.wf-header-icon {
+    position: relative;
+    width: 28px;
+    height: 28px;
+}
+
+.wf-notification-dot {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--wf-red);
+    border: 1px solid var(--wf-topbar-bg);
+}
+
+.wf-user-chip {
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--wf-text);
+    font-size: 12px;
+    font-weight: 800;
+}
+
+/*.wf-user-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: var(--wf-blue);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 900;
+}*/
+
+.wf-page {
+    min-height: 0;
+    overflow: hidden;
+    padding: 16px 18px 18px;
+    background: var(--wf-bg);
+    display: flex;
+    flex-direction: column;
+}
+
+.wf-page-header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
+    margin-bottom: 14px;
 }
 
-.wf-topbar-left {
-    min-width: 0;
-}
-
-.wf-topbar-right {
-    margin-left: auto;
-}
-
-.wf-topbar .wf-page-title {
-    margin-top: 2px;
+.wf-page-title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 900;
 }
 
 .wf-sidebar.is-collapsed {
@@ -201,20 +332,132 @@ body {
     .wf-sidebar.is-collapsed .wf-brand-text,
     .wf-sidebar.is-collapsed .wf-nav-title,
     .wf-sidebar.is-collapsed .wf-nav-link span,
-    .wf-sidebar.is-collapsed .wf-sidebar-status {
+    .wf-sidebar.is-collapsed .wf-opc-status-card,
+    .wf-sidebar.is-collapsed .wf-sidebar-collapse span {
         display: none;
     }
-
-
 
     .wf-sidebar.is-collapsed .wf-brand,
     .wf-sidebar.is-collapsed .wf-nav-link {
         justify-content: center;
     }
 
-@media (max-width: 991px) {
-    .wf-sidebar.is-open {
-        transform: translateX(0);
+    .wf-sidebar.is-collapsed .wf-sidebar-bottom {
+        padding: 10px;
     }
 
+    .wf-sidebar.is-collapsed .wf-sidebar-collapse svg {
+        transform: rotate(180deg);
+    }
+
+@media (max-width: 991px) {
+    .wf-sidebar {
+        position: fixed;
+        inset: 0 auto 0 0;
+        transform: translateX(-100%);
+        transition: transform 0.2s ease;
+    }
+
+        .wf-sidebar.is-open {
+            transform: translateX(0);
+        }
+
+    .wf-main {
+        flex: 1 1 auto;
+    }
+
+    .wf-topbar-right {
+        gap: 6px;
+    }
+
+    .wf-header-clock,
+    .wf-user-chip span:not(.wf-user-avatar) {
+        display: none;
+    }
+}
+
+/* =========================================================
+   Page Layout Modes
+   - 기본: 데스크톱에서 스크롤 없이 화면에 맞춤
+   - is-scroll: 데스크톱에서도 페이지 내부 스크롤 허용
+   ========================================================= */
+
+.wf-page-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+}
+
+    .wf-page-layout.is-scroll {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 2px;
+    }
+
+    .wf-page-layout.is-compact {
+        gap: 10px;
+    }
+
+.wf-page-layout-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow: hidden;
+}
+
+    .wf-page-layout-body.is-scroll {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+/* 페이지 안에서 남은 높이를 꽉 채우는 영역 */
+.wf-fill {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+}
+
+/* 표/그리드가 있는 영역 */
+.wf-grid-fill {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+    .wf-grid-fill .wf-card-body,
+    .wf-grid-fill .wf-grid-wrap,
+    .wf-grid-fill .wf-grid {
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+/* 데스크톱에서는 고정형, 태블릿/모바일에서는 스크롤 허용 */
+@media (max-width: 991px) {
+    .wf-page {
+        overflow: hidden;
+        padding: 14px;
+    }
+
+    .wf-page-layout {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 2px;
+    }
+
+    .wf-page-layout-body {
+        overflow: visible;
+    }
+
+    .wf-fill,
+    .wf-grid-fill {
+        overflow: visible;
+    }
 }

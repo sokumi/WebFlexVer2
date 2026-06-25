@@ -25,7 +25,11 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<TimescaleOptionService>();
 
 
-builder.Services.AddControllersWithViews();
+var mvcBuilder = builder.Services.AddControllersWithViews();
+
+if (builder.Environment.IsDevelopment()) {
+    mvcBuilder.AddRazorRuntimeCompilation();
+}
 
 var app = builder.Build();
 
