@@ -1,6 +1,8 @@
 ﻿@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
 
 @{
+    var title = ViewData["Title"]?.ToString() ?? "로그인";
+
     var controllerName = ViewContext.RouteData.Values["controller"]?.ToString()?.ToLowerInvariant() ?? "";
     var actionName = ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant() ?? "";
 
@@ -18,14 +20,13 @@
 }
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-webflex-theme="light" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebFlexV2</title>
+    <title>@title - WebFlexV2</title>
 
     <link rel="stylesheet" href="~/1.0.0/css/app.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/1.0.0/css/auth/login.css" asp-append-version="true" />
 
     @if (hasPageCss)
     {
@@ -33,9 +34,7 @@
     }
 </head>
 <body>
-    <main class="login-layout">
-        @RenderBody()
-    </main>
+    @RenderBody()
 
     <script src="~/1.0.0/js/app.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)

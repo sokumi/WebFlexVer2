@@ -34,10 +34,40 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ Page)
 /* harmony export */ });
 class Page {
-    constructor() {
-        this.isAutoRefresh = false;
-    }
     init() {
+        this.focusUserId();
+        this.bindSubmitGuard();
+    }
+    focusUserId() {
+        const userId = document.getElementById("txtUserId");
+        if (userId == null) {
+            return;
+        }
+        userId.focus();
+    }
+    bindSubmitGuard() {
+        const form = document.getElementById("frmLogin");
+        const userId = document.getElementById("txtUserId");
+        const password = document.getElementById("txtPassword");
+        if (form == null || userId == null || password == null) {
+            return;
+        }
+        form.addEventListener("submit", event => {
+            const userIdValue = userId.value.trim();
+            const passwordValue = password.value.trim();
+            if (userIdValue.length === 0) {
+                event.preventDefault();
+                alert("아이디를 입력해 주세요.");
+                userId.focus();
+                return;
+            }
+            if (passwordValue.length === 0) {
+                event.preventDefault();
+                alert("비밀번호를 입력해 주세요.");
+                password.focus();
+                return;
+            }
+        });
     }
 }
 

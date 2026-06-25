@@ -1,4 +1,229 @@
 /*!****************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./Scripts/src/css/views/auth/login.css ***!
   \****************************************************************************************/
+.wf-login-page {
+    min-height: 100vh;
+    background: radial-gradient(circle at top, rgba(47, 111, 237, 0.08), transparent 32rem), var(--wf-bg);
+    color: var(--wf-text);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
 
+.wf-login-topbar {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 22px;
+    border-bottom: 1px solid var(--wf-border);
+    background: color-mix(in srgb, var(--wf-surface) 86%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.wf-login-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+}
+
+.wf-login-brand-icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: var(--wf-blue);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .wf-login-brand-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+
+.wf-login-main {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+}
+
+.wf-login-hero {
+    width: 100%;
+    max-width: 410px;
+    text-align: center;
+}
+
+.wf-login-logo {
+    width: 58px;
+    height: 58px;
+    margin: 0 auto 14px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, var(--wf-blue), #4dabf7);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 16px 34px rgba(47, 111, 237, 0.28);
+}
+
+    .wf-login-logo svg {
+        width: 28px;
+        height: 28px;
+    }
+
+.wf-login-hero h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+}
+
+.wf-login-hero > p {
+    margin: 7px 0 26px;
+    color: var(--wf-text-muted);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+.wf-login-card {
+    text-align: left;
+    background: var(--wf-surface);
+    border: 1px solid var(--wf-border);
+    border-radius: 14px;
+    box-shadow: var(--wf-card-shadow);
+    padding: 24px;
+}
+
+.wf-login-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+    .wf-login-card-header h2 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 900;
+    }
+
+    .wf-login-card-header p {
+        margin: 5px 0 0;
+        color: var(--wf-text-muted);
+        font-size: 12px;
+    }
+
+.wf-login-field {
+    margin-bottom: 14px;
+}
+
+    .wf-login-field label {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--wf-text);
+        font-size: 12px;
+        font-weight: 800;
+    }
+
+    .wf-login-field .form-control {
+        height: 44px;
+        border-color: var(--wf-border);
+        background: var(--wf-surface-soft);
+        color: var(--wf-text);
+        font-size: 14px;
+    }
+
+        .wf-login-field .form-control::placeholder {
+            color: color-mix(in srgb, var(--wf-text-muted) 72%, transparent);
+        }
+
+        .wf-login-field .form-control:focus {
+            border-color: var(--wf-blue);
+            box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
+        }
+
+.wf-login-submit {
+    width: 100%;
+    height: 44px;
+    margin-top: 4px;
+    font-weight: 900;
+    border-radius: 8px;
+}
+
+.wf-login-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 18px;
+    padding-top: 14px;
+    border-top: 1px solid var(--wf-border);
+    color: var(--wf-text-muted);
+    font-size: 12px;
+}
+
+.wf-login-link {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--wf-text-muted);
+    font-size: 12px;
+}
+
+    .wf-login-link:hover {
+        color: var(--wf-blue);
+    }
+
+.wf-login-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 18px;
+    color: var(--wf-text-muted);
+    font-size: 12px;
+}
+
+.wf-login-status-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--wf-green);
+    box-shadow: 0 0 0 4px rgba(18, 184, 134, 0.12);
+}
+
+.wf-login-footer {
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--wf-text-muted);
+    font-size: 12px;
+}
+
+:root[data-webflex-theme="dark"] .wf-login-page {
+    background: radial-gradient(circle at top, rgba(47, 111, 237, 0.16), transparent 34rem), var(--wf-bg);
+}
+
+:root[data-webflex-theme="dark"] .wf-login-topbar {
+    background: color-mix(in srgb, var(--wf-surface) 82%, transparent);
+}
+
+@media (max-width: 575px) {
+    .wf-login-topbar {
+        padding: 0 14px;
+    }
+
+    .wf-login-main {
+        padding: 30px 14px;
+    }
+
+    .wf-login-card {
+        padding: 20px;
+    }
+}
+
+
+/*# sourceMappingURL=login.css.map*/
