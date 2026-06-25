@@ -47,10 +47,50 @@ function bindThemeToggle(): void {
     });
 }
 
+function bindActiveMenu(): void {
+    const currentPath = window.location.pathname.toLowerCase();
+
+    document.querySelectorAll<HTMLElement>("[data-menu-path]").forEach(menu => {
+        const menuPath = (menu.getAttribute("data-menu-path") ?? "").toLowerCase();
+
+        if (menuPath === "/") {
+            if (currentPath === "/" || currentPath === "/home" || currentPath === "/home/index") {
+                menu.classList.add("active");
+            }
+
+            return;
+        }
+
+        if (currentPath.startsWith(menuPath)) {
+            menu.classList.add("active");
+        }
+    });
+}
+
+function bindSidebarToggle(): void {
+    const button = document.getElementById("btnSidebarToggle");
+    const sidebar = document.querySelector<HTMLElement>(".wf-sidebar");
+
+    if (button == null || sidebar == null) {
+        return;
+    }
+
+    button.addEventListener("click", () => {
+        if (window.innerWidth <= 991) {
+            sidebar.classList.toggle("is-open");
+            return;
+        }
+
+        sidebar.classList.toggle("is-collapsed");
+    });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     initWebFlexTheme();
-    initWebFlexIcons();
+    bindActiveMenu();
+    bindSidebarToggle();
     bindThemeToggle();
+    initWebFlexIcons();
 });
 
 console.log("WebFlex app loaded.");

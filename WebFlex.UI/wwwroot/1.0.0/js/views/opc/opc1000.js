@@ -2,10 +2,10 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./WebFlex.UI/Scripts/src/ts/framework/page.ts"
-/*!*****************************************************!*\
-  !*** ./WebFlex.UI/Scripts/src/ts/framework/page.ts ***!
-  \*****************************************************/
+/***/ "./Scripts/src/ts/framework/page.ts"
+/*!******************************************!*\
+  !*** ./Scripts/src/ts/framework/page.ts ***!
+  \******************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -23,10 +23,10 @@ function runPage(Page) {
 
 /***/ },
 
-/***/ "./WebFlex.UI/Scripts/src/ts/views/opc/opc1000.ts"
-/*!********************************************************!*\
-  !*** ./WebFlex.UI/Scripts/src/ts/views/opc/opc1000.ts ***!
-  \********************************************************/
+/***/ "./Scripts/src/ts/views/opc/opc1000.ts"
+/*!*********************************************!*\
+  !*** ./Scripts/src/ts/views/opc/opc1000.ts ***!
+  \*********************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -61,7 +61,7 @@ class Page {
         }, 3000);
     }
     async loadDevices() {
-        var _a;
+        var _a, _b, _c, _d;
         try {
             const res = await this.get("/device/manage/list");
             this.devices = (_a = res.data) !== null && _a !== void 0 ? _a : [];
@@ -69,7 +69,10 @@ class Page {
             $selDevice.empty();
             $selDevice.append(`<option value="">디바이스 선택</option>`);
             for (const device of this.devices) {
-                $selDevice.append(`<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`);
+                const id = (_b = device.id) !== null && _b !== void 0 ? _b : "";
+                const deviceName = (_c = device.deviceName) !== null && _c !== void 0 ? _c : "";
+                const deviceType = (_d = device.deviceType) !== null && _d !== void 0 ? _d : "";
+                $selDevice.append(`<option value="${this.escapeHtml(id)}">${this.escapeHtml(deviceName)} (${this.escapeHtml(deviceType)})</option>`);
             }
         }
         catch (e) {
@@ -236,7 +239,7 @@ class Page {
         }
     }
     escapeHtml(value) {
-        return value
+        return String(value !== null && value !== void 0 ? value : "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
@@ -326,17 +329,28 @@ class Page {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
 (() => {
-/*!**************************************************************!*\
-  !*** ./WebFlex.UI/Scripts/.generated/views__opc__opc1000.ts ***!
-  \**************************************************************/
+var __webpack_exports__ = {};
+/*!***************************************************!*\
+  !*** ./Scripts/.generated/views__opc__opc1000.ts ***!
+  \***************************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_ts_views_opc_opc1000__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/opc/opc1000 */ "./WebFlex.UI/Scripts/src/ts/views/opc/opc1000.ts");
-/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./WebFlex.UI/Scripts/src/ts/framework/page.ts");
+/* harmony import */ var _src_ts_views_opc_opc1000__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/opc/opc1000 */ "./Scripts/src/ts/views/opc/opc1000.ts");
+/* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./Scripts/src/ts/framework/page.ts");
 
 
 (0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_opc_opc1000__WEBPACK_IMPORTED_MODULE_0__["default"]);
+
+})();
+
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
+(() => {
+/*!***********************************************!*\
+  !*** ./Scripts/src/css/views/opc/opc1000.css ***!
+  \***********************************************/
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
 
 })();
 

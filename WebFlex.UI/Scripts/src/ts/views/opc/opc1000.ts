@@ -43,8 +43,12 @@ export default class Page {
             $selDevice.append(`<option value="">디바이스 선택</option>`);
 
             for (const device of this.devices) {
+                const id = device.id ?? "";
+                const deviceName = device.deviceName ?? "";
+                const deviceType = device.deviceType ?? "";
+
                 $selDevice.append(
-                    `<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`
+                    `<option value="${this.escapeHtml(id)}">${this.escapeHtml(deviceName)} (${this.escapeHtml(deviceType)})</option>`
                 );
             }
         } catch (e) {
@@ -246,8 +250,8 @@ export default class Page {
         }
     }
 
-    escapeHtml(value: string): string {
-        return value
+    escapeHtml(value: string | null | undefined): string {
+        return String(value ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")

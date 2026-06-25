@@ -1,4 +1,9 @@
-﻿import axios, { AxiosInstance, AxiosRequestConfig } from "axios";
+﻿import axios, {
+    AxiosError,
+    AxiosInstance,
+    AxiosRequestConfig,
+    AxiosResponse
+} from "axios";
 
 // ─── 공통 응답 타입 ───────────────────────────────────────────
 export interface ApiResponse<T = any> {
@@ -29,12 +34,13 @@ const instance: AxiosInstance = axios.create({
 });
 
 instance.interceptors.response.use(
-    response => response,
-    error => {
-        const message = error.message
-            ?? error.response?.statusText
+    (response: AxiosResponse) => response,
+    (error: AxiosError) => {
+        const message =
+            error.response?.statusText
             ?? error.message
             ?? "알 수 없는 오류";
+
         return Promise.reject(new Error(message));
     }
 );

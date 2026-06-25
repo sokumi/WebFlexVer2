@@ -1,47 +1,148 @@
-﻿﻿
+﻿@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
+
+@{
+    var title = ViewData["Title"]?.ToString() ?? "Dashboard";
+
+    var controllerName = ViewContext.RouteData.Values["controller"]?.ToString()?.ToLowerInvariant() ?? "";
+    var actionName = ViewContext.RouteData.Values["action"]?.ToString()?.ToLowerInvariant() ?? "";
+
+    var pageCssUrl = $"/1.0.0/css/views/{controllerName}/{actionName}.css";
+    var pageCssPath = System.IO.Path.Combine(
+        WebHostEnvironment.WebRootPath,
+        "1.0.0",
+        "css",
+        "views",
+        controllerName,
+        $"{actionName}.css"
+    );
+
+    var hasPageCss = System.IO.File.Exists(pageCssPath);
+}
+
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-webflex-theme="light" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - WebFlexV2</title>
+    <title>@title - WebFlexV2</title>
 
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/layout-main.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/css/device.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/1.0.0/css/app.css" asp-append-version="true" />
+
+    @if (hasPageCss)
+    {
+        <link rel="stylesheet" href="@pageCssUrl" asp-append-version="true" />
+    }
 </head>
 <body>
-    <div class="app-layout">
-        <aside class="app-sidebar">
-            <div class="app-logo">
-                WebFlex
+    <div class="wf-app">
+        <aside class="wf-sidebar">
+            <div class="wf-brand">
+                <span class="wf-brand-icon">
+                    <i data-lucide="activity"></i>
+                </span>
+                <span class="wf-brand-text">
+                    WebFlex
+                    <small>Industrial Monitoring</small>
+                </span>
             </div>
 
-            <nav class="app-menu">
-                <a class="app-menu-item" href="/">메인</a>
-                <a class="app-menu-item" href="/device/dvc1000">디바이스 관리</a>
-                <a class="app-menu-item" href="/device/dvc1010">디바이스 태그 관리</a>
-                <a class="app-menu-item" href="/opc/opc1000">OPC 수집 관리</a>
-                <a class="app-menu-item" href="/opc/opc1020">OPC Collector 옵션</a>
-                <a class="app-menu-item" href="/opc/opc1030">OPC Client 옵션</a>
-                <a class="app-menu-item" href="/system/svc1000">Windows Service 제어</a>
-                <a class="app-menu-item" style="display:none;" href="/opc/opc3000">OPC History 옵션</a>
-            </nav>
-        </aside>
+            <nav class="wf-nav">
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">Dashboard</div>
 
-        <section class="app-main">
-            <header class="app-header">
-                <div class="app-header-left">
-                    <button id="btnMenu" class="btn-menu" type="button">☰</button>
-                    <span>@ViewData["Title"]</span>
+                    <a class="wf-nav-link" href="/" data-menu-path="/">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span>메인</span>
+                    </a>
                 </div>
 
-                <div class="app-header-right">
-                    <a class="btn-logout" href="/auth/logout">로그아웃</a>
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">Device</div>
+
+                    <a class="wf-nav-link" href="/device/dvc1000" data-menu-path="/device/dvc1000">
+                        <i data-lucide="server"></i>
+                        <span>디바이스 관리</span>
+                    </a>
+
+                    <a class="wf-nav-link" href="/device/dvc1010" data-menu-path="/device/dvc1010">
+                        <i data-lucide="git-branch"></i>
+                        <span>디바이스 태그 관리</span>
+                    </a>
+                </div>
+
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">OPC</div>
+
+                    <a class="wf-nav-link" href="/opc/opc1000" data-menu-path="/opc/opc1000">
+                        <i data-lucide="radio-receiver"></i>
+                        <span>OPC 수집 관리</span>
+                    </a>
+
+                    <a class="wf-nav-link" href="/opc/opc1020" data-menu-path="/opc/opc1020">
+                        <i data-lucide="sliders-horizontal"></i>
+                        <span>Collector 옵션</span>
+                    </a>
+
+                    <a class="wf-nav-link" href="/opc/opc1030" data-menu-path="/opc/opc1030">
+                        <i data-lucide="settings-2"></i>
+                        <span>Client 옵션</span>
+                    </a>
+
+                    <a class="wf-nav-link" href="/opc/opc3000" data-menu-path="/opc/opc3000">
+                        <i data-lucide="history"></i>
+                        <span>History 조회</span>
+                    </a>
+
+                    <a class="wf-nav-link" href="/opc/opc4000" data-menu-path="/opc/opc4000">
+                        <i data-lucide="database-zap"></i>
+                        <span>Timescale 설정</span>
+                    </a>
+                </div>
+
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">System</div>
+
+                    <a class="wf-nav-link" href="/system/svc1000" data-menu-path="/system/svc1000">
+                        <i data-lucide="monitor-cog"></i>
+                        <span>Windows Service</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="wf-sidebar-status">
+                <span class="wf-status good">Service Ready</span>
+            </div>
+        </aside>
+
+        <section class="wf-main">
+            <header class="wf-topbar">
+                <div class="wf-topbar-left">
+                    <button id="btnSidebarToggle" class="wf-btn-icon" type="button" aria-label="메뉴">
+                        <i data-lucide="menu"></i>
+                    </button>
+
+                    <div>
+                        <div class="wf-breadcrumb">
+                            <span>WebFlex</span>
+                            <span>/</span>
+                            <span>@title</span>
+                        </div>
+                        <h1 class="wf-page-title">@title</h1>
+                    </div>
+                </div>
+
+                <div class="wf-topbar-right">
+                    <button class="wf-btn-icon" type="button" data-webflex-theme-toggle aria-label="테마 변경">
+                        <i data-lucide="moon"></i>
+                    </button>
+
+                    <a class="btn btn-outline-secondary btn-sm" href="/auth/logout">
+                        로그아웃
+                    </a>
                 </div>
             </header>
 
-            <main class="app-content">
+            <main class="wf-page">
                 @RenderBody()
             </main>
         </section>

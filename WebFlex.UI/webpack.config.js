@@ -1,19 +1,23 @@
 const path = require("path");
 const fs = require("fs");
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+
+const version = "1.0.0";
 
 const tsRoot = path.resolve(__dirname, "Scripts/src/ts");
 const viewsRoot = path.resolve(tsRoot, "views");
+
+const cssRoot = path.resolve(__dirname, "Scripts/src/css");
+const cssViewsRoot = path.resolve(cssRoot, "views");
+
 const tempRoot = path.resolve(__dirname, "Scripts/.generated");
+const distRoot = path.resolve(__dirname, `wwwroot/${version}`);
 
 function ensureDir(dir) {
     if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
     }
-}
-
-function toImportPath(filePath) {
-    return filePath.replace(/\\/g, "/");
 }
 
 function createPageWrapper(entryName, sourcePath) {
@@ -35,6 +39,21 @@ runPage(Page);
     fs.writeFileSync(wrapperPath, content.trim(), "utf8");
 
     return wrapperPath;
+}
+
+function getMatchingPageCssPath(entryName) {
+    if (!entryName.startsWith("views/")) {
+        return null;
+    }
+
+    const relativeCssPath = entryName.replace(/^views\//, "") + ".css";
+    const cssPath = path.resolve(cssViewsRoot, relativeCssPath);
+
+    if (!fs.existsSync(cssPath)) {
+        return null;
+    }
+
+    return cssPath;
 }
 
 function getViewEntries(dir, prefix = "views") {
@@ -61,7 +80,12 @@ function getViewEntries(dir, prefix = "views") {
         const name = item.name.replace(/\.ts$/, "");
         const entryName = `${prefix}/${name}`;
 
-        entries[entryName] = createPageWrapper(entryName, fullPath);
+        const wrapperPath = createPageWrapper(entryName, fullPath);
+        const cssPath = getMatchingPageCssPath(entryName);
+
+        entries[entryName] = cssPath == null
+            ? wrapperPath
+            : [wrapperPath, cssPath];
     }
 
     return entries;
@@ -74,15 +98,23 @@ module.exports = {
         ...getViewEntries(viewsRoot)
     },
     output: {
-        filename: "[name].js",
-        path: path.resolve(__dirname, "wwwroot/1.0.0/js"),
+        clean: true,
+        filename: "js/[name].js",
+        path: distRoot,
         devtoolModuleFilenameTemplate: info => {
             return "file:///" + path.resolve(info.absoluteResourcePath).replace(/\\/g, "/");
-        }
+        },
+        assetModuleFilename: "assets/[hash][ext][query]"
     },
     devtool: "source-map",
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: [".ts", ".js"],
+        modules: [
+            "node_modules",
+            path.resolve(__dirname, "node_modules"),
+            path.resolve(__dirname, "../node_modules"),
+            "Scripts"
+        ]
     },
     module: {
         rules: [
@@ -93,11 +125,35 @@ module.exports = {
             },
             {
                 test: /\.css$/i,
-                use: ["style-loader", "css-loader"]
+                use: [
+                    MiniCssExtractPlugin.loader,
+                    "css-loader"
+                ]
+            },
+            {
+                test: /\.(svg|png|ico|jpg|jpeg|gif)$/i,
+                type: "asset/resource",
+                generator: {
+                    filename: "imgs/[hash][ext][query]"
+                }
+            },
+            {
+                test: /\.(ttf|otf|eot|woff|woff2)$/i,
+                type: "asset/resource",
+                generator: {
+                    filename: "fonts/[hash][ext][query]"
+                }
             }
         ]
     },
     plugins: [
-        new CleanWebpackPlugin()
+        new CleanWebpackPlugin(),
+        new MiniCssExtractPlugin({
+            filename: pathData => {
+                const name = String(pathData.chunk.name).replaceAll("\\", "/");
+                return `css/${name}.css`;
+            },
+            chunkFilename: "css/[id].css"
+        })
     ]
 };
