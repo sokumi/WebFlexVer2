@@ -187,6 +187,10 @@ export default class Page {
             ],
             onRowClick: row => {
                 this.selectRow(row);
+            },
+            onRowDoubleClick: row => {
+                this.selectRow(row);
+                notify.info(`${row.deviceName} 상세를 열었습니다.`);
             }
         });
     }
@@ -217,6 +221,8 @@ export default class Page {
 
     private async loadList(): Promise<void> {
         try {
+            this.grid?.showLoading("디바이스 목록 조회 중입니다...");
+
             const result = await api.get<DeviceRowDto[]>({
                 url: "/test/device/list"
             });
@@ -232,6 +238,8 @@ export default class Page {
             notify.success("디바이스 목록을 조회했습니다.");
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
+        } finally {
+            this.grid?.hideLoading();
         }
     }
 
