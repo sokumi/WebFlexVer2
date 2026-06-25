@@ -14,9 +14,20 @@ declare module "*.css"; declare module "tabulator-tables" {
         setData(data?: unknown[]): Promise<void>;
         replaceData(data?: unknown[]): Promise<void>;
         clearData(): Promise<void>;
+
+        addRow(data?: unknown, top?: boolean): Promise<unknown>;
+        updateData(data?: unknown[]): Promise<void>;
+        deleteRow(row: unknown): Promise<void>;
+
         redraw(force?: boolean): void;
         destroy(): void;
+
+        getData(): unknown[];
         getSelectedData(): unknown[];
+        deselectRow(): void;
+
+        setFilter(field: string, type: string, value: unknown): void;
+        clearFilter(): void;
 
         on(eventName: string, callback: (...args: unknown[]) => void): void;
     }

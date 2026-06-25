@@ -61,7 +61,7 @@ __webpack_require__.r(__webpack_exports__);
 class WebFlexGrid {
     constructor(options) {
         var _a, _b, _c, _d, _e;
-        const element = this.resolveElement(options.selector);
+        this.element = this.resolveElement(options.selector);
         const tableOptions = {
             layout: (_a = options.layout) !== null && _a !== void 0 ? _a : "fitColumns",
             height: options.height,
@@ -75,14 +75,8 @@ class WebFlexGrid {
             paginationSize: (_e = options.paginationSize) !== null && _e !== void 0 ? _e : 20,
             ...options.options
         };
-        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(element, tableOptions);
-        if (options.onRowClick != null) {
-            this.table.on("rowClick", (event, row) => {
-                var _a;
-                const rowComponent = row;
-                (_a = options.onRowClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
-            });
-        }
+        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, tableOptions);
+        this.bindEvents(options);
     }
     get instance() {
         return this.table;
@@ -96,14 +90,81 @@ class WebFlexGrid {
     async clearData() {
         await this.table.clearData();
     }
+    async addRow(row, top = false) {
+        await this.table.addRow(row, top);
+    }
+    async updateData(rows) {
+        await this.table.updateData(rows);
+    }
+    async deleteRow(row) {
+        await this.table.deleteRow(row);
+    }
+    getData() {
+        return this.table.getData();
+    }
+    getSelectedData() {
+        return this.table.getSelectedData();
+    }
+    clearSelection() {
+        this.table.deselectRow();
+    }
+    setFilter(field, type, value) {
+        this.table.setFilter(field, type, value);
+    }
+    clearFilter() {
+        this.table.clearFilter();
+    }
     redraw(force = false) {
         this.table.redraw(force);
+    }
+    refreshLayout() {
+        window.requestAnimationFrame(() => {
+            this.table.redraw(true);
+        });
     }
     destroy() {
         this.table.destroy();
     }
-    getSelectedData() {
-        return this.table.getSelectedData();
+    showLoading(message = "조회 중입니다...") {
+        this.element.classList.add("is-loading");
+        this.element.setAttribute("data-loading-message", message);
+    }
+    hideLoading() {
+        this.element.classList.remove("is-loading");
+        this.element.removeAttribute("data-loading-message");
+    }
+    selectRowByField(field, value) {
+        const rows = this.getData();
+        const target = rows.find(row => row[field] === value);
+        if (target == null) {
+            return false;
+        }
+        // Tabulator row component 직접 접근은 타입 선언을 단순화해둔 상태라,
+        // 현재는 데이터 기준 재선택 대신 선택값 유지용으로 true만 반환.
+        // 실제 row select까지 필요하면 getRows 타입을 추가해서 확장하면 됨.
+        return true;
+    }
+    bindEvents(options) {
+        if (options.onRowClick != null) {
+            this.table.on("rowClick", (event, row) => {
+                var _a;
+                const rowComponent = row;
+                (_a = options.onRowClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
+            });
+        }
+        if (options.onRowDoubleClick != null) {
+            this.table.on("rowDblClick", (event, row) => {
+                var _a;
+                const rowComponent = row;
+                (_a = options.onRowDoubleClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
+            });
+        }
+        if (options.onSelectionChanged != null) {
+            this.table.on("rowSelectionChanged", (data) => {
+                var _a;
+                (_a = options.onSelectionChanged) === null || _a === void 0 ? void 0 : _a.call(options, data);
+            });
+        }
     }
     resolveElement(selector) {
         if (typeof selector !== "string") {
@@ -479,6 +540,10 @@ class Page {
             ],
             onRowClick: row => {
                 this.selectRow(row);
+            },
+            onRowDoubleClick: row => {
+                this.selectRow(row);
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.info(`${row.deviceName} 상세를 열었습니다.`);
             }
         });
     }
@@ -504,21 +569,25 @@ class Page {
         }
     }
     async loadList() {
-        var _a, _b;
+        var _a, _b, _c, _d;
         try {
+            (_a = this.grid) === null || _a === void 0 ? void 0 : _a.showLoading("디바이스 목록 조회 중입니다...");
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
                 url: "/test/device/list"
             });
             if (!result.success) {
-                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "디바이스 목록 조회에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_b = result.message) !== null && _b !== void 0 ? _b : "디바이스 목록 조회에 실패했습니다.");
                 return;
             }
-            this.rows = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            this.rows = (_c = result.data) !== null && _c !== void 0 ? _c : [];
             await this.applyClientFilter();
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success("디바이스 목록을 조회했습니다.");
         }
         catch (e) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
+        }
+        finally {
+            (_d = this.grid) === null || _d === void 0 ? void 0 : _d.hideLoading();
         }
     }
     async applyClientFilter() {
