@@ -1,41 +1,116 @@
 ﻿@{
-    ViewData["Title"] = "서비스 관리";
+    ViewData["Title"] = "Windows Service";
 }
 
-<div class="page-service-manager">
-    <h2>Windows Service 관리</h2>
+<div class="wf-page-layout wf-service-page is-scroll">
+    <section id="serviceHeroCard" class="wf-card wf-service-hero is-stopped">
+        <div class="wf-service-hero-accent"></div>
 
-    <div style="margin-bottom: 16px;">
-        <div>
-            <strong>서비스 이름:</strong>
-            <span id="serviceName">-</span>
-        </div>
-        <div>
-            <strong>표시 이름:</strong>
-            <span id="displayName">-</span>
-        </div>
-        <div>
-            <strong>서비스 상태:</strong>
-            <span id="serviceStatus">-</span>
-        </div>
-        <div>
-            <strong>실행 파일 경로:</strong>
-            <span id="exePath">-</span>
-        </div>
-    </div>
+        <div class="wf-service-hero-body">
+            <div class="wf-service-main">
+                <div class="wf-service-icon">
+                    <i data-lucide="settings"></i>
+                </div>
 
-    <div style="margin-bottom: 16px;">
-        <button type="button" id="btnRefresh">새로고침</button>
-        <button type="button" id="btnInstall">서비스 등록</button>
-        <button type="button" id="btnStart">서비스 시작</button>
-        <button type="button" id="btnStop">서비스 중지</button>
-        <button type="button" id="btnRestart">서비스 재시작</button>
-        <button type="button" id="btnUninstall">서비스 삭제</button>
-    </div>
+                <div class="wf-service-title-block">
+                    <h2 id="displayName">WebFlex Collector Service</h2>
+                    <p id="serviceName">WebFlexCollector</p>
+                </div>
+            </div>
 
-    <pre id="resultBox" style="min-height: 250px; padding: 12px; border: 1px solid #ccc; overflow: auto;"></pre>
+            <div class="wf-service-status-area">
+                <span id="serviceStatusBadge" class="wf-service-status-badge is-stopped">
+                    <span class="wf-status-dot"></span>
+                    <span id="serviceStatus">조회 전</span>
+                </span>
+
+                <div class="wf-service-action-row">
+                    <button type="button" id="btnStart" class="btn btn-primary btn-sm">
+                        <i data-lucide="play"></i>
+                        시작
+                    </button>
+
+                    <button type="button" id="btnStop" class="btn btn-outline-warning btn-sm">
+                        <i data-lucide="square"></i>
+                        중지
+                    </button>
+
+                    <button type="button" id="btnRestart" class="btn btn-outline-secondary btn-sm">
+                        <i data-lucide="rotate-cw"></i>
+                        재시작
+                    </button>
+                </div>
+            </div>
+
+            <div class="wf-service-meta-grid">
+                <div class="wf-service-meta-item is-wide">
+                    <span>실행 파일 경로</span>
+                    <strong id="exePath">-</strong>
+                </div>
+
+                <div class="wf-service-meta-item">
+                    <span>PID</span>
+                    <strong id="servicePid">-</strong>
+                </div>
+
+                <div class="wf-service-meta-item">
+                    <span>메모리 사용량</span>
+                    <strong id="serviceMemory">-</strong>
+                </div>
+
+                <div class="wf-service-meta-item">
+                    <span>시작 유형</span>
+                    <strong>
+                        <span id="serviceStartType" class="wf-service-mini-badge">자동</span>
+                    </strong>
+                </div>
+            </div>
+
+            <div class="wf-service-description">
+                <div>
+                    <span>설명</span>
+                    <p>OPC UA/DA 디바이스 데이터 수집 및 태그 구독 관리 서비스</p>
+                </div>
+
+                <div class="wf-service-manage-row">
+                    <button type="button" id="btnRefresh" class="btn btn-outline-secondary btn-sm">
+                        <i data-lucide="refresh-cw"></i>
+                        새로고침
+                    </button>
+
+                    <button type="button" id="btnInstall" class="btn btn-outline-primary btn-sm">
+                        <i data-lucide="circle-plus"></i>
+                        서비스 등록
+                    </button>
+
+                    <button type="button" id="btnUninstall" class="btn btn-outline-danger btn-sm">
+                        <i data-lucide="trash-2"></i>
+                        서비스 삭제
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="wf-card wf-service-log-card is-collapsed" id="serviceLogCard">
+        <header class="wf-service-log-header">
+            <div class="wf-service-log-title">
+                <strong>서비스 로그</strong>
+                <span id="serviceLogCount">0개 항목</span>
+            </div>
+
+            <button type="button" id="btnToggleLog" class="wf-service-log-toggle">
+                <span id="serviceLogToggleText">펼치기</span>
+                <i data-lucide="chevron-down"></i>
+            </button>
+        </header>
+
+        <div class="wf-service-log-body">
+            <pre id="resultBox" class="wf-service-log-box"></pre>
+        </div>
+    </section>
 </div>
 
 @section Scripts {
-    <script src="~/1.0.0/js/views/system/svc1000.js"></script>
+    <script src="~/1.0.0/js/views/system/svc1000.js" asp-append-version="true"></script>
 }

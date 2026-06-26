@@ -12017,7 +12017,7 @@ class Page {
         var _a;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
-                url: "/test/devicetag/devices"
+                url: "/device/tag/devices"
             });
             if (!result.success || result.data == null) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "디바이스 조회에 실패했습니다.");
@@ -12050,7 +12050,7 @@ class Page {
         var _a;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
-                url: `/test/devicetag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
+                url: `/device/tag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
             });
             if (!result.success || result.data == null) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "요약 조회에 실패했습니다.");
@@ -12073,7 +12073,7 @@ class Page {
             (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.showLoading();
             const keyword = encodeURIComponent(String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtTagKeyword").val()) !== null && _b !== void 0 ? _b : "").trim());
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
-                url: `/test/devicetag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
+                url: `/device/tag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
             });
             if (!result.success || result.data == null) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_c = result.message) !== null && _c !== void 0 ? _c : "태그 조회에 실패했습니다.");
@@ -12122,7 +12122,7 @@ class Page {
         try {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.info("OPC 노드를 조회하고 있습니다.");
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
-                url: `/test/devicetag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
+                url: `/device/tag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
             });
             if (!result.success || result.data == null) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "노드 조회에 실패했습니다.");
@@ -12146,7 +12146,7 @@ class Page {
         };
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
-                url: "/test/devicetag/save",
+                url: "/device/tag/save",
                 data: request
             });
             if (!result.success) {
@@ -12179,7 +12179,7 @@ class Page {
         };
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
-                url: "/test/devicetag/delete",
+                url: "/device/tag/delete",
                 data: request
             });
             if (!result.success) {
@@ -12251,7 +12251,7 @@ class Page {
         this.setDeviceConnectionStatus("checking");
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
-                url: `/test/devicetag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
+                url: `/device/tag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
             });
             if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
                 return;

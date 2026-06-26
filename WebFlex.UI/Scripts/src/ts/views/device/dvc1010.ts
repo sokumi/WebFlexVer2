@@ -261,7 +261,7 @@ export default class Page {
     async loadDevices(): Promise<void> {
         try {
             const result = await api.get<DeviceRowDto[]>({
-                url: "/test/devicetag/devices"
+                url: "/device/tag/devices"
             });
 
             if (!result.success || result.data == null) {
@@ -301,7 +301,7 @@ export default class Page {
     async loadSummary(): Promise<void> {
         try {
             const result = await api.get<DeviceTagSummaryDto>({
-                url: `/test/devicetag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
+                url: `/device/tag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
             });
 
             if (!result.success || result.data == null) {
@@ -328,7 +328,7 @@ export default class Page {
             const keyword = encodeURIComponent(String($("#txtTagKeyword").val() ?? "").trim());
 
             const result = await api.get<TagRowDto[]>({
-                url: `/test/devicetag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
+                url: `/device/tag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
             });
 
             if (!result.success || result.data == null) {
@@ -383,7 +383,7 @@ export default class Page {
             notify.info("OPC 노드를 조회하고 있습니다.");
 
             const result = await api.get<BrowseNodeDto[]>({
-                url: `/test/devicetag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
+                url: `/device/tag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
             });
 
             if (!result.success || result.data == null) {
@@ -410,7 +410,7 @@ export default class Page {
 
         try {
             const result = await api.post<unknown, SaveRequest>({
-                url: "/test/devicetag/save",
+                url: "/device/tag/save",
                 data: request
             });
 
@@ -450,7 +450,7 @@ export default class Page {
 
         try {
             const result = await api.post<unknown, DeleteRequest>({
-                url: "/test/devicetag/delete",
+                url: "/device/tag/delete",
                 data: request
             });
 
@@ -534,7 +534,7 @@ export default class Page {
 
         try {
             const result = await api.get<DeviceConnectionCheckDto>({
-                url: `/test/devicetag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
+                url: `/device/tag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
             });
 
             if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
