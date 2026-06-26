@@ -35,7 +35,7 @@
 </head>
 <body>
     <div class="wf-app">
-        <aside class="wf-sidebar">
+        <aside id="wfSidebar" class="wf-sidebar">
             <div class="wf-brand">
                 <span class="wf-brand-icon">
                     <i data-lucide="activity"></i>
@@ -145,9 +145,23 @@
             </div>
         </aside>
 
+        <button id="wfSidebarBackdrop"
+                class="wf-sidebar-backdrop"
+                type="button"
+                aria-label="메뉴 닫기"></button>
+
         <section class="wf-main">
             <header class="wf-topbar">
                 <div class="wf-topbar-left">
+                    <button id="btnMobileMenuToggle"
+                            class="wf-btn-icon wf-mobile-menu-toggle"
+                            type="button"
+                            aria-label="메뉴 열기"
+                            aria-controls="wfSidebar"
+                            aria-expanded="false">
+                        <i data-lucide="menu"></i>
+                    </button>
+
                     <div class="wf-topbar-title-block">
                         <div class="wf-breadcrumb">
                             <span>위젯 대시보드</span>

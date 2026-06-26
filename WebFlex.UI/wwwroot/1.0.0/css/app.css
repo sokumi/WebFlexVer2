@@ -260,6 +260,15 @@ body {
         height: 15px;
     }
 
+.wf-mobile-menu-toggle {
+    display: none;
+    flex: 0 0 auto;
+}
+
+.wf-sidebar-backdrop {
+    display: none;
+}
+
 .wf-main {
     height: 100vh;
     min-width: 0;
@@ -435,20 +444,61 @@ body {
     .wf-sidebar {
         position: fixed;
         inset: 0 auto 0 0;
+        width: min(82vw, var(--wf-sidebar-width));
+        flex-basis: min(82vw, var(--wf-sidebar-width));
         transform: translateX(-100%);
         transition: transform 0.2s ease;
+        z-index: 1100;
+        box-shadow: 18px 0 40px rgba(15, 23, 42, 0.18);
     }
 
         .wf-sidebar.is-open {
             transform: translateX(0);
         }
 
+    .wf-sidebar-backdrop {
+        position: fixed;
+        inset: 0;
+        display: none;
+        border: 0;
+        padding: 0;
+        background: rgba(15, 23, 42, 0.42);
+        z-index: 1090;
+    }
+
+    body.wf-sidebar-open .wf-sidebar-backdrop {
+        display: block;
+    }
+
+    body.wf-sidebar-open {
+        overflow: hidden;
+    }
+
+    .wf-mobile-menu-toggle {
+        display: inline-flex;
+    }
+
     .wf-main {
         flex: 1 1 auto;
+        width: 100%;
+    }
+
+    .wf-topbar {
+        padding-left: 12px;
+        padding-right: 10px;
+    }
+
+    .wf-topbar-left {
+        gap: 8px;
     }
 
     .wf-topbar-right {
         gap: 6px;
+    }
+
+    .wf-breadcrumb {
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .wf-header-clock,
@@ -540,6 +590,27 @@ body {
     .wf-fill,
     .wf-grid-fill {
         overflow: visible;
+    }
+}
+
+@media (max-width: 575px) {
+    .wf-page {
+        padding: 12px;
+    }
+
+    .wf-breadcrumb span:first-child,
+    .wf-breadcrumb span:nth-child(2),
+    .wf-header-status {
+        display: none;
+    }
+
+    .wf-topbar-right {
+        gap: 4px;
+    }
+
+    .wf-header-icon {
+        width: 30px;
+        height: 30px;
     }
 }
 /*!******************************************************************************************!*\

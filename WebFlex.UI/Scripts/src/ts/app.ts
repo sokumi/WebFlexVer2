@@ -71,20 +71,61 @@ function bindActiveMenu(): void {
 }
 
 function bindSidebarToggle(): void {
-    const button = document.getElementById("btnSidebarToggle");
+    const collapseButton = document.getElementById("btnSidebarToggle");
+    const mobileButton = document.getElementById("btnMobileMenuToggle");
+    const backdrop = document.getElementById("wfSidebarBackdrop");
     const sidebar = document.querySelector<HTMLElement>(".wf-sidebar");
 
-    if (button == null || sidebar == null) {
+    if (sidebar == null) {
         return;
     }
 
-    button.addEventListener("click", () => {
-        if (window.innerWidth <= 991) {
-            sidebar.classList.toggle("is-open");
+    const isMobile = (): boolean => window.innerWidth <= 991;
+
+    const setMobileSidebarOpen = (isOpen: boolean): void => {
+        sidebar.classList.toggle("is-open", isOpen);
+        document.body.classList.toggle("wf-sidebar-open", isOpen);
+        mobileButton?.setAttribute("aria-expanded", String(isOpen));
+
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+    };
+
+    collapseButton?.addEventListener("click", () => {
+        if (isMobile()) {
+            setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
             return;
         }
 
         sidebar.classList.toggle("is-collapsed");
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+    });
+
+    mobileButton?.addEventListener("click", () => {
+        setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
+    });
+
+    backdrop?.addEventListener("click", () => {
+        setMobileSidebarOpen(false);
+    });
+
+    document.querySelectorAll<HTMLElement>(".wf-nav-link").forEach(link => {
+        link.addEventListener("click", () => {
+            if (isMobile()) {
+                setMobileSidebarOpen(false);
+            }
+        });
+    });
+
+    window.addEventListener("resize", () => {
+        if (!isMobile()) {
+            setMobileSidebarOpen(false);
+        }
+    });
+
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && isMobile()) {
+            setMobileSidebarOpen(false);
+        }
     });
 }
 
