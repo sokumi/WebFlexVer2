@@ -73,15 +73,15 @@ type TabulatorRowComponent = {
 };
 
 export default class Page {
-    private devices: DeviceRowDto[] = [];
-    private nodes: BrowseNodeDto[] = [];
-    private treeNodes: BrowseNodeDto[] = [];
-    private selectedNodes: SelectedNodeDto[] = [];
-    private selectedTagIds: string[] = [];
-    private selectedDeviceId = "";
+     devices: DeviceRowDto[] = [];
+     nodes: BrowseNodeDto[] = [];
+     treeNodes: BrowseNodeDto[] = [];
+     selectedNodes: SelectedNodeDto[] = [];
+     selectedTagIds: string[] = [];
+     selectedDeviceId = "";
 
-    private selectedNodeGrid: WebFlexGrid<SelectedNodeDto> | null = null;
-    private tagGrid: WebFlexGrid<TagRowDto> | null = null;
+     selectedNodeGrid: WebFlexGrid<SelectedNodeDto> | null = null;
+     tagGrid: WebFlexGrid<TagRowDto> | null = null;
 
     public init(): void {
         this.initSelectedNodeGrid();
@@ -92,7 +92,7 @@ export default class Page {
         void this.loadSummary();
     }
 
-    private bindEvents(): void {
+     bindEvents(): void {
         $("#selDevice").on("change", () => {
             this.selectedDeviceId = String($("#selDevice").val() ?? "");
 
@@ -156,7 +156,7 @@ export default class Page {
         });
     }
 
-    private initSelectedNodeGrid(): void {
+     initSelectedNodeGrid(): void {
         this.selectedNodeGrid = new WebFlexGrid<SelectedNodeDto>({
             selector: "#gridSelectedNode",
             height: 430,
@@ -185,7 +185,7 @@ export default class Page {
         });
     }
 
-    private initTagGrid(): void {
+     initTagGrid(): void {
         this.tagGrid = new WebFlexGrid<TagRowDto>({
             selector: "#gridTag",
             height: 380,
@@ -278,7 +278,7 @@ export default class Page {
         });
     }
 
-    private async loadDevices(): Promise<void> {
+     async loadDevices(): Promise<void> {
         try {
             const result = await api.get<DeviceRowDto[]>({
                 url: "/test/devicetag/devices"
@@ -306,7 +306,7 @@ export default class Page {
         }
     }
 
-    private async loadSummary(): Promise<void> {
+     async loadSummary(): Promise<void> {
         try {
             const deviceId = encodeURIComponent(this.selectedDeviceId);
 
@@ -328,7 +328,7 @@ export default class Page {
         }
     }
 
-    private async browse(): Promise<void> {
+     async browse(): Promise<void> {
         if (this.selectedDeviceId.length === 0) {
             this.showAlert("디바이스를 선택해 주세요.");
             return;
@@ -361,7 +361,7 @@ export default class Page {
         }
     }
 
-    private async loadTags(): Promise<void> {
+     async loadTags(): Promise<void> {
         if (this.selectedDeviceId.length === 0) {
             this.showAlert("디바이스를 선택해 주세요.");
             return;
@@ -390,7 +390,7 @@ export default class Page {
         }
     }
 
-    private buildTree(nodes: BrowseNodeDto[]): BrowseNodeDto[] {
+     buildTree(nodes: BrowseNodeDto[]): BrowseNodeDto[] {
         const map = new Map<string, BrowseNodeDto>();
 
         for (const node of nodes) {
@@ -413,7 +413,7 @@ export default class Page {
         return roots;
     }
 
-    private renderNodes(): void {
+     renderNodes(): void {
         const $area = $("#nodeList");
         $area.empty();
 
@@ -427,7 +427,7 @@ export default class Page {
         }
     }
 
-    private createNodeElement(node: BrowseNodeDto, depth: number): JQuery<HTMLElement> {
+     createNodeElement(node: BrowseNodeDto, depth: number): JQuery<HTMLElement> {
         const isVariable = node.nodeClass === "Variable";
         const checked = this.selectedNodes.some(x => x.nodeId === node.nodeId);
         const padding = depth * 18;
@@ -473,7 +473,7 @@ export default class Page {
         return $wrapper;
     }
 
-    private toggleNode(node: BrowseNodeDto, checked: boolean): void {
+     toggleNode(node: BrowseNodeDto, checked: boolean): void {
         if (checked) {
             const exists = this.selectedNodes.some(x => x.nodeId === node.nodeId);
 
@@ -494,7 +494,7 @@ export default class Page {
         this.updateSelectedCount();
     }
 
-    private selectAllVariableNodes(): void {
+     selectAllVariableNodes(): void {
         this.selectedNodes = this.nodes
             .filter(x => x.nodeClass === "Variable")
             .map(x => ({
@@ -510,7 +510,7 @@ export default class Page {
         this.updateSelectedCount();
     }
 
-    private clearSelectedNodes(): void {
+     clearSelectedNodes(): void {
         this.selectedNodes = [];
 
         this.renderNodes();
@@ -518,7 +518,7 @@ export default class Page {
         this.updateSelectedCount();
     }
 
-    private async save(): Promise<void> {
+     async save(): Promise<void> {
         if (this.selectedDeviceId.length === 0) {
             this.showAlert("디바이스를 선택해 주세요.");
             return;
@@ -555,7 +555,7 @@ export default class Page {
         }
     }
 
-    private toggleTagSelection(id: string): void {
+     toggleTagSelection(id: string): void {
         if (id.length === 0) {
             return;
         }
@@ -569,7 +569,7 @@ export default class Page {
         this.tagGrid?.instance.redraw(true);
     }
 
-    private selectAllTags(): void {
+     selectAllTags(): void {
         const rows = this.tagGrid?.instance.getSelectedData() as TagRowDto[];
 
         if (rows.length > 0) {
@@ -581,12 +581,12 @@ export default class Page {
         this.tagGrid?.instance.redraw(true);
     }
 
-    private clearSelectedTags(): void {
+     clearSelectedTags(): void {
         this.selectedTagIds = [];
         this.tagGrid?.instance.redraw(true);
     }
 
-    private async deleteTags(): Promise<void> {
+     async deleteTags(): Promise<void> {
         if (this.selectedTagIds.length === 0) {
             this.showAlert("삭제할 태그를 선택해 주세요.");
             return;
@@ -621,11 +621,11 @@ export default class Page {
         }
     }
 
-    private updateSelectedCount(): void {
+     updateSelectedCount(): void {
         $("#lblSelectedCount").text(`${this.selectedNodes.length.toLocaleString()}개 선택`);
     }
 
-    private showAlert(message: string): void {
+     showAlert(message: string): void {
         $("#testAlertMessage").text(message);
         $("#testAlert").removeClass("d-none");
 
@@ -634,7 +634,7 @@ export default class Page {
         }, 2500);
     }
 
-    private escapeHtml(value: string | null | undefined): string {
+     escapeHtml(value: string | null | undefined): string {
         return String(value ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")

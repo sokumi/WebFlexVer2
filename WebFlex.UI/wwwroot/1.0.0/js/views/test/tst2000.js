@@ -610,7 +610,7 @@ class Page {
         $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
     }
     selectRow(row) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e;
         console.log("selected device row", row);
         this.selectedId = row.id;
         $("#hidId").val(row.id);
@@ -628,8 +628,7 @@ class Page {
         $("#txtPassword").val((_b = row.password) !== null && _b !== void 0 ? _b : "");
         $("#txtPublishingIntervalMs").val((_c = row.publishingIntervalMs) !== null && _c !== void 0 ? _c : 1000);
         $("#txtSamplingIntervalMs").val((_d = row.samplingIntervalMs) !== null && _d !== void 0 ? _d : 1000);
-        $("#txtSortOrder").val((_e = row.sortOrder) !== null && _e !== void 0 ? _e : 0);
-        $("#txtDescription").val((_f = row.description) !== null && _f !== void 0 ? _f : "");
+        $("#txtDescription").val((_e = row.description) !== null && _e !== void 0 ? _e : "");
         this.setEditMode(row.deviceName);
         this.applyEndpointPlaceholder();
     }
@@ -650,7 +649,6 @@ class Page {
         $("#txtPassword").val("");
         $("#txtPublishingIntervalMs").val(1000);
         $("#txtSamplingIntervalMs").val(1000);
-        $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
         this.setCreateMode();
         this.applyEndpointPlaceholder();
@@ -670,7 +668,7 @@ class Page {
         $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
     getFormData() {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
         return {
             id: this.selectedId || null,
             deviceName: String((_a = $("#txtDeviceName").val()) !== null && _a !== void 0 ? _a : "").trim(),
@@ -686,8 +684,7 @@ class Page {
             password: String((_g = $("#txtPassword").val()) !== null && _g !== void 0 ? _g : ""),
             publishingIntervalMs: Number((_h = $("#txtPublishingIntervalMs").val()) !== null && _h !== void 0 ? _h : 1000),
             samplingIntervalMs: Number((_j = $("#txtSamplingIntervalMs").val()) !== null && _j !== void 0 ? _j : 1000),
-            sortOrder: Number((_k = $("#txtSortOrder").val()) !== null && _k !== void 0 ? _k : 0),
-            description: String((_l = $("#txtDescription").val()) !== null && _l !== void 0 ? _l : "").trim()
+            description: String((_k = $("#txtDescription").val()) !== null && _k !== void 0 ? _k : "").trim()
         };
     }
     validate(request) {

@@ -27,7 +27,6 @@ type DeviceRowDto = {
     password: string;
     publishingIntervalMs: number;
     samplingIntervalMs: number;
-    sortOrder: number;
     description: string;
     tagCount?: number | null;
 };
@@ -61,9 +60,9 @@ type EndpointPreviewDto = {
 
 
 export default class Page {
-    private grid: WebFlexGrid<DeviceRowDto> | null = null;
-    private rows: DeviceRowDto[] = [];
-    private selectedId = "";
+     grid: WebFlexGrid<DeviceRowDto> | null = null;
+     rows: DeviceRowDto[] = [];
+     selectedId = "";
 
     public init(): void {
         this.initGrid();
@@ -78,7 +77,7 @@ export default class Page {
         });
     }
 
-    private bindEvents(): void {
+     bindEvents(): void {
         $("#btnNew").on("click", () => {
             this.clearForm();
         });
@@ -114,7 +113,7 @@ export default class Page {
         });
     }
 
-    private initGrid(): void {
+     initGrid(): void {
         this.grid = new WebFlexGrid<DeviceRowDto>({
             selector: "#gridDevice",
             height: "100%",
@@ -195,7 +194,7 @@ export default class Page {
         });
     }
 
-    private async loadDeviceTypes(): Promise<void> {
+     async loadDeviceTypes(): Promise<void> {
         try {
             const result = await api.get<DeviceTypeDto[]>({
                 url: "/test/device/types"
@@ -219,7 +218,7 @@ export default class Page {
         }
     }
 
-    private async loadList(): Promise<void> {
+     async loadList(): Promise<void> {
         try {
             this.grid?.showLoading("디바이스 목록 조회 중입니다...");
 
@@ -243,7 +242,7 @@ export default class Page {
         }
     }
 
-    private async applyClientFilter(): Promise<void> {
+     async applyClientFilter(): Promise<void> {
         const keyword = String($("#txtGridKeyword").val() ?? "").trim().toLowerCase();
 
         const filteredRows = keyword.length === 0
@@ -259,12 +258,12 @@ export default class Page {
         this.updateGridSummary(filteredRows.length, this.rows.length);
     }
 
-    private updateGridSummary(visibleCount: number, totalCount: number): void {
+     updateGridSummary(visibleCount: number, totalCount: number): void {
         $("#lblDeviceGridCount").text(`${totalCount.toLocaleString()}건`);
         $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
     }
 
-    private selectRow(row: DeviceRowDto): void {
+     selectRow(row: DeviceRowDto): void {
         console.log("selected device row", row);
 
         this.selectedId = row.id;
@@ -284,14 +283,13 @@ export default class Page {
         $("#txtPassword").val(row.password ?? "");
         $("#txtPublishingIntervalMs").val(row.publishingIntervalMs ?? 1000);
         $("#txtSamplingIntervalMs").val(row.samplingIntervalMs ?? 1000);
-        $("#txtSortOrder").val(row.sortOrder ?? 0);
         $("#txtDescription").val(row.description ?? "");
 
         this.setEditMode(row.deviceName);
         this.applyEndpointPlaceholder();
     }
 
-    private clearForm(): void {
+     clearForm(): void {
         this.selectedId = "";
 
         $("#hidId").val("");
@@ -309,14 +307,13 @@ export default class Page {
         $("#txtPassword").val("");
         $("#txtPublishingIntervalMs").val(1000);
         $("#txtSamplingIntervalMs").val(1000);
-        $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
 
         this.setCreateMode();
         this.applyEndpointPlaceholder();
     }
 
-    private setCreateMode(): void {
+     setCreateMode(): void {
         $("#lblFormMode")
             .removeClass("edit")
             .addClass("create")
@@ -325,7 +322,7 @@ export default class Page {
         $("#lblSelectedDevice").text("선택 없음");
     }
 
-    private setEditMode(deviceName: string): void {
+     setEditMode(deviceName: string): void {
         $("#lblFormMode")
             .removeClass("create")
             .addClass("edit")
@@ -334,7 +331,7 @@ export default class Page {
         $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
 
-    private getFormData(): DeviceSaveRequest {
+     getFormData(): DeviceSaveRequest {
         return {
             id: this.selectedId || null,
             deviceName: String($("#txtDeviceName").val() ?? "").trim(),
@@ -350,12 +347,11 @@ export default class Page {
             password: String($("#txtPassword").val() ?? ""),
             publishingIntervalMs: Number($("#txtPublishingIntervalMs").val() ?? 1000),
             samplingIntervalMs: Number($("#txtSamplingIntervalMs").val() ?? 1000),
-            sortOrder: Number($("#txtSortOrder").val() ?? 0),
             description: String($("#txtDescription").val() ?? "").trim()
         };
     }
 
-    private validate(request: DeviceSaveRequest): string | null {
+     validate(request: DeviceSaveRequest): string | null {
         if (request.deviceName.length === 0) {
             return "디바이스명을 입력해 주세요.";
         }
@@ -383,7 +379,7 @@ export default class Page {
         return null;
     }
 
-    private async save(): Promise<void> {
+     async save(): Promise<void> {
         const request = this.getFormData();
         const errorMessage = this.validate(request);
 
@@ -412,7 +408,7 @@ export default class Page {
         }
     }
 
-    private async delete(): Promise<void> {
+     async delete(): Promise<void> {
         if (this.selectedId.length === 0) {
             notify.warning("삭제할 디바이스를 선택해 주세요.");
             return;
@@ -446,7 +442,7 @@ export default class Page {
         }
     }
 
-    private async previewEndpoint(): Promise<void> {
+     async previewEndpoint(): Promise<void> {
         const deviceType = encodeURIComponent(String($("#selDeviceType").val() ?? ""));
         const address = encodeURIComponent(String($("#txtDeviceAddress").val() ?? "").trim());
         const port = Number($("#txtPort").val() ?? 0);
@@ -468,7 +464,7 @@ export default class Page {
         }
     }
 
-    private applyEndpointPlaceholder(): void {
+     applyEndpointPlaceholder(): void {
         const deviceType = String($("#selDeviceType").val() ?? "");
         const address = String($("#txtDeviceAddress").val() ?? "").trim();
         const port = Number($("#txtPort").val() ?? 0);
