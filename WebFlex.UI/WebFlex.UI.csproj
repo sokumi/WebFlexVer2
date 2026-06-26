@@ -89,13 +89,19 @@
   </ItemGroup>
 
   <ItemGroup>
+    <TypeScriptCompile Include="Scripts\src\ts\components\webflexTagRegisterPopup.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
+    <TypeScriptCompile Include="Scripts\src\ts\components\webflexCheckTree.ts">
+      <SubType>Code</SubType>
+    </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\framework\notify.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="Scripts\src\ts\framework\grid\webflexGridFormatters.ts">
+    <TypeScriptCompile Include="Scripts\src\ts\components\grid\webflexGridFormatters.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="Scripts\src\ts\framework\grid\webflexGrid.ts">
+    <TypeScriptCompile Include="Scripts\src\ts\components\grid\webflexGrid.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\viewmodels\currentValueViewModel.ts">

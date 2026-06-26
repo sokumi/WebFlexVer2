@@ -24,7 +24,6 @@ public class DeviceSaveRequest {
     public int SamplingIntervalMs { get; set; } = 1000;
     public int QueueSize { get; set; } = 100;
 
-    public int SortOrder { get; set; }
     public string? Description { get; set; }
 
     public bool IsEnabled { get; set; } = true;

@@ -2,7 +2,7 @@
 import { Modal } from "bootstrap";
 
 import { api } from "../../framework/common";
-import { WebFlexGrid } from "../../framework/grid/webflexGrid";
+import { WebFlexGrid } from "../../components/grid/webflexGrid";
 import { notify } from "../../framework/notify";
 
 import {
@@ -10,7 +10,7 @@ import {
     numberFormatter,
     statusFormatter,
     textFormatter
-} from "../../framework/grid/webflexGridFormatters";
+} from "../../components/grid/webflexGridFormatters";
 
 type TestSummaryDto = {
     deviceCount: number;

@@ -1,9 +1,18 @@
-﻿import { api } from "../../framework/common";
-import { WebFlexGrid } from "../../framework/grid/webflexGrid";
+﻿import $ from "jquery";
+
+import { api } from "../../framework/common";
+import { notify } from "../../framework/notify";
+import { WebFlexGrid } from "../../components/grid/webflexGrid";
+import {
+    WebFlexTagRegisterPopup,
+    type WebFlexTagRegisterNode,
+    type WebFlexTagRegisterSaveNode
+} from "../../components/webflexTagRegisterPopup";
+
 import {
     numberFormatter,
     textFormatter
-} from "../../framework/grid/webflexGridFormatters";
+} from "../../components/grid/webflexGridFormatters";
 
 type DeviceRowDto = {
     id: string;
@@ -22,26 +31,15 @@ type DeviceTagSummaryDto = {
     collectTagCount: number;
 };
 
-type BrowseNodeDto = {
+type BrowseNodeDto = WebFlexTagRegisterNode & {
     deviceId: string;
-    nodeId: string;
-    parentNodeId: string;
-    displayName: string;
-    nodeClass: string;
-    dataType: string;
     accessLevel: string;
     engineeringUnit: string;
-    description?: string | null;
     children?: BrowseNodeDto[];
 };
 
-type SelectedNodeDto = {
-    nodeId: string;
-    displayName: string;
-    nodeClass: string;
-    dataType: string;
-    description?: string | null;
-};
+type SelectedNodeDto = WebFlexTagRegisterSaveNode;
+
 
 type TagRowDto = {
     id: string;
@@ -68,65 +66,66 @@ type DeleteRequest = {
     ids: string[];
 };
 
-type TabulatorRowComponent = {
-    getData: () => unknown;
-};
 
 export default class Page {
      devices: DeviceRowDto[] = [];
      nodes: BrowseNodeDto[] = [];
      treeNodes: BrowseNodeDto[] = [];
-     selectedNodes: SelectedNodeDto[] = [];
-     selectedTagIds: string[] = [];
      selectedDeviceId = "";
+     selectedTagIds: string[] = [];
+     tagRows: TagRowDto[] = [];
 
-     selectedNodeGrid: WebFlexGrid<SelectedNodeDto> | null = null;
      tagGrid: WebFlexGrid<TagRowDto> | null = null;
+     modalPopup: WebFlexTagRegisterPopup | null = null;
+     drawerPopup: WebFlexTagRegisterPopup | null = null;
 
-    public init(): void {
-        this.initSelectedNodeGrid();
+     init(): void {
         this.initTagGrid();
+        this.initPopups();
         this.bindEvents();
 
         void this.loadDevices();
         void this.loadSummary();
     }
 
+     initPopups(): void {
+        this.modalPopup = new WebFlexTagRegisterPopup({
+            selector: "#tagRegisterModal",
+            cascadeCheck: true,
+            widthPercent: 55,
+            heightPercent: 72,
+            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
+            onSave: nodes => this.saveTags(nodes)
+        });
+
+        this.drawerPopup = new WebFlexTagRegisterPopup({
+            selector: "#tagRegisterDrawer",
+            cascadeCheck: true,
+            widthPercent: 60,
+            heightPercent: 100,
+            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
+            onSave: nodes => this.saveTags(nodes)
+        });
+    }
+
      bindEvents(): void {
         $("#selDevice").on("change", () => {
             this.selectedDeviceId = String($("#selDevice").val() ?? "");
-
             this.nodes = [];
             this.treeNodes = [];
-            this.selectedNodes = [];
             this.selectedTagIds = [];
 
-            this.renderNodes();
-            void this.selectedNodeGrid?.setData([]);
+            this.updateSelectedDeviceInfo();
             void this.tagGrid?.setData([]);
-
-            this.updateSelectedCount();
+            this.updateTagGridFooter();
 
             if (this.selectedDeviceId.length > 0) {
-                void this.loadSummary();
                 void this.loadTags();
+                void this.loadSummary();
+            } else {
+                $("#lblTagCount").text("0개");
+                $("#lblGridTagCount").text("0건");
             }
-        });
-
-        $("#btnBrowse").on("click", () => {
-            void this.browse();
-        });
-
-        $("#btnSelectAll").on("click", () => {
-            this.selectAllVariableNodes();
-        });
-
-        $("#btnClearSelect").on("click", () => {
-            this.clearSelectedNodes();
-        });
-
-        $("#btnSave").on("click", () => {
-            void this.save();
         });
 
         $("#btnSearch").on("click", () => {
@@ -139,115 +138,93 @@ export default class Page {
             }
         });
 
-        $("#chkOnlyCollectTag").on("change", () => {
-            void this.loadTags();
+        $("#btnOpenTagModal").on("click", () => {
+            void this.openRegisterPopup("modal");
         });
 
-        $("#btnTagSelectAll").on("click", () => {
-            this.selectAllTags();
-        });
-
-        $("#btnTagClearSelect").on("click", () => {
-            this.clearSelectedTags();
+        $("#btnOpenTagDrawer").on("click", () => {
+            void this.openRegisterPopup("drawer");
         });
 
         $("#btnDelete").on("click", () => {
             void this.deleteTags();
         });
-    }
 
-     initSelectedNodeGrid(): void {
-        this.selectedNodeGrid = new WebFlexGrid<SelectedNodeDto>({
-            selector: "#gridSelectedNode",
-            height: 430,
-            pagination: true,
-            paginationSize: 10,
-            columns: [
-                {
-                    title: "DisplayName",
-                    field: "displayName",
-                    minWidth: 160,
-                    formatter: textFormatter
-                },
-                {
-                    title: "NodeId",
-                    field: "nodeId",
-                    minWidth: 260,
-                    formatter: textFormatter
-                },
-                {
-                    title: "DataType",
-                    field: "dataType",
-                    width: 120,
-                    formatter: textFormatter
-                }
-            ]
+        $(document).on("keydown", event => {
+            if (event.key === "Escape") {
+                $(".wf-tag-popup.is-open [data-popup-close]").first().trigger("click");
+            }
+        });
+
+        window.addEventListener("webflex:layoutChanged", () => {
+            this.tagGrid?.refreshLayout();
         });
     }
 
      initTagGrid(): void {
         this.tagGrid = new WebFlexGrid<TagRowDto>({
             selector: "#gridTag",
-            height: 380,
+            height: "100%",
             pagination: true,
-            paginationSize: 10,
-            selectableRows: true,
+            paginationSize: 20,
+            selectableRows: false,
+            placeholder: "등록된 태그가 없습니다.",
             columns: [
                 {
                     title: "",
                     field: "id",
-                    width: 54,
+                    width: 48,
                     hozAlign: "center",
                     headerSort: false,
-                    formatter: (cell: { getValue: () => any; }) => {
+                    formatter: (cell: { getValue: () => unknown }) => {
                         const id = String(cell.getValue() ?? "");
                         const checked = this.selectedTagIds.includes(id) ? "checked" : "";
-                        return `<input type="checkbox" class="wf-tag-check" data-id="${id}" ${checked} />`;
+                        return `<input type="checkbox" class="wf-tag-check" data-id="${this.escapeHtml(id)}" ${checked} />`;
                     }
                 },
                 {
-                    title: "TagId",
+                    title: "태그코드",
                     field: "id",
-                    width: 110,
+                    width: 130,
                     formatter: textFormatter
                 },
                 {
-                    title: "TagName",
+                    title: "태그명",
                     field: "tagName",
-                    minWidth: 160,
+                    minWidth: 220,
                     formatter: textFormatter
                 },
                 {
                     title: "NodeId",
                     field: "nodeId",
-                    minWidth: 280,
+                    minWidth: 360,
                     formatter: textFormatter
                 },
                 {
                     title: "DataType",
                     field: "dataType",
                     width: 120,
+                    formatter: (cell: { getValue: () => unknown }) => this.createDataTypeBadge(String(cell.getValue() ?? ""))
+                },
+                {
+                    title: "설명",
+                    field: "description",
+                    minWidth: 220,
                     formatter: textFormatter
                 },
                 {
                     title: "수집",
                     field: "isCollectEnabled",
-                    width: 90,
-                    formatter: (cell: { getValue: () => boolean; }) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
-                    }
+                    width: 80,
+                    hozAlign: "center",
+                    formatter: (cell: { getValue: () => boolean }) => this.createYn(cell.getValue())
                 },
                 {
-                    title: "DB저장",
+                    title: "사용",
                     field: "saveToDatabase",
-                    width: 100,
-                    formatter: (cell: { getValue: () => boolean; }) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-status good">Y</span>`
-                            : `<span class="wf-status bad">N</span>`;
-                    }
+                    width: 80,
+                    hozAlign: "center",
+                    formatter: (cell: { getValue: () => boolean }) => this.createYn(cell.getValue())
                 },
                 {
                     title: "Sampling",
@@ -255,24 +232,16 @@ export default class Page {
                     width: 110,
                     hozAlign: "right",
                     formatter: numberFormatter
-                },
-                {
-                    title: "Queue",
-                    field: "queueSize",
-                    width: 90,
-                    hozAlign: "right",
-                    formatter: numberFormatter
                 }
             ],
-            options: {
-                rowClick: (_event: Event, row: TabulatorRowComponent) => {
-                    const data = row.getData() as TagRowDto;
-                    this.toggleTagSelection(data.id);
-                }
+            onRowClick: row => {
+                this.toggleTagSelection(row.id);
             }
         });
 
         $("#gridTag").on("change", ".wf-tag-check", event => {
+            event.stopPropagation();
+
             const id = String($(event.currentTarget).data("id") ?? "");
             this.toggleTagSelection(id);
         });
@@ -285,7 +254,7 @@ export default class Page {
             });
 
             if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "디바이스 조회에 실패했습니다.");
+                notify.error(result.message ?? "디바이스 조회에 실패했습니다.");
                 return;
             }
 
@@ -296,97 +265,191 @@ export default class Page {
             $sel.append(`<option value="">디바이스 선택</option>`);
 
             for (const device of this.devices) {
-                const collectText = device.isCollectEnabled ? "수집" : "중지";
                 $sel.append(
-                    `<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)} / ${collectText})</option>`
+                    `<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`
                 );
             }
+
+            if (this.devices.length > 0) {
+                this.selectedDeviceId = this.devices[0].id;
+                $sel.val(this.selectedDeviceId);
+                this.updateSelectedDeviceInfo();
+                await this.loadTags();
+                await this.loadSummary();
+            }
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "디바이스 조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "디바이스 조회 중 오류가 발생했습니다.");
         }
     }
 
      async loadSummary(): Promise<void> {
         try {
-            const deviceId = encodeURIComponent(this.selectedDeviceId);
-
             const result = await api.get<DeviceTagSummaryDto>({
-                url: `/test/devicetag/summary?deviceId=${deviceId}`
+                url: `/test/devicetag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
             });
 
             if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "요약 조회에 실패했습니다.");
+                notify.error(result.message ?? "요약 조회에 실패했습니다.");
                 return;
             }
 
-            $("#lblDeviceCount").text(result.data.deviceCount.toLocaleString());
-            $("#lblNodeCount").text(result.data.nodeCount.toLocaleString());
-            $("#lblVariableNodeCount").text(result.data.variableNodeCount.toLocaleString());
-            $("#lblTagCount").text(result.data.tagCount.toLocaleString());
+            $("#lblTagCount").text(`${result.data.tagCount.toLocaleString()}개`);
+            $("#lblGridTagCount").text(`${result.data.tagCount.toLocaleString()}건`);
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "요약 조회 중 오류가 발생했습니다.");
-        }
-    }
-
-     async browse(): Promise<void> {
-        if (this.selectedDeviceId.length === 0) {
-            this.showAlert("디바이스를 선택해 주세요.");
-            return;
-        }
-
-        try {
-            const onlyCollectable = $("#chkOnlyCollectable").prop("checked") === true;
-
-            const result = await api.get<BrowseNodeDto[]>({
-                url: `/test/devicetag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=${onlyCollectable}`
-            });
-
-            if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "노드 조회에 실패했습니다.");
-                return;
-            }
-
-            this.nodes = result.data;
-            this.treeNodes = this.buildTree(this.nodes);
-            this.selectedNodes = [];
-
-            this.renderNodes();
-            await this.selectedNodeGrid?.setData([]);
-            this.updateSelectedCount();
-
-            this.showAlert("노드를 조회했습니다.");
-            await this.loadSummary();
-        } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "노드 조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "요약 조회 중 오류가 발생했습니다.");
         }
     }
 
      async loadTags(): Promise<void> {
         if (this.selectedDeviceId.length === 0) {
-            this.showAlert("디바이스를 선택해 주세요.");
+            notify.warning("디바이스를 선택해 주세요.");
             return;
         }
 
         try {
+            this.tagGrid?.showLoading();
+
             const keyword = encodeURIComponent(String($("#txtTagKeyword").val() ?? "").trim());
-            const onlyCollect = $("#chkOnlyCollectTag").prop("checked") === true;
 
             const result = await api.get<TagRowDto[]>({
-                url: `/test/devicetag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=${onlyCollect}`
+                url: `/test/devicetag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
             });
 
             if (!result.success || result.data == null) {
-                this.showAlert(result.message ?? "태그 조회에 실패했습니다.");
+                notify.error(result.message ?? "태그 조회에 실패했습니다.");
                 return;
             }
 
             this.selectedTagIds = [];
-            await this.tagGrid?.setData(result.data);
+            this.tagRows = result.data;
+            await this.tagGrid?.setData(this.tagRows);
 
-            this.showAlert("태그 목록을 조회했습니다.");
+            this.updateTagGridFooter();
             await this.loadSummary();
         } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "태그 조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "태그 조회 중 오류가 발생했습니다.");
+        } finally {
+            this.tagGrid?.hideLoading();
+        }
+    }
+
+     async openRegisterPopup(type: "modal" | "drawer"): Promise<void> {
+        if (this.selectedDeviceId.length === 0) {
+            notify.warning("디바이스를 선택해 주세요.");
+            return;
+        }
+
+        if (this.nodes.length === 0) {
+            const success = await this.browseNodes();
+
+            if (!success) {
+                return;
+            }
+        }
+
+        const device = this.getSelectedDevice();
+
+        const options = {
+            deviceName: device == null ? "-" : `${device.deviceName} (${device.deviceType})`,
+            nodes: this.nodes,
+            treeNodes: this.treeNodes
+        };
+
+        if (type === "modal") {
+            this.modalPopup?.open(options);
+        } else {
+            this.drawerPopup?.open(options);
+        }
+    }
+
+     async browseNodes(): Promise<boolean> {
+        try {
+            notify.info("OPC 노드를 조회하고 있습니다.");
+
+            const result = await api.get<BrowseNodeDto[]>({
+                url: `/test/devicetag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
+            });
+
+            if (!result.success || result.data == null) {
+                notify.error(result.message ?? "노드 조회에 실패했습니다.");
+                return false;
+            }
+
+            this.nodes = result.data;
+            this.treeNodes = this.buildTree(this.nodes);
+
+            notify.success("OPC 노드를 조회했습니다.");
+            return true;
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "노드 조회 중 오류가 발생했습니다.");
+            return false;
+        }
+    }
+
+     async saveTags(nodes: SelectedNodeDto[]): Promise<boolean> {
+        const request: SaveRequest = {
+            deviceId: this.selectedDeviceId,
+            nodes
+        };
+
+        try {
+            const result = await api.post<unknown, SaveRequest>({
+                url: "/test/devicetag/save",
+                data: request
+            });
+
+            if (!result.success) {
+                notify.error(result.message ?? "태그 저장에 실패했습니다.");
+                return false;
+            }
+
+            notify.success(result.message ?? "태그가 저장되었습니다.");
+
+            this.nodes = [];
+            this.treeNodes = [];
+
+            await this.loadTags();
+            await this.loadSummary();
+
+            return true;
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "태그 저장 중 오류가 발생했습니다.");
+            return false;
+        }
+    }
+
+     async deleteTags(): Promise<void> {
+        if (this.selectedTagIds.length === 0) {
+            notify.warning("삭제할 태그를 선택해 주세요.");
+            return;
+        }
+
+        if (!confirm(`${this.selectedTagIds.length}개의 태그를 삭제하시겠습니까?`)) {
+            return;
+        }
+
+        const request: DeleteRequest = {
+            ids: this.selectedTagIds
+        };
+
+        try {
+            const result = await api.post<unknown, DeleteRequest>({
+                url: "/test/devicetag/delete",
+                data: request
+            });
+
+            if (!result.success) {
+                notify.error(result.message ?? "태그 삭제에 실패했습니다.");
+                return;
+            }
+
+            notify.success(result.message ?? "태그가 삭제되었습니다.");
+
+            this.selectedTagIds = [];
+            await this.loadTags();
+            await this.loadSummary();
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "태그 삭제 중 오류가 발생했습니다.");
         }
     }
 
@@ -413,148 +476,6 @@ export default class Page {
         return roots;
     }
 
-     renderNodes(): void {
-        const $area = $("#nodeList");
-        $area.empty();
-
-        if (this.treeNodes.length === 0) {
-            $area.append(`<div class="wf-empty-message">디바이스를 선택한 뒤 노드 조회 버튼을 클릭하세요.</div>`);
-            return;
-        }
-
-        for (const node of this.treeNodes) {
-            $area.append(this.createNodeElement(node, 0));
-        }
-    }
-
-     createNodeElement(node: BrowseNodeDto, depth: number): JQuery<HTMLElement> {
-        const isVariable = node.nodeClass === "Variable";
-        const checked = this.selectedNodes.some(x => x.nodeId === node.nodeId);
-        const padding = depth * 18;
-
-        const $wrapper = $(`<div class="wf-node-item"></div>`);
-
-        const unitText = node.engineeringUnit ? ` [${this.escapeHtml(node.engineeringUnit)}]` : "";
-        const descText = node.description ? ` · ${this.escapeHtml(node.description)}` : "";
-        const rowClass = isVariable ? "variable" : "object";
-        const icon = isVariable ? "●" : "▾";
-
-        const checkboxHtml = isVariable
-            ? `<input type="checkbox" ${checked ? "checked" : ""} />`
-            : `<span class="wf-node-object-icon">${icon}</span>`;
-
-        const $row = $(`
-            <div class="wf-node-row ${rowClass}" style="padding-left:${padding + 8}px">
-                ${checkboxHtml}
-                <div class="wf-node-content">
-                    <div class="wf-node-title">
-                        <span>${icon}</span>
-                        <span>${this.escapeHtml(node.displayName)}${unitText}</span>
-                    </div>
-                    <div class="wf-node-id">${this.escapeHtml(node.nodeId)}</div>
-                    <div class="wf-node-meta">${this.escapeHtml(node.nodeClass)} ${this.escapeHtml(node.dataType)} ${this.escapeHtml(node.accessLevel)}${descText}</div>
-                </div>
-            </div>
-        `);
-
-        if (isVariable) {
-            $row.find("input").on("change", event => {
-                const isChecked = $(event.currentTarget).prop("checked") === true;
-                this.toggleNode(node, isChecked);
-            });
-        }
-
-        $wrapper.append($row);
-
-        for (const child of node.children ?? []) {
-            $wrapper.append(this.createNodeElement(child, depth + 1));
-        }
-
-        return $wrapper;
-    }
-
-     toggleNode(node: BrowseNodeDto, checked: boolean): void {
-        if (checked) {
-            const exists = this.selectedNodes.some(x => x.nodeId === node.nodeId);
-
-            if (!exists) {
-                this.selectedNodes.push({
-                    nodeId: node.nodeId,
-                    displayName: node.displayName,
-                    nodeClass: node.nodeClass,
-                    dataType: node.dataType,
-                    description: node.description
-                });
-            }
-        } else {
-            this.selectedNodes = this.selectedNodes.filter(x => x.nodeId !== node.nodeId);
-        }
-
-        void this.selectedNodeGrid?.setData(this.selectedNodes);
-        this.updateSelectedCount();
-    }
-
-     selectAllVariableNodes(): void {
-        this.selectedNodes = this.nodes
-            .filter(x => x.nodeClass === "Variable")
-            .map(x => ({
-                nodeId: x.nodeId,
-                displayName: x.displayName,
-                nodeClass: x.nodeClass,
-                dataType: x.dataType,
-                description: x.description
-            }));
-
-        this.renderNodes();
-        void this.selectedNodeGrid?.setData(this.selectedNodes);
-        this.updateSelectedCount();
-    }
-
-     clearSelectedNodes(): void {
-        this.selectedNodes = [];
-
-        this.renderNodes();
-        void this.selectedNodeGrid?.setData([]);
-        this.updateSelectedCount();
-    }
-
-     async save(): Promise<void> {
-        if (this.selectedDeviceId.length === 0) {
-            this.showAlert("디바이스를 선택해 주세요.");
-            return;
-        }
-
-        if (this.selectedNodes.length === 0) {
-            this.showAlert("저장할 노드를 선택해 주세요.");
-            return;
-        }
-
-        const request: SaveRequest = {
-            deviceId: this.selectedDeviceId,
-            nodes: this.selectedNodes
-        };
-
-        try {
-            const result = await api.post<unknown, SaveRequest>({
-                url: "/test/devicetag/save",
-                data: request
-            });
-
-            if (!result.success) {
-                this.showAlert(result.message ?? "태그 저장에 실패했습니다.");
-                return;
-            }
-
-            this.showAlert(result.message ?? "태그가 저장되었습니다.");
-
-            this.clearSelectedNodes();
-            await this.loadTags();
-            await this.loadSummary();
-        } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "태그 저장 중 오류가 발생했습니다.");
-        }
-    }
-
      toggleTagSelection(id: string): void {
         if (id.length === 0) {
             return;
@@ -566,72 +487,68 @@ export default class Page {
             this.selectedTagIds.push(id);
         }
 
-        this.tagGrid?.instance.redraw(true);
+        this.tagGrid?.redraw(true);
+        this.updateTagGridFooter();
     }
 
-     selectAllTags(): void {
-        const rows = this.tagGrid?.instance.getSelectedData() as TagRowDto[];
+     updateSelectedDeviceInfo(): void {
+        const device = this.getSelectedDevice();
 
-        if (rows.length > 0) {
-            this.selectedTagIds = rows.map(x => x.id);
-        } else {
-            this.showAlert("행 선택 기준이 아니라 현재 표시 데이터 기준 선택은 다음 단계에서 보강할게.");
-        }
+        if (device == null) {
+            $("#lblDeviceStatus")
+                .removeClass("is-connected")
+                .addClass("is-empty")
+                .find("span:last")
+                .text("미선택");
 
-        this.tagGrid?.instance.redraw(true);
-    }
-
-     clearSelectedTags(): void {
-        this.selectedTagIds = [];
-        this.tagGrid?.instance.redraw(true);
-    }
-
-     async deleteTags(): Promise<void> {
-        if (this.selectedTagIds.length === 0) {
-            this.showAlert("삭제할 태그를 선택해 주세요.");
+            $("#lblEndpoint").text("Endpoint 없음");
             return;
         }
 
-        if (!confirm(`${this.selectedTagIds.length}개의 태그를 삭제하시겠습니까?`)) {
-            return;
-        }
+        $("#lblDeviceStatus")
+            .removeClass("is-empty")
+            .find("span:last")
+            .text(device.isCollectEnabled ? "연결됨" : "수집 중지");
 
-        const request: DeleteRequest = {
-            ids: this.selectedTagIds
-        };
-
-        try {
-            const result = await api.post<unknown, DeleteRequest>({
-                url: "/test/devicetag/delete",
-                data: request
-            });
-
-            if (!result.success) {
-                this.showAlert(result.message ?? "태그 삭제에 실패했습니다.");
-                return;
-            }
-
-            this.showAlert(result.message ?? "태그가 삭제되었습니다.");
-
-            this.selectedTagIds = [];
-            await this.loadTags();
-            await this.loadSummary();
-        } catch (e) {
-            this.showAlert(e instanceof Error ? e.message : "태그 삭제 중 오류가 발생했습니다.");
-        }
+        $("#lblEndpoint").text(device.endpointUrl || "Endpoint 없음");
+        $("#lblTagCount").text(`${device.tagCount.toLocaleString()}개`);
     }
 
-     updateSelectedCount(): void {
-        $("#lblSelectedCount").text(`${this.selectedNodes.length.toLocaleString()}개 선택`);
+     updateTagGridFooter(): void {
+        $("#lblGridSummary").text(`총 ${this.tagRows.length.toLocaleString()}건`);
+        $("#lblGridTagCount").text(`${this.tagRows.length.toLocaleString()}건`);
+        $("#lblSelectedTag").text(
+            this.selectedTagIds.length === 0
+                ? "선택 없음"
+                : `${this.selectedTagIds.length.toLocaleString()}개 선택`
+        );
     }
 
-     showAlert(message: string): void {
-        $("#testAlertMessage").text(message);
-        $("#testAlert").removeClass("d-none");
+     getSelectedDevice(): DeviceRowDto | null {
+        return this.devices.find(x => x.id === this.selectedDeviceId) ?? null;
+    }
 
-        window.setTimeout(() => {
-            $("#testAlert").addClass("d-none");
-        }, 2500);
+     createYn(value: boolean): string {
+        return value
+            ? `<span class="wf-tag-yn">Y</span>`
+            : `<span class="wf-tag-yn off">N</span>`;
+    }
+
+     createDataTypeBadge(dataType: string): string {
+        const value = String(dataType ?? "");
+        const lower = value.toLowerCase();
+
+        let className = "default";
+
+        if (lower.includes("string")) {
+            className = "string";
+        } else if (lower.includes("bool")) {
+            className = "boolean";
+        } else if (lower.includes("int") || lower.includes("float") || lower.includes("double") || lower.includes("decimal")) {
+            className = "number";
+        }
+
+        return `<span class="wf-tag-badge ${className}">${this.escapeHtml(value || "-")}</span>`;
     }
 
      escapeHtml(value: string | null | undefined): string {

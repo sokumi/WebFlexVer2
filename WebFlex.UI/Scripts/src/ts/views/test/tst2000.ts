@@ -1,10 +1,10 @@
 ﻿import { api } from "../../framework/common";
 import { notify } from "../../framework/notify";
-import { WebFlexGrid } from "../../framework/grid/webflexGrid";
+import { WebFlexGrid } from "../../components/grid/webflexGrid";
 import {
     numberFormatter,
     textFormatter
-} from "../../framework/grid/webflexGridFormatters";
+} from "../../components/grid/webflexGridFormatters";
 
 type DeviceTypeDto = {
     value: string;
@@ -46,7 +46,6 @@ type DeviceSaveRequest = {
     password: string;
     publishingIntervalMs: number;
     samplingIntervalMs: number;
-    sortOrder: number;
     description: string;
 };
 

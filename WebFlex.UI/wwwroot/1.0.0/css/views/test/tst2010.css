@@ -1,166 +1,155 @@
 /*!******************************************************************************************!*\
   !*** css ./node_modules/css-loader/dist/cjs.js!./Scripts/src/css/views/test/tst2010.css ***!
   \******************************************************************************************/
-.wf-test-devicetag-page {
-    display: grid;
-    gap: 16px;
+.wf-test-tag-page {
+    gap: 14px;
 }
 
-.wf-test-devicetag-actions,
-.wf-devicetag-card-actions {
+.wf-tag-controlbar {
+    flex: 0 0 auto;
+    min-height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    border: 1px solid var(--wf-border);
+    border-radius: var(--wf-radius-lg);
+    background: var(--wf-surface);
+    box-shadow: var(--wf-card-shadow);
+}
+
+.wf-tag-device-select {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 340px;
 }
 
-.wf-test-devicetag-summary {
-    margin-bottom: 2px;
-}
-
-.wf-devicetag-search-form {
-    display: grid;
-    grid-template-columns: minmax(260px, 1.2fr) minmax(220px, 1fr) 180px 150px;
-    gap: 12px;
-    align-items: end;
-}
-
-.wf-form-field {
-    min-width: 0;
-}
-
-    .wf-form-field .form-label {
-        margin-bottom: 6px;
+    .wf-tag-device-select label {
+        margin: 0;
         color: var(--wf-text-muted);
         font-size: 12px;
         font-weight: 800;
+        white-space: nowrap;
     }
 
-    .wf-form-field .form-control,
-    .wf-form-field .form-select {
-        border-color: var(--wf-border);
-        background-color: var(--wf-surface-soft);
+.wf-tag-connect-chip,
+.wf-tag-endpoint-chip {
+    height: 26px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 999px;
+    padding: 0 10px;
+    font-size: 11px;
+    font-weight: 900;
+    white-space: nowrap;
+}
+
+.wf-tag-connect-chip {
+    background: color-mix(in srgb, var(--wf-green) 12%, var(--wf-surface));
+    color: var(--wf-green);
+}
+
+    .wf-tag-connect-chip.is-empty {
+        background: var(--wf-surface-soft);
+        color: var(--wf-text-muted);
+    }
+
+.wf-tag-endpoint-chip {
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: var(--wf-surface-soft);
+    color: var(--wf-text-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.wf-tag-controlbar-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.wf-tag-total-text {
+    color: var(--wf-text-muted);
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+    .wf-tag-total-text strong {
         color: var(--wf-text);
     }
 
-        .wf-form-field .form-control:focus,
-        .wf-form-field .form-select:focus {
-            border-color: var(--wf-blue);
-            box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.14);
-        }
-
-.wf-form-check-field {
-    min-height: 38px;
-    display: flex;
-    align-items: center;
+.wf-tag-list-card {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
 }
 
-.wf-devicetag-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(420px, 0.9fr);
-    gap: 16px;
-    align-items: start;
-}
-
-.wf-devicetag-node-card,
-.wf-devicetag-selected-card {
-    min-width: 0;
-}
-
-.wf-node-tree {
-    height: 430px;
-    overflow: auto;
-    border: 1px solid var(--wf-border);
-    border-radius: var(--wf-radius-md);
-    background: var(--wf-surface-soft);
-    padding: 10px;
-}
-
-.wf-node-item {
-    margin-bottom: 4px;
-}
-
-.wf-node-row {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    border-radius: 8px;
-    padding: 7px 8px;
-    color: var(--wf-text);
-}
-
-    .wf-node-row:hover {
-        background: color-mix(in srgb, var(--wf-blue) 8%, transparent);
+    .wf-tag-list-card .wf-card-body {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
     }
 
-    .wf-node-row.object {
-        color: var(--wf-text-muted);
-        font-weight: 800;
+    .wf-tag-list-card .tabulator-row.tabulator-selected,
+    .wf-tag-list-card .tabulator-row:hover {
+        background: color-mix(in srgb, var(--wf-green) 7%, var(--wf-surface)) !important;
     }
 
-    .wf-node-row.variable {
-        background: color-mix(in srgb, var(--wf-surface) 74%, transparent);
+.wf-tag-check {
+    width: 16px;
+    height: 16px;
+}
+
+@media (max-width: 1199px) {
+    .wf-tag-controlbar {
+        flex-wrap: wrap;
     }
 
-    .wf-node-row input {
-        margin-top: 3px;
-    }
-
-.wf-node-content {
-    min-width: 0;
-    display: grid;
-    gap: 2px;
-}
-
-.wf-node-title {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 800;
-}
-
-.wf-node-id {
-    color: var(--wf-text-muted);
-    font-size: 11px;
-    word-break: break-all;
-}
-
-.wf-node-meta {
-    color: var(--wf-text-muted);
-    font-size: 11px;
-}
-
-.wf-empty-message {
-    height: 100%;
-    min-height: 120px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--wf-text-muted);
-    font-size: 13px;
-    font-weight: 700;
-} 
-
-@media (max-width: 1399px) {
-    .wf-devicetag-layout {
-        grid-template-columns: 1fr;
+    .wf-tag-controlbar-actions {
+        width: 100%;
+        justify-content: flex-end;
     }
 }
 
 @media (max-width: 991px) {
-    .wf-devicetag-search-form {
-        grid-template-columns: 1fr 1fr;
+    .wf-tag-device-select {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .wf-tag-endpoint-chip {
+        max-width: 100%;
     }
 }
 
 @media (max-width: 767px) {
-    .wf-test-devicetag-actions,
-    .wf-devicetag-card-actions {
-        flex-wrap: wrap;
+    .wf-tag-list-card {
+        min-height: 560px;
     }
 
-    .wf-devicetag-search-form {
-        grid-template-columns: 1fr;
+        .wf-tag-list-card .wf-card-body {
+            height: 560px;
+        }
+}
+
+@media (max-width: 575px) {
+    .wf-tag-controlbar-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .wf-tag-total-text {
+        grid-column: 1 / -1;
+    }
+
+    .wf-tag-controlbar-actions .btn {
+        width: 100%;
     }
 }
 

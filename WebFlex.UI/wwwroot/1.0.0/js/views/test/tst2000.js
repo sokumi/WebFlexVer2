@@ -2,54 +2,10 @@
 /******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
 
-/***/ "./Scripts/src/ts/framework/common.ts"
-/*!********************************************!*\
-  !*** ./Scripts/src/ts/framework/common.ts ***!
-  \********************************************/
-(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
-
-__webpack_require__.r(__webpack_exports__);
-/* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   api: () => (/* binding */ api)
-/* harmony export */ });
-/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
-
-const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
-    headers: {
-        "Content-Type": "application/json"
-    }
-});
-instance.interceptors.response.use((response) => response, (error) => {
-    var _a, _b, _c;
-    const message = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.statusText) !== null && _b !== void 0 ? _b : error.message) !== null && _c !== void 0 ? _c : "알 수 없는 오류";
-    return Promise.reject(new Error(message));
-});
-const api = {
-    async get(options) {
-        const res = await instance.get(options.url, options.config);
-        return res.data;
-    },
-    async post(options) {
-        const res = await instance.post(options.url, options.data, options.config);
-        return res.data;
-    },
-    async put(options) {
-        const res = await instance.put(options.url, options.data, options.config);
-        return res.data;
-    },
-    async delete(options) {
-        const res = await instance.delete(options.url, options.config);
-        return res.data;
-    }
-};
-
-
-/***/ },
-
-/***/ "./Scripts/src/ts/framework/grid/webflexGrid.ts"
-/*!******************************************************!*\
-  !*** ./Scripts/src/ts/framework/grid/webflexGrid.ts ***!
-  \******************************************************/
+/***/ "./Scripts/src/ts/components/grid/webflexGrid.ts"
+/*!*******************************************************!*\
+  !*** ./Scripts/src/ts/components/grid/webflexGrid.ts ***!
+  \*******************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -181,10 +137,10 @@ class WebFlexGrid {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/framework/grid/webflexGridFormatters.ts"
-/*!****************************************************************!*\
-  !*** ./Scripts/src/ts/framework/grid/webflexGridFormatters.ts ***!
-  \****************************************************************/
+/***/ "./Scripts/src/ts/components/grid/webflexGridFormatters.ts"
+/*!*****************************************************************!*\
+  !*** ./Scripts/src/ts/components/grid/webflexGridFormatters.ts ***!
+  \*****************************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -278,6 +234,50 @@ function escapeHtml(value) {
         .replace(/\"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+
+/***/ },
+
+/***/ "./Scripts/src/ts/framework/common.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/common.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   api: () => (/* binding */ api)
+/* harmony export */ });
+/* harmony import */ var axios__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! axios */ "./node_modules/axios/lib/axios.js");
+
+const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
+    headers: {
+        "Content-Type": "application/json"
+    }
+});
+instance.interceptors.response.use((response) => response, (error) => {
+    var _a, _b, _c;
+    const message = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.statusText) !== null && _b !== void 0 ? _b : error.message) !== null && _c !== void 0 ? _c : "알 수 없는 오류";
+    return Promise.reject(new Error(message));
+});
+const api = {
+    async get(options) {
+        const res = await instance.get(options.url, options.config);
+        return res.data;
+    },
+    async post(options) {
+        const res = await instance.post(options.url, options.data, options.config);
+        return res.data;
+    },
+    async put(options) {
+        const res = await instance.put(options.url, options.data, options.config);
+        return res.data;
+    },
+    async delete(options) {
+        const res = await instance.delete(options.url, options.config);
+        return res.data;
+    }
+};
 
 
 /***/ },
@@ -415,8 +415,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 /* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
 /* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../framework/notify */ "./Scripts/src/ts/framework/notify.ts");
-/* harmony import */ var _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../framework/grid/webflexGrid */ "./Scripts/src/ts/framework/grid/webflexGrid.ts");
-/* harmony import */ var _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../framework/grid/webflexGridFormatters */ "./Scripts/src/ts/framework/grid/webflexGridFormatters.ts");
+/* harmony import */ var _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../components/grid/webflexGrid */ "./Scripts/src/ts/components/grid/webflexGrid.ts");
+/* harmony import */ var _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/grid/webflexGridFormatters */ "./Scripts/src/ts/components/grid/webflexGridFormatters.ts");
 
 
 
@@ -467,7 +467,7 @@ class Page {
         });
     }
     initGrid() {
-        this.grid = new _framework_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__.WebFlexGrid({
+        this.grid = new _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__.WebFlexGrid({
             selector: "#gridDevice",
             height: "100%",
             pagination: true,
@@ -478,13 +478,13 @@ class Page {
                     title: "코드",
                     field: "deviceCode",
                     width: 120,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
+                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "디바이스명",
                     field: "deviceName",
                     minWidth: 190,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
+                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "타입",
@@ -501,21 +501,21 @@ class Page {
                     title: "주소",
                     field: "deviceAddress",
                     minWidth: 160,
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
+                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
                 },
                 {
                     title: "포트",
                     field: "port",
                     width: 100,
                     hozAlign: "right",
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
+                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
                 },
                 {
                     title: "태그",
                     field: "tagCount",
                     width: 90,
                     hozAlign: "right",
-                    formatter: _framework_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
+                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
                 },
                 {
                     title: "수집",
