@@ -88,18 +88,18 @@
     }
 
     .wf-status.good {
-        color: var(--wf-green);
-        background: rgba(18, 184, 134, 0.12);
+        color: var(--wf-success);
+        background: var(--wf-success-soft);
     }
 
     .wf-status.uncertain {
-        color: var(--wf-yellow);
-        background: rgba(245, 159, 0, 0.14);
+        color: var(--wf-warning);
+        background: var(--wf-warning-soft);
     }
 
     .wf-status.bad {
-        color: var(--wf-red);
-        background: rgba(250, 82, 82, 0.14);
+        color: var(--wf-danger);
+        background: var(--wf-danger-soft);
     }
 
 .wf-toolbar {
@@ -300,7 +300,7 @@
 
     .wf-toast.info .wf-toast-icon {
         color: var(--wf-blue);
-        background: rgba(47, 111, 237, 0.14);
+        box-shadow: 0 0 0 3px var(--wf-focus-ring);
     }
 
 .wf-toast.warning {
@@ -420,8 +420,8 @@
 }
 
     .wf-search-toggle:hover {
-        background: var(--wf-blue-soft);
-        color: var(--wf-blue);
+        background: var(--wf-badge-blue-bg);
+        color: var(--wf-badge-blue-text);
     }
 
     .wf-search-toggle svg {
@@ -742,15 +742,15 @@
 }
 
     .wf-mode-badge.create {
-        background: rgba(18, 184, 134, 0.12);
-        color: var(--wf-green);
-        border: 1px solid rgba(18, 184, 134, 0.28);
+        background: var(--wf-success-soft);
+        color: var(--wf-success);
+        border: 1px solid var(--wf-success-border);
     }
 
     .wf-mode-badge.edit {
-        background: rgba(47, 111, 237, 0.12);
-        color: var(--wf-blue);
-        border: 1px solid rgba(47, 111, 237, 0.28);
+        background: var(--wf-primary-soft);
+        color: var(--wf-primary);
+        border: 1px solid var(--wf-primary-border);
     }
 
 /* =========================================================
@@ -795,26 +795,26 @@
 
     .wf-data-type-badge.string,
     .wf-tag-badge.string {
-        color: #d63384;
-        background: rgba(214, 51, 132, 0.10);
+        color: var(--wf-primary);
+        background: var(--wf-primary-soft);
     }
 
     .wf-data-type-badge.boolean,
     .wf-tag-badge.boolean {
-        color: #e67700;
-        background: rgba(230, 119, 0, 0.10);
+        color: var(--wf-warning);
+        background: var(--wf-warning-soft);
     }
 
     .wf-data-type-badge.number,
     .wf-tag-badge.number {
-        color: #7048e8;
-        background: rgba(112, 72, 232, 0.10);
+        color: var(--wf-purple);
+        background: var(--wf-purple-soft);
     }
 
     .wf-data-type-badge.default,
     .wf-tag-badge.default {
-        color: var(--wf-blue);
-        background: var(--wf-blue-soft);
+        color: var(--wf-text-subtle);
+        background: var(--wf-surface-muted);
     }
 
 .wf-yn-badge,
@@ -864,7 +864,7 @@
     inset: 0;
     border: 0;
     padding: 0;
-    background: rgba(15, 23, 42, 0.48);
+    background: var(--wf-overlay-bg);
     opacity: 0;
     transition: opacity 0.18s ease;
 }

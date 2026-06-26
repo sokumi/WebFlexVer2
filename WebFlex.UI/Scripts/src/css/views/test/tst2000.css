@@ -72,7 +72,7 @@
 
 .wf-test-device-list-card .tabulator-row.tabulator-selected,
 .wf-test-device-list-card .tabulator-row:hover {
-    background: color-mix(in srgb, var(--wf-green) 9%, var(--wf-surface)) !important;
+    background: color-mix(in srgb, var(--wf-primary) 7%, var(--wf-surface)) !important;
 }
 
     .wf-test-device-list-card .tabulator-row.tabulator-selected .tabulator-cell {

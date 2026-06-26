@@ -44,8 +44,8 @@ body {
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: var(--wf-blue);
-    color: #ffffff;
+    background: var(--wf-primary);
+    color: var(--wf-primary-text);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -104,8 +104,8 @@ body {
 
     .wf-nav-link:hover,
     .wf-nav-link.active {
-        background: var(--wf-blue-soft);
-        color: var(--wf-blue);
+        background: var(--wf-sidebar-active-bg);
+        color: var(--wf-sidebar-active-text);
     }
 
     .wf-nav-link svg {
@@ -152,8 +152,8 @@ body {
 }
 
     .wf-status-dot.good {
-        background: var(--wf-green);
-        box-shadow: 0 0 0 4px rgba(18, 184, 134, 0.12);
+        background: var(--wf-success);
+        box-shadow: 0 0 0 4px var(--wf-success-soft);
     }
 
 .wf-sidebar-collapse {
@@ -171,7 +171,7 @@ body {
 }
 
     .wf-sidebar-collapse:hover {
-        color: var(--wf-blue);
+        color: var(--wf-primary);
     }
 
     .wf-sidebar-collapse svg {
@@ -260,8 +260,8 @@ body {
     gap: 5px;
     padding: 0 9px;
     border-radius: 999px;
-    background: rgba(18, 184, 134, 0.12);
-    color: var(--wf-green);
+    background: var(--wf-success-soft);
+    color: var(--wf-success);
     font-size: 11px;
     font-weight: 900;
 }

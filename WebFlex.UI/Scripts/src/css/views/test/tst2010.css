@@ -44,8 +44,8 @@
 }
 
 .wf-tag-connect-chip {
-    background: color-mix(in srgb, var(--wf-green) 12%, var(--wf-surface));
-    color: var(--wf-green);
+    background: var(--wf-success-soft);
+    color: var(--wf-success);
 }
 
     .wf-tag-connect-chip.is-empty {
@@ -95,7 +95,7 @@
 
     .wf-tag-list-card .tabulator-row.tabulator-selected,
     .wf-tag-list-card .tabulator-row:hover {
-        background: color-mix(in srgb, var(--wf-green) 7%, var(--wf-surface)) !important;
+        background: color-mix(in srgb, var(--wf-primary) 7%, var(--wf-surface)) !important;
     }
 
 .wf-tag-check {

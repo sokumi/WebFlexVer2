@@ -1,20 +1,245 @@
-:root {
+/* =========================================================
+   WebFlex Theme Variables
+   - 우선은 여기에서 라이트 테마 블록을 주석 처리/해제하면서 변경
+   - 저장 기능 없이 CSS 변수만으로 테마 변경
+   ========================================================= */
+
+/* =========================================================
+   LIGHT THEME - BLUE TONE
+   ========================================================= */
+/*:root,
+:root[data-webflex-theme="light"] {
     --wf-font-family: "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
-    --wf-blue: #2f6fed;
-    --wf-blue-soft: #eaf1ff;
-    --wf-green: #12b886;
-    --wf-yellow: #f59f00;
-    --wf-red: #fa5252;
-    --wf-purple: #7950f2;
-    --wf-bg: #f3f6fb;
+    --wf-primary: #2563eb;
+    --wf-primary-hover: #1d4ed8;
+    --wf-primary-active: #1e40af;
+    --wf-primary-soft: #eaf1ff;
+    --wf-primary-soft-hover: #dbeafe;
+    --wf-primary-border: #bfdbfe;
+    --wf-primary-text: #ffffff;
+    --wf-blue: var(--wf-primary);
+    --wf-blue-soft: var(--wf-primary-soft);
+    --wf-success: #0f9f6e;
+    --wf-success-hover: #0b8a5f;
+    --wf-success-soft: #e8f8f2;
+    --wf-success-border: #b9ead8;
+    --wf-green: var(--wf-success);
+    --wf-warning: #d97706;
+    --wf-warning-hover: #b45309;
+    --wf-warning-soft: #fff7e6;
+    --wf-warning-border: #fed7aa;
+    --wf-yellow: var(--wf-warning);
+    --wf-danger: #dc2626;
+    --wf-danger-hover: #b91c1c;
+    --wf-danger-soft: #fff1f2;
+    --wf-danger-border: #fecdd3;
+    --wf-red: var(--wf-danger);
+    --wf-purple: #7c3aed;
+    --wf-purple-soft: #f3e8ff;
+
+    --wf-bg: #f4f7fb;
     --wf-surface: #ffffff;
     --wf-surface-soft: #f8fafc;
-    --wf-border: #e5eaf2;
-    --wf-text: #1f2937;
-    --wf-text-muted: #6b7280;
+    --wf-surface-muted: #f1f5f9;
+    --wf-border: #dfe7f2;
+    --wf-border-strong: #cbd5e1;
+
+    --wf-text: #172033;
+    --wf-text-subtle: #475569;
+    --wf-text-muted: #64748b;
+    --wf-text-disabled: #94a3b8;
+
     --wf-sidebar-bg: #ffffff;
+    --wf-sidebar-active-bg: var(--wf-primary-soft);
+    --wf-sidebar-active-text: var(--wf-primary);
     --wf-topbar-bg: #ffffff;
+
     --wf-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --wf-overlay-bg: rgba(15, 23, 42, 0.48);
+    --wf-focus-ring: rgba(37, 99, 235, 0.16);
+
+    --wf-btn-primary-bg: var(--wf-primary);
+    --wf-btn-primary-border: var(--wf-primary);
+    --wf-btn-primary-color: #ffffff;
+    --wf-btn-primary-hover-bg: var(--wf-primary-hover);
+    --wf-btn-primary-hover-border: var(--wf-primary-hover);
+    --wf-btn-success-bg: #0f9f6e;
+    --wf-btn-success-border: #0f9f6e;
+    --wf-btn-success-color: #ffffff;
+    --wf-btn-success-hover-bg: #0b8a5f;
+    --wf-btn-success-hover-border: #0b8a5f;
+    --wf-btn-danger-bg: transparent;
+    --wf-btn-danger-border: var(--wf-danger);
+    --wf-btn-danger-color: var(--wf-danger);
+    --wf-btn-danger-hover-bg: var(--wf-danger-soft);
+    --wf-btn-danger-hover-border: var(--wf-danger-hover);
+    --wf-btn-danger-hover-color: var(--wf-danger-hover);
+    --wf-btn-secondary-bg: var(--wf-surface);
+    --wf-btn-secondary-border: var(--wf-border-strong);
+    --wf-btn-secondary-color: var(--wf-text-subtle);
+    --wf-btn-secondary-hover-bg: var(--wf-surface-muted);
+    --wf-btn-secondary-hover-border: var(--wf-border-strong);
+    --wf-btn-secondary-hover-color: var(--wf-text);
+    --tblr-primary: var(--wf-primary);
+    --tblr-primary-rgb: 37, 99, 235;
+    --tblr-primary-fg: var(--wf-primary-text);
+    --tblr-primary-darken: var(--wf-primary-hover);
+
+    --tblr-success: var(--wf-success);
+    --tblr-success-rgb: 15, 159, 110;
+    --tblr-success-fg: #ffffff;
+    --tblr-success-darken: var(--wf-success-hover);
+
+    --tblr-danger: var(--wf-danger);
+    --tblr-danger-rgb: 220, 38, 38;
+    --tblr-danger-fg: #ffffff;
+    --tblr-danger-darken: var(--wf-danger-hover);
+
+    --tblr-muted: var(--wf-text-muted);
+    --tblr-body-color: var(--wf-text);
+    --tblr-body-bg: var(--wf-bg);
+    --tblr-border-color: var(--wf-border);
+
+    --wf-badge-blue-text: var(--wf-primary);
+    --wf-badge-blue-bg: var(--wf-primary-soft);
+    --wf-badge-green-text: var(--wf-success);
+    --wf-badge-green-bg: var(--wf-success-soft);
+    --wf-badge-red-text: var(--wf-danger);
+    --wf-badge-red-bg: var(--wf-danger-soft);
+    --wf-badge-yellow-text: var(--wf-warning);
+    --wf-badge-yellow-bg: var(--wf-warning-soft);
+
+    --wf-radius-sm: 6px;
+    --wf-radius-md: 10px;
+    --wf-radius-lg: 14px;
+    --wf-sidebar-width: 232px;
+    --wf-topbar-height: 56px;
+}*/
+
+    /* =========================================================
+   LIGHT THEME - EMERALD / GREEN TONE
+   - 나중에 블루톤 대신 쓸 때 위 BLUE TONE 블록을 주석 처리하고
+     아래 블록을 주석 해제하면 됨.
+   ========================================================= */
+
+:root,
+:root[data-webflex-theme="light"] {
+    --wf-font-family: "Pretendard", "Noto Sans KR", "Segoe UI", sans-serif;
+
+    --wf-primary: #059669;
+    --wf-primary-hover: #047857;
+    --wf-primary-active: #065f46;
+    --wf-primary-soft: #e8f8f2;
+    --wf-primary-soft-hover: #d1fae5;
+    --wf-primary-border: #a7f3d0;
+    --wf-primary-text: #ffffff;
+
+    --wf-blue: var(--wf-primary);
+    --wf-blue-soft: var(--wf-primary-soft);
+
+    --wf-success: #059669;
+    --wf-success-hover: #047857;
+    --wf-success-soft: #e8f8f2;
+    --wf-success-border: #a7f3d0;
+
+    --wf-green: var(--wf-success);
+
+    --wf-warning: #d97706;
+    --wf-warning-hover: #b45309;
+    --wf-warning-soft: #fff7e6;
+    --wf-warning-border: #fed7aa;
+
+    --wf-yellow: var(--wf-warning);
+
+    --wf-danger: #dc2626;
+    --wf-danger-hover: #b91c1c;
+    --wf-danger-soft: #fff1f2;
+    --wf-danger-border: #fecdd3;
+
+    --wf-red: var(--wf-danger);
+
+    --wf-purple: #7c3aed;
+    --wf-purple-soft: #f3e8ff;
+
+    --wf-bg: #f4f8f7;
+    --wf-surface: #ffffff;
+    --wf-surface-soft: #f7fbfa;
+    --wf-surface-muted: #eef7f4;
+    --wf-border: #dbece7;
+    --wf-border-strong: #bedbd2;
+
+    --wf-text: #172033;
+    --wf-text-subtle: #475569;
+    --wf-text-muted: #64748b;
+    --wf-text-disabled: #94a3b8;
+
+    --wf-sidebar-bg: #ffffff;
+    --wf-sidebar-active-bg: var(--wf-primary-soft);
+    --wf-sidebar-active-text: var(--wf-primary);
+    --wf-topbar-bg: #ffffff;
+
+    --wf-card-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    --wf-overlay-bg: rgba(15, 23, 42, 0.48);
+    --wf-focus-ring: rgba(5, 150, 105, 0.16);
+
+    --wf-btn-primary-bg: var(--wf-primary);
+    --wf-btn-primary-border: var(--wf-primary);
+    --wf-btn-primary-color: #ffffff;
+    --wf-btn-primary-hover-bg: var(--wf-primary-hover);
+    --wf-btn-primary-hover-border: var(--wf-primary-hover);
+
+    --wf-btn-success-bg: var(--wf-primary);
+    --wf-btn-success-border: var(--wf-primary);
+    --wf-btn-success-color: #ffffff;
+    --wf-btn-success-hover-bg: var(--wf-primary-hover);
+    --wf-btn-success-hover-border: var(--wf-primary-hover);
+
+    --wf-btn-danger-bg: transparent;
+    --wf-btn-danger-border: var(--wf-danger);
+    --wf-btn-danger-color: var(--wf-danger);
+    --wf-btn-danger-hover-bg: var(--wf-danger-soft);
+    --wf-btn-danger-hover-border: var(--wf-danger-hover);
+    --wf-btn-danger-hover-color: var(--wf-danger-hover);
+
+    --wf-btn-secondary-bg: var(--wf-surface);
+    --wf-btn-secondary-border: var(--wf-border-strong);
+    --wf-btn-secondary-color: var(--wf-text-subtle);
+    --wf-btn-secondary-hover-bg: var(--wf-surface-muted);
+    --wf-btn-secondary-hover-border: var(--wf-border-strong);
+    --wf-btn-secondary-hover-color: var(--wf-text);
+
+    --tblr-primary: var(--wf-primary);
+    --tblr-primary-rgb: 5, 150, 105;
+    --tblr-primary-fg: var(--wf-primary-text);
+    --tblr-primary-darken: var(--wf-primary-hover);
+
+    --tblr-success: var(--wf-success);
+    --tblr-success-rgb: 5, 150, 105;
+    --tblr-success-fg: #ffffff;
+    --tblr-success-darken: var(--wf-success-hover);
+
+    --tblr-danger: var(--wf-danger);
+    --tblr-danger-rgb: 220, 38, 38;
+    --tblr-danger-fg: #ffffff;
+    --tblr-danger-darken: var(--wf-danger-hover);
+
+    --tblr-muted: var(--wf-text-muted);
+    --tblr-body-color: var(--wf-text);
+    --tblr-body-bg: var(--wf-bg);
+    --tblr-border-color: var(--wf-border);
+
+    --wf-badge-blue-text: var(--wf-primary);
+    --wf-badge-blue-bg: var(--wf-primary-soft);
+
+    --wf-badge-green-text: var(--wf-success);
+    --wf-badge-green-bg: var(--wf-success-soft);
+
+    --wf-badge-red-text: var(--wf-danger);
+    --wf-badge-red-bg: var(--wf-danger-soft);
+
+    --wf-badge-yellow-text: var(--wf-warning);
+    --wf-badge-yellow-bg: var(--wf-warning-soft);
+
     --wf-radius-sm: 6px;
     --wf-radius-md: 10px;
     --wf-radius-lg: 14px;
@@ -22,18 +247,208 @@
     --wf-topbar-height: 56px;
 }
 
-    :root[data-webflex-theme="dark"] {
+    /* =========================================================
+   DARK THEME - BLUE TONE
+   - 블루 라이트 테마를 사용할 때 활성화
+   - 에메랄드 테마를 사용할 때는 이 블록을 주석 처리하고,
+     아래 DARK THEME - EMERALD / GREEN TONE 블록을 주석 해제
+   ========================================================= */
+/*    :root[data-webflex-theme="dark"] {
+        --wf-primary: #60a5fa;
+        --wf-primary-hover: #3b82f6;
+        --wf-primary-active: #2563eb;
+        --wf-primary-soft: rgba(96, 165, 250, 0.14);
+        --wf-primary-soft-hover: rgba(96, 165, 250, 0.20);
+        --wf-primary-border: rgba(96, 165, 250, 0.30);
+        --wf-primary-text: #ffffff;
+        --wf-blue: var(--wf-primary);
+        --wf-blue-soft: var(--wf-primary-soft);
+        --wf-success: #34d399;
+        --wf-success-hover: #10b981;
+        --wf-success-soft: rgba(52, 211, 153, 0.14);
+        --wf-success-border: rgba(52, 211, 153, 0.28);
+        --wf-green: var(--wf-success);
+        --wf-warning: #fbbf24;
+        --wf-warning-hover: #f59e0b;
+        --wf-warning-soft: rgba(251, 191, 36, 0.14);
+        --wf-warning-border: rgba(251, 191, 36, 0.28);
+        --wf-yellow: var(--wf-warning);
+        --wf-danger: #fb7185;
+        --wf-danger-hover: #f43f5e;
+        --wf-danger-soft: rgba(251, 113, 133, 0.14);
+        --wf-danger-border: rgba(251, 113, 133, 0.28);
+        --wf-red: var(--wf-danger);
+        --wf-purple: #a78bfa;
+        --wf-purple-soft: rgba(167, 139, 250, 0.14);
         --wf-bg: #070b13;
         --wf-surface: #121922;
         --wf-surface-soft: #0d141d;
+        --wf-surface-muted: #111827;
         --wf-border: #202b3a;
+        --wf-border-strong: #334155;
         --wf-text: #e5e7eb;
+        --wf-text-subtle: #cbd5e1;
         --wf-text-muted: #8b95a5;
+        --wf-text-disabled: #64748b;
         --wf-sidebar-bg: #101720;
+        --wf-sidebar-active-bg: var(--wf-primary-soft);
+        --wf-sidebar-active-text: var(--wf-primary);
         --wf-topbar-bg: #101720;
         --wf-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
-        --wf-blue-soft: rgba(47, 111, 237, 0.14);
+        --wf-overlay-bg: rgba(0, 0, 0, 0.58);
+        --wf-focus-ring: rgba(96, 165, 250, 0.20);
+        --wf-btn-primary-bg: var(--wf-primary-hover);
+        --wf-btn-primary-border: var(--wf-primary-hover);
+        --wf-btn-primary-color: #ffffff;
+        --wf-btn-primary-hover-bg: var(--wf-primary-active);
+        --wf-btn-primary-hover-border: var(--wf-primary-active);
+        --wf-btn-success-bg: #10b981;
+        --wf-btn-success-border: #10b981;
+        --wf-btn-success-color: #ffffff;
+        --wf-btn-success-hover-bg: #059669;
+        --wf-btn-success-hover-border: #059669;
+        --wf-btn-danger-bg: transparent;
+        --wf-btn-danger-border: var(--wf-danger);
+        --wf-btn-danger-color: var(--wf-danger);
+        --wf-btn-danger-hover-bg: var(--wf-danger-soft);
+        --wf-btn-danger-hover-border: var(--wf-danger-hover);
+        --wf-btn-danger-hover-color: var(--wf-danger-hover);
+        --wf-btn-secondary-bg: var(--wf-surface);
+        --wf-btn-secondary-border: var(--wf-border-strong);
+        --wf-btn-secondary-color: var(--wf-text-subtle);
+        --wf-btn-secondary-hover-bg: var(--wf-surface-muted);
+        --wf-btn-secondary-hover-border: var(--wf-border-strong);
+        --wf-btn-secondary-hover-color: var(--wf-text);
+        --wf-badge-blue-text: var(--wf-primary);
+        --wf-badge-blue-bg: var(--wf-primary-soft);
+        --wf-badge-green-text: var(--wf-success);
+        --wf-badge-green-bg: var(--wf-success-soft);
+        --wf-badge-red-text: var(--wf-danger);
+        --wf-badge-red-bg: var(--wf-danger-soft);
+        --wf-badge-yellow-text: var(--wf-warning);
+        --wf-badge-yellow-bg: var(--wf-warning-soft);
+        --tblr-primary: var(--wf-primary-hover);
+        --tblr-primary-rgb: 59, 130, 246;
+        --tblr-primary-fg: #ffffff;
+        --tblr-primary-darken: var(--wf-primary-active);
+        --tblr-success: #10b981;
+        --tblr-success-rgb: 16, 185, 129;
+        --tblr-success-fg: #ffffff;
+        --tblr-success-darken: #059669;
+        --tblr-danger: var(--wf-danger);
+        --tblr-danger-rgb: 251, 113, 133;
+        --tblr-danger-fg: #ffffff;
+        --tblr-danger-darken: var(--wf-danger-hover);
+        --tblr-muted: var(--wf-text-muted);
+        --tblr-body-color: var(--wf-text);
+        --tblr-body-bg: var(--wf-bg);
+        --tblr-border-color: var(--wf-border);
+    }*/
+
+/* =========================================================
+   DARK THEME - EMERALD / GREEN TONE
+   - 에메랄드 라이트 테마를 사용할 때는 위 BLUE DARK 블록을 주석 처리하고
+     아래 블록을 주석 해제
+   ========================================================= */
+
+
+    :root[data-webflex-theme="dark"] {
+        --wf-primary: #34d399;
+        --wf-primary-hover: #10b981;
+        --wf-primary-active: #059669;
+        --wf-primary-soft: rgba(52, 211, 153, 0.14);
+        --wf-primary-soft-hover: rgba(52, 211, 153, 0.20);
+        --wf-primary-border: rgba(52, 211, 153, 0.32);
+        --wf-primary-text: #ffffff;
+        --wf-blue: var(--wf-primary);
+        --wf-blue-soft: var(--wf-primary-soft);
+        --wf-success: #34d399;
+        --wf-success-hover: #10b981;
+        --wf-success-soft: rgba(52, 211, 153, 0.14);
+        --wf-success-border: rgba(52, 211, 153, 0.32);
+        --wf-green: var(--wf-success);
+        --wf-warning: #fbbf24;
+        --wf-warning-hover: #f59e0b;
+        --wf-warning-soft: rgba(251, 191, 36, 0.14);
+        --wf-warning-border: rgba(251, 191, 36, 0.28);
+        --wf-yellow: var(--wf-warning);
+        --wf-danger: #fb7185;
+        --wf-danger-hover: #f43f5e;
+        --wf-danger-soft: rgba(251, 113, 133, 0.14);
+        --wf-danger-border: rgba(251, 113, 133, 0.28);
+        --wf-red: var(--wf-danger);
+        --wf-purple: #a78bfa;
+        --wf-purple-soft: rgba(167, 139, 250, 0.14);
+
+        --wf-bg: #070b13;
+        --wf-surface: #121922;
+        --wf-surface-soft: #0d141d;
+        --wf-surface-muted: #111827;
+        --wf-border: #202b3a;
+        --wf-border-strong: #334155;
+        --wf-text: #e5e7eb;
+        --wf-text-subtle: #cbd5e1;
+        --wf-text-muted: #8b95a5;
+        --wf-text-disabled: #64748b;
+        --wf-sidebar-bg: #101720;
+        --wf-sidebar-active-bg: var(--wf-primary-soft);
+        --wf-sidebar-active-text: var(--wf-primary);
+        --wf-topbar-bg: #101720;
+        --wf-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+        --wf-overlay-bg: rgba(0, 0, 0, 0.58);
+        --wf-focus-ring: rgba(52, 211, 153, 0.20);
+        --wf-btn-primary-bg: var(--wf-primary-active);
+        --wf-btn-primary-border: var(--wf-primary-active);
+        --wf-btn-primary-color: #ffffff;
+        --wf-btn-primary-hover-bg: #047857;
+        --wf-btn-primary-hover-border: #047857;
+        --wf-btn-success-bg: var(--wf-primary-active);
+        --wf-btn-success-border: var(--wf-primary-active);
+        --wf-btn-success-color: #ffffff;
+        --wf-btn-success-hover-bg: #047857;
+        --wf-btn-success-hover-border: #047857;
+        --wf-btn-danger-bg: transparent;
+        --wf-btn-danger-border: var(--wf-danger);
+        --wf-btn-danger-color: var(--wf-danger);
+        --wf-btn-danger-hover-bg: var(--wf-danger-soft);
+        --wf-btn-danger-hover-border: var(--wf-danger-hover);
+        --wf-btn-danger-hover-color: var(--wf-danger-hover);
+        --wf-btn-secondary-bg: var(--wf-surface);
+        --wf-btn-secondary-border: var(--wf-border-strong);
+        --wf-btn-secondary-color: var(--wf-text-subtle);
+        --wf-btn-secondary-hover-bg: var(--wf-surface-muted);
+        --wf-btn-secondary-hover-border: var(--wf-border-strong);
+        --wf-btn-secondary-hover-color: var(--wf-text);
+        --wf-badge-blue-text: var(--wf-primary);
+        --wf-badge-blue-bg: var(--wf-primary-soft);
+        --wf-badge-green-text: var(--wf-success);
+        --wf-badge-green-bg: var(--wf-success-soft);
+        --wf-badge-red-text: var(--wf-danger);
+        --wf-badge-red-bg: var(--wf-danger-soft);
+        --wf-badge-yellow-text: var(--wf-warning);
+        --wf-badge-yellow-bg: var(--wf-warning-soft);
+        --tblr-primary: var(--wf-primary-active);
+        --tblr-primary-rgb: 5, 150, 105;
+        --tblr-primary-fg: #ffffff;
+        --tblr-primary-darken: #047857;
+        --tblr-success: var(--wf-success-hover);
+        --tblr-success-rgb: 16, 185, 129;
+        --tblr-success-fg: #ffffff;
+        --tblr-success-darken: var(--wf-primary-active);
+        --tblr-danger: var(--wf-danger);
+        --tblr-danger-rgb: 251, 113, 133;
+        --tblr-danger-fg: #ffffff;
+        --tblr-danger-darken: var(--wf-danger-hover);
+        --tblr-muted: var(--wf-text-muted);
+        --tblr-body-color: var(--wf-text);
+        --tblr-body-bg: var(--wf-bg);
+        --tblr-border-color: var(--wf-border);
     }
+
+
+/* =========================================================
+   Global Base
+   ========================================================= */
 
 html,
 body {
@@ -55,3 +470,159 @@ a {
 .text-muted {
     color: var(--wf-text-muted) !important;
 }
+
+/* =========================================================
+   Bootstrap Button Tone Override
+   - Bootstrap 기본 원색을 WebFlex 테마 변수로 덮어씀
+   ========================================================= */
+
+.btn-primary {
+    --bs-btn-bg: var(--wf-btn-primary-bg);
+    --bs-btn-border-color: var(--wf-btn-primary-border);
+    --bs-btn-color: var(--wf-btn-primary-color);
+    --bs-btn-hover-bg: var(--wf-btn-primary-hover-bg);
+    --bs-btn-hover-border-color: var(--wf-btn-primary-hover-border);
+    --bs-btn-hover-color: var(--wf-btn-primary-color);
+    --bs-btn-active-bg: var(--wf-primary-active);
+    --bs-btn-active-border-color: var(--wf-primary-active);
+    --bs-btn-active-color: var(--wf-btn-primary-color);
+    --bs-btn-disabled-bg: var(--wf-primary);
+    --bs-btn-disabled-border-color: var(--wf-primary);
+    --bs-btn-disabled-color: var(--wf-btn-primary-color);
+    --tblr-btn-bg: var(--wf-btn-primary-bg);
+    --tblr-btn-border-color: var(--wf-btn-primary-border);
+    --tblr-btn-color: var(--wf-btn-primary-color);
+    --tblr-btn-hover-bg: var(--wf-btn-primary-hover-bg);
+    --tblr-btn-hover-border-color: var(--wf-btn-primary-hover-border);
+    --tblr-btn-hover-color: var(--wf-btn-primary-color);
+    --tblr-btn-active-bg: var(--wf-primary-active);
+    --tblr-btn-active-border-color: var(--wf-primary-active);
+    --tblr-btn-active-color: var(--wf-btn-primary-color);
+    --tblr-btn-disabled-bg: var(--wf-primary);
+    --tblr-btn-disabled-border-color: var(--wf-primary);
+    --tblr-btn-disabled-color: var(--wf-btn-primary-color);
+    --tblr-btn-box-shadow: none;
+}
+
+.btn-success {
+    --bs-btn-bg: var(--wf-btn-success-bg);
+    --bs-btn-border-color: var(--wf-btn-success-border);
+    --bs-btn-color: var(--wf-btn-success-color);
+    --bs-btn-hover-bg: var(--wf-btn-success-hover-bg);
+    --bs-btn-hover-border-color: var(--wf-btn-success-hover-border);
+    --bs-btn-hover-color: var(--wf-btn-success-color);
+    --bs-btn-active-bg: var(--wf-success-hover);
+    --bs-btn-active-border-color: var(--wf-success-hover);
+    --bs-btn-active-color: var(--wf-btn-success-color);
+    --bs-btn-disabled-bg: var(--wf-success);
+    --bs-btn-disabled-border-color: var(--wf-success);
+    --bs-btn-disabled-color: var(--wf-btn-success-color);
+    --tblr-btn-bg: var(--wf-btn-success-bg);
+    --tblr-btn-border-color: var(--wf-btn-success-border);
+    --tblr-btn-color: var(--wf-btn-success-color);
+    --tblr-btn-hover-bg: var(--wf-btn-success-hover-bg);
+    --tblr-btn-hover-border-color: var(--wf-btn-success-hover-border);
+    --tblr-btn-hover-color: var(--wf-btn-success-color);
+    --tblr-btn-active-bg: var(--wf-success-hover);
+    --tblr-btn-active-border-color: var(--wf-success-hover);
+    --tblr-btn-active-color: var(--wf-btn-success-color);
+    --tblr-btn-disabled-bg: var(--wf-success);
+    --tblr-btn-disabled-border-color: var(--wf-success);
+    --tblr-btn-disabled-color: var(--wf-btn-success-color);
+    --tblr-btn-box-shadow: none;
+}
+
+.btn-outline-primary {
+    --bs-btn-color: var(--wf-primary);
+    --bs-btn-border-color: var(--wf-primary-border);
+    --bs-btn-hover-bg: var(--wf-primary-soft);
+    --bs-btn-hover-border-color: var(--wf-primary);
+    --bs-btn-hover-color: var(--wf-primary-hover);
+    --bs-btn-active-bg: var(--wf-primary);
+    --bs-btn-active-border-color: var(--wf-primary);
+    --bs-btn-active-color: #ffffff;
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: var(--wf-primary-border);
+    --tblr-btn-color: var(--wf-primary);
+    --tblr-btn-hover-bg: var(--wf-primary-soft);
+    --tblr-btn-hover-border-color: var(--wf-primary);
+    --tblr-btn-hover-color: var(--wf-primary-hover);
+    --tblr-btn-active-bg: var(--wf-primary);
+    --tblr-btn-active-border-color: var(--wf-primary);
+    --tblr-btn-active-color: #ffffff;
+    --tblr-btn-box-shadow: none;
+}
+
+.btn-outline-success {
+    --bs-btn-color: var(--wf-success);
+    --bs-btn-border-color: var(--wf-success-border);
+    --bs-btn-hover-bg: var(--wf-success-soft);
+    --bs-btn-hover-border-color: var(--wf-success);
+    --bs-btn-hover-color: var(--wf-success-hover);
+    --bs-btn-active-bg: var(--wf-success);
+    --bs-btn-active-border-color: var(--wf-success);
+    --bs-btn-active-color: #ffffff;
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: var(--wf-success-border);
+    --tblr-btn-color: var(--wf-success);
+    --tblr-btn-hover-bg: var(--wf-success-soft);
+    --tblr-btn-hover-border-color: var(--wf-success);
+    --tblr-btn-hover-color: var(--wf-success-hover);
+    --tblr-btn-active-bg: var(--wf-success);
+    --tblr-btn-active-border-color: var(--wf-success);
+    --tblr-btn-active-color: #ffffff;
+    --tblr-btn-box-shadow: none;
+}
+
+.btn-outline-danger {
+    --bs-btn-color: var(--wf-btn-danger-color);
+    --bs-btn-border-color: var(--wf-btn-danger-border);
+    --bs-btn-hover-bg: var(--wf-btn-danger-hover-bg);
+    --bs-btn-hover-border-color: var(--wf-btn-danger-hover-border);
+    --bs-btn-hover-color: var(--wf-btn-danger-hover-color);
+    --bs-btn-active-bg: var(--wf-danger);
+    --bs-btn-active-border-color: var(--wf-danger);
+    --bs-btn-active-color: #ffffff;
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: var(--wf-btn-danger-border);
+    --tblr-btn-color: var(--wf-btn-danger-color);
+    --tblr-btn-hover-bg: var(--wf-btn-danger-hover-bg);
+    --tblr-btn-hover-border-color: var(--wf-btn-danger-hover-border);
+    --tblr-btn-hover-color: var(--wf-btn-danger-hover-color);
+    --tblr-btn-active-bg: var(--wf-danger);
+    --tblr-btn-active-border-color: var(--wf-danger);
+    --tblr-btn-active-color: #ffffff;
+    --tblr-btn-box-shadow: none;
+}
+
+.btn-outline-secondary,
+.btn-light {
+    --bs-btn-bg: var(--wf-btn-secondary-bg);
+    --bs-btn-border-color: var(--wf-btn-secondary-border);
+    --bs-btn-color: var(--wf-btn-secondary-color);
+    --bs-btn-hover-bg: var(--wf-btn-secondary-hover-bg);
+    --bs-btn-hover-border-color: var(--wf-btn-secondary-hover-border);
+    --bs-btn-hover-color: var(--wf-btn-secondary-hover-color);
+    --bs-btn-active-bg: var(--wf-surface-muted);
+    --bs-btn-active-border-color: var(--wf-border-strong);
+    --bs-btn-active-color: var(--wf-text);
+    --tblr-btn-bg: var(--wf-btn-secondary-bg);
+    --tblr-btn-border-color: var(--wf-btn-secondary-border);
+    --tblr-btn-color: var(--wf-btn-secondary-color);
+    --tblr-btn-hover-bg: var(--wf-btn-secondary-hover-bg);
+    --tblr-btn-hover-border-color: var(--wf-btn-secondary-hover-border);
+    --tblr-btn-hover-color: var(--wf-btn-secondary-hover-color);
+    --tblr-btn-active-bg: var(--wf-surface-muted);
+    --tblr-btn-active-border-color: var(--wf-border-strong);
+    --tblr-btn-active-color: var(--wf-text);
+    --tblr-btn-box-shadow: none;
+}
+
+.btn {
+    font-weight: 800;
+}
+
+    .btn svg {
+        width: 15px;
+        height: 15px;
+    }
