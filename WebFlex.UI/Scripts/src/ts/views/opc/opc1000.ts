@@ -534,18 +534,11 @@ export default class Page {
         }
 
         $el.text(newText);
-        $el.removeClass("value-flash");
 
         const element = $el[0] as HTMLElement | undefined;
 
         if (element != null) {
             void element.offsetWidth;
         }
-
-        $el.addClass("value-flash");
-
-        window.setTimeout(() => {
-            $el.removeClass("value-flash");
-        }, 700);
     }
 }

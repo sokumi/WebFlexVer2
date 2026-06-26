@@ -6,6 +6,12 @@ import "tabulator-tables/dist/css/tabulator_bootstrap5.min.css";
 
 import { createIcons, icons } from "lucide";
 
+type WebFlexLucideWindow = Window & {
+    lucide?: {
+        createIcons: () => void;
+    };
+};
+
 import "../css/webflex-theme.css";
 import "../css/webflex-layout.css";
 import "../css/webflex-components.css";
@@ -20,6 +26,18 @@ function initWebFlexIcons(): void {
     createIcons({
         icons
     });
+}
+
+function exposeWebFlexIcons(): void {
+    const target = window as WebFlexLucideWindow;
+
+    target.lucide = {
+        createIcons: () => {
+            createIcons({
+                icons
+            });
+        }
+    };
 }
 
 function initWebFlexTheme(): void {
@@ -174,6 +192,7 @@ function bindSearchPanelToggle(): void {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+    exposeWebFlexIcons();
     initWebFlexTheme();
     bindActiveMenu();
     bindSidebarToggle();

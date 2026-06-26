@@ -81740,6 +81740,16 @@ function initWebFlexIcons() {
         icons: lucide__WEBPACK_IMPORTED_MODULE_5__
     });
 }
+function exposeWebFlexIcons() {
+    const target = window;
+    target.lucide = {
+        createIcons: () => {
+            (0,lucide__WEBPACK_IMPORTED_MODULE_4__.createIcons)({
+                icons: lucide__WEBPACK_IMPORTED_MODULE_5__
+            });
+        }
+    };
+}
 function initWebFlexTheme() {
     const savedTheme = localStorage.getItem("webflex-theme");
     const theme = savedTheme === "dark" || savedTheme === "light" ? savedTheme : "light";
@@ -81858,6 +81868,7 @@ function bindSearchPanelToggle() {
     });
 }
 document.addEventListener("DOMContentLoaded", () => {
+    exposeWebFlexIcons();
     initWebFlexTheme();
     bindActiveMenu();
     bindSidebarToggle();

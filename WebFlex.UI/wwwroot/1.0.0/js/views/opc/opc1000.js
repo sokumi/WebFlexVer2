@@ -559,15 +559,10 @@ class Page {
             return;
         }
         $el.text(newText);
-        $el.removeClass("value-flash");
         const element = $el[0];
         if (element != null) {
             void element.offsetWidth;
         }
-        $el.addClass("value-flash");
-        window.setTimeout(() => {
-            $el.removeClass("value-flash");
-        }, 700);
     }
 }
 
