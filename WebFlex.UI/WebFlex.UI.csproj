@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="Scripts\src\css\views\opc - 복사\opc1000.css">
+    <Content Include="Scripts\src\css\views\opc\opc1000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>

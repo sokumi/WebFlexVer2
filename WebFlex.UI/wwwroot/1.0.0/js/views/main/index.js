@@ -47,9 +47,13 @@ class Page {
         this.isLoading = false;
         this.hasMore = true;
         this.renderTimer = null;
+        this.searchTimer = null;
         this.flashKeys = new Set();
     }
     init() {
+        $("#btnToggleGroupPanel").on("click", () => {
+            this.toggleGroupPanel();
+        });
         $("#currentValueScroll").on("scroll", () => {
             this.handleScroll();
         });
@@ -63,11 +67,12 @@ class Page {
             this.keyword = String((_a = $("#txtKeyword").val()) !== null && _a !== void 0 ? _a : "").trim();
             void this.reload();
         });
+        $("#txtKeyword").on("input", () => {
+            this.requestSearch();
+        });
         $("#txtKeyword").on("keydown", event => {
-            var _a;
             if (event.key === "Enter") {
-                this.keyword = String((_a = $("#txtKeyword").val()) !== null && _a !== void 0 ? _a : "").trim();
-                void this.reload();
+                this.applySearchImmediately();
             }
         });
         void this.loadGroups();
@@ -77,6 +82,14 @@ class Page {
             var _a;
             (_a = this.eventSource) === null || _a === void 0 ? void 0 : _a.close();
         });
+    }
+    toggleGroupPanel() {
+        const $panel = $("#currentGroupPanel");
+        const collapsed = !$panel.hasClass("is-collapsed");
+        $panel.toggleClass("is-collapsed", collapsed);
+        $("#btnToggleGroupPanel").attr("aria-expanded", String(!collapsed));
+        $("#lblGroupToggleText").text(collapsed ? "펼치기" : "접기");
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     }
     async reload() {
         this.rows = [];
@@ -145,6 +158,35 @@ class Page {
         $("#groupFilterHost [data-group-id]").removeClass("is-active");
         $(`#groupFilterHost [data-group-id="${this.escapeSelectorValue(groupId)}"]`).addClass("is-active");
         $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupId);
+        void this.reload();
+    }
+    requestSearch() {
+        if (this.searchTimer != null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+        this.searchTimer = window.setTimeout(() => {
+            var _a;
+            this.searchTimer = null;
+            const nextKeyword = String((_a = $("#txtKeyword").val()) !== null && _a !== void 0 ? _a : "").trim();
+            if (this.keyword === nextKeyword) {
+                return;
+            }
+            this.keyword = nextKeyword;
+            void this.reload();
+        }, 350);
+    }
+    applySearchImmediately() {
+        var _a;
+        if (this.searchTimer != null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+        const nextKeyword = String((_a = $("#txtKeyword").val()) !== null && _a !== void 0 ? _a : "").trim();
+        if (this.keyword === nextKeyword) {
+            return;
+        }
+        this.keyword = nextKeyword;
         void this.reload();
     }
     async loadNextPage() {

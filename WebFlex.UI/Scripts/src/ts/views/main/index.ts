@@ -44,10 +44,15 @@ export default class Page {
      isLoading = false;
      hasMore = true;
 
-     renderTimer: number | null = null;
-     flashKeys = new Set<string>();
+    renderTimer: number | null = null;
+    searchTimer: number | null = null;
+    flashKeys = new Set<string>();
 
-    public init(): void {
+    init(): void {
+        $("#btnToggleGroupPanel").on("click", () => {
+            this.toggleGroupPanel();
+        });
+
         $("#currentValueScroll").on("scroll", () => {
             this.handleScroll();
         });
@@ -62,10 +67,13 @@ export default class Page {
             void this.reload();
         });
 
+        $("#txtKeyword").on("input", () => {
+            this.requestSearch();
+        });
+
         $("#txtKeyword").on("keydown", event => {
             if (event.key === "Enter") {
-                this.keyword = String($("#txtKeyword").val() ?? "").trim();
-                void this.reload();
+                this.applySearchImmediately();
             }
         });
 
@@ -76,6 +84,17 @@ export default class Page {
         window.addEventListener("beforeunload", () => {
             this.eventSource?.close();
         });
+    }
+
+    toggleGroupPanel(): void {
+        const $panel = $("#currentGroupPanel");
+        const collapsed = !$panel.hasClass("is-collapsed");
+
+        $panel.toggleClass("is-collapsed", collapsed);
+        $("#btnToggleGroupPanel").attr("aria-expanded", String(!collapsed));
+        $("#lblGroupToggleText").text(collapsed ? "펼치기" : "접기");
+
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     }
 
      async reload(): Promise<void> {
@@ -161,6 +180,42 @@ export default class Page {
 
         $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupId);
 
+        void this.reload();
+    }
+
+    requestSearch(): void {
+        if (this.searchTimer != null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+
+        this.searchTimer = window.setTimeout(() => {
+            this.searchTimer = null;
+
+            const nextKeyword = String($("#txtKeyword").val() ?? "").trim();
+
+            if (this.keyword === nextKeyword) {
+                return;
+            }
+
+            this.keyword = nextKeyword;
+            void this.reload();
+        }, 350);
+    }
+
+    applySearchImmediately(): void {
+        if (this.searchTimer != null) {
+            window.clearTimeout(this.searchTimer);
+            this.searchTimer = null;
+        }
+
+        const nextKeyword = String($("#txtKeyword").val() ?? "").trim();
+
+        if (this.keyword === nextKeyword) {
+            return;
+        }
+
+        this.keyword = nextKeyword;
         void this.reload();
     }
 

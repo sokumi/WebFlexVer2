@@ -19,13 +19,12 @@
     var hasPageCss = System.IO.File.Exists(pageCssPath);
 }
 
-<!DOCTYPE html>
+<!DOCTYPE html>fltmxm vpdlwl
 <html lang="ko" data-webflex-theme="light" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@title - WebFlexV2</title>
-     <link rel="stylesheet" href="~/1.0.0/css/views/main/index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/1.0.0/css/app.css" asp-append-version="true" />
 
     @if (hasPageCss)
@@ -77,6 +76,19 @@
                         <i data-lucide="radio-receiver"></i>
                         <span>OPC 수집 관리</span>
                     </a>
+                </div>
+
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">System</div>
+
+                    <a class="wf-nav-link" href="/system/svc1000" data-menu-path="/system/svc1000">
+                        <i data-lucide="monitor-cog"></i>
+                        <span>Windows Service</span>
+                    </a>
+                </div>
+
+                <div class="wf-nav-section">
+                    <div class="wf-nav-title">Options</div>
 
                     <a class="wf-nav-link" href="/opc/opc1020" data-menu-path="/opc/opc1020">
                         <i data-lucide="sliders-horizontal"></i>
@@ -96,15 +108,6 @@
                     <a class="wf-nav-link" href="/opc/opc4000" data-menu-path="/opc/opc4000">
                         <i data-lucide="database-zap"></i>
                         <span>Timescale 설정</span>
-                    </a>
-                </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">System</div>
-
-                    <a class="wf-nav-link" href="/system/svc1000" data-menu-path="/system/svc1000">
-                        <i data-lucide="monitor-cog"></i>
-                        <span>Windows Service</span>
                     </a>
                 </div>
 

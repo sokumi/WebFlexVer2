@@ -3,59 +3,69 @@
 }
 
 <div class="wf-page-layout wf-main-dashboard is-scroll">
-    <section class="wf-current-filter-card">
+    <section id="currentGroupPanel" class="wf-current-filter-card">
         <div class="wf-current-filter-head">
             <div>
                 <strong>그룹 선택</strong>
                 <span id="lblGroupSummary">전체 그룹</span>
             </div>
+
+            <button type="button"
+                    id="btnToggleGroupPanel"
+                    class="wf-current-filter-toggle"
+                    aria-expanded="true">
+                <span id="lblGroupToggleText">접기</span>
+                <i data-lucide="chevron-up"></i>
+            </button>
         </div>
 
-        <div id="groupFilterHost" class="wf-current-group-list">
-            <button type="button" class="wf-current-group-chip is-active" data-group-id="">
-                전체
-                <span>0</span>
-            </button>
+        <div id="groupFilterBody" class="wf-current-filter-body">
+            <div id="groupFilterHost" class="wf-current-group-list">
+                <button type="button" class="wf-current-group-chip is-active" data-group-id="">
+                    전체
+                    <span>0</span>
+                </button>
+            </div>
         </div>
     </section>
 
     <section class="wf-card wf-current-grid-card">
         <header class="wf-current-grid-header">
-            <div class="wf-current-grid-header-top">
-                <div class="wf-current-grid-title">
+            <div class="wf-current-grid-header-main">
+                <div class="wf-current-title-line">
                     <strong>실시간 태그 리스트</strong>
                     <span id="lblVisibleRange">0 ~ 0</span>
+
+                    <div class="wf-current-status-row">
+                        <span class="wf-current-status-chip">
+                            전체 <strong id="lblTotalCount">0</strong>
+                        </span>
+                        <span class="wf-current-status-chip">
+                            로드 <strong id="lblLoadedCount">0</strong>
+                        </span>
+                        <span class="wf-current-status-chip">
+                            수신 <strong id="lblUpdateCount">0</strong>
+                        </span>
+                        <span id="lblStreamChip" class="wf-current-stream-chip is-wait">
+                            <span class="wf-status-dot"></span>
+                            <span id="lblStreamStatus">연결 전</span>
+                        </span>
+                    </div>
                 </div>
 
-                <div class="wf-current-status-row">
-                    <span class="wf-current-status-chip">
-                        전체 <strong id="lblTotalCount">0</strong>
-                    </span>
-                    <span class="wf-current-status-chip">
-                        로드 <strong id="lblLoadedCount">0</strong>
-                    </span>
-                    <span class="wf-current-status-chip">
-                        수신 <strong id="lblUpdateCount">0</strong>
-                    </span>
-                    <span id="lblStreamChip" class="wf-current-stream-chip is-wait">
-                        <span class="wf-status-dot"></span>
-                        <span id="lblStreamStatus">연결 전</span>
-                    </span>
-                </div>
-            </div>
+                <div class="wf-current-action-line">
+                    <button id="btnRefreshCurrent" type="button" class="btn btn-outline-secondary btn-sm">
+                        <i data-lucide="refresh-cw"></i>
+                        새로고침
+                    </button>
 
-            <div class="wf-current-grid-header-bottom">
-                <button id="btnRefreshCurrent" type="button" class="btn btn-outline-secondary btn-sm">
-                    <i data-lucide="refresh-cw"></i>
-                    새로고침
-                </button>
-
-                <div class="wf-grid-search wf-current-search">
-                    <i data-lucide="search"></i>
-                    <input id="txtKeyword"
-                           type="text"
-                           class="form-control"
-                           placeholder="태그 / 그룹 / 값 검색" />
+                    <div class="wf-grid-search wf-current-search">
+                        <i data-lucide="search"></i>
+                        <input id="txtKeyword"
+                               type="text"
+                               class="form-control"
+                               placeholder="태그 / 그룹 / 값 검색" />
+                    </div>
                 </div>
             </div>
         </header>

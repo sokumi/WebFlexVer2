@@ -632,8 +632,9 @@ class Page {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry needs to be wrapped in an IIFE because it needs to be isolated against other modules in the chunk.
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
 (() => {
+var __webpack_exports__ = {};
 /*!***************************************************!*\
   !*** ./Scripts/.generated/views__opc__opc1000.ts ***!
   \***************************************************/
@@ -643,6 +644,16 @@ __webpack_require__.r(__webpack_exports__);
 
 
 (0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_opc_opc1000__WEBPACK_IMPORTED_MODULE_0__["default"]);
+
+})();
+
+// This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
+(() => {
+/*!***********************************************!*\
+  !*** ./Scripts/src/css/views/opc/opc1000.css ***!
+  \***********************************************/
+__webpack_require__.r(__webpack_exports__);
+// extracted by mini-css-extract-plugin
 
 })();
 
