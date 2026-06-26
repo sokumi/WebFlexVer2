@@ -1,0 +1,217 @@
+.wf-test-device-page {
+    gap: 0;
+}
+
+.wf-test-device-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 430px;
+    gap: 16px;
+    overflow: hidden;
+}
+
+.wf-test-device-list-card,
+.wf-test-device-form-card {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+    .wf-test-device-list-card .wf-card-body,
+    .wf-test-device-form-card {
+        height: 100%;
+        min-height: 0;
+    }
+
+    .wf-test-device-list-card .wf-card-body {
+        display: flex;
+        flex-direction: column;
+    }
+
+.wf-test-device-form-card {
+    display: flex;
+    flex-direction: column;
+}
+
+    .wf-test-device-form-card .wf-card-header {
+        flex: 0 0 auto;
+    }
+
+    .wf-test-device-form-card .wf-card-body {
+        flex: 1 1 auto;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+.wf-test-device-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wf-device-section {
+    margin-bottom: 20px;
+}
+
+    .wf-device-section:last-child {
+        margin-bottom: 0;
+    }
+
+.wf-unit {
+    float: right;
+    color: var(--wf-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.wf-test-device-list-card .tabulator {
+    border-radius: 10px;
+}
+
+.wf-test-device-list-card .tabulator-row.tabulator-selected,
+.wf-test-device-list-card .tabulator-row:hover {
+    background: color-mix(in srgb, var(--wf-primary) 7%, var(--wf-surface)) !important;
+}
+
+    .wf-test-device-list-card .tabulator-row.tabulator-selected .tabulator-cell {
+        font-weight: 800;
+    }
+
+@media (max-width: 1399px) {
+    .wf-test-device-layout {
+        grid-template-columns: minmax(0, 1fr) 400px;
+    }
+}
+
+@media (max-width: 1199px) {
+    .wf-test-device-page {
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 2px;
+    }
+
+    .wf-test-device-layout {
+        flex: 0 0 auto;
+        min-height: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        overflow: visible;
+    }
+
+    .wf-test-device-list-card,
+    .wf-test-device-form-card {
+        flex: 0 0 auto;
+        height: auto;
+        min-height: 0;
+        overflow: visible;
+    }
+
+    .wf-test-device-list-card {
+        min-height: 560px;
+    }
+
+        .wf-test-device-list-card .wf-card-body {
+            height: 560px;
+            min-height: 0;
+        }
+
+    .wf-test-device-form-card {
+        height: auto;
+        min-height: 0;
+    }
+
+        .wf-test-device-form-card .wf-card-body {
+            height: auto;
+            min-height: 0;
+            overflow: visible;
+        }
+}
+
+@media (max-width: 991px) {
+    .wf-test-device-list-card {
+        min-height: min(620px, 62vh);
+    }
+
+        .wf-test-device-list-card .wf-card-body {
+            height: min(620px, 62vh);
+        }
+}
+
+@media (max-width: 767px) {
+    .wf-test-device-layout {
+        gap: 12px;
+    }
+
+    .wf-test-device-list-card {
+        min-height: min(600px, 60vh);
+    }
+
+        .wf-test-device-list-card .wf-card-body {
+            height: min(600px, 60vh);
+            padding: 12px;
+        }
+
+    .wf-test-device-form-card .wf-card-header {
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .wf-test-device-form-actions {
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .wf-form-grid-2 {
+        grid-template-columns: 1fr;
+    }
+
+    .wf-switch-box {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 575px) {
+    .wf-test-device-list-card {
+        min-height: min(560px, 58vh);
+    }
+
+        .wf-test-device-list-card .wf-card-body {
+            height: min(560px, 58vh);
+        }
+
+    .wf-grid-toolbar {
+        align-items: flex-start;
+    }
+
+    .wf-grid-toolbar-right {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr auto auto;
+        gap: 8px;
+    }
+
+    .wf-grid-search {
+        min-width: 0;
+    }
+
+    .wf-grid-toolbar-right .btn {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .wf-test-device-form-card .wf-card-header {
+        flex-direction: column;
+    }
+
+    .wf-test-device-form-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .wf-switch-box {
+        grid-template-columns: 1fr;
+    }
+}

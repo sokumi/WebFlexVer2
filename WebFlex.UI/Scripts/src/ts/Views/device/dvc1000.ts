@@ -1,110 +1,270 @@
 ﻿import { api } from "../../framework/common";
+import { notify } from "../../framework/notify";
+import { WebFlexGrid } from "../../components/grid/webflexGrid";
+import {
+    numberFormatter,
+    textFormatter
+} from "../../components/grid/webflexGridFormatters";
 
-export default class {
-    rows: any[] = [];
-    selectedId = 0;
+type DeviceTypeDto = {
+    value: string;
+    text: string;
+};
 
-    init(): void {
-        $("#btnNew").on("click", this.btnNew_onClick);
-        $("#btnSave").on("click", this.btnSave_onClick);
-        $("#btnDelete").on("click", this.btnDelete_onClick);
+type DeviceRowDto = {
+    id: string;
+    deviceCode: string;
+    deviceName: string;
+    deviceType: string;
+    deviceAddress: string;
+    port: number;
+    endpointUrl: string;
+    isCollectEnabled: boolean;
+    isEnabled: boolean;
+    useSecurity: boolean;
+    useAnonymous: boolean;
+    userName: string;
+    password: string;
+    publishingIntervalMs: number;
+    samplingIntervalMs: number;
+    description: string;
+    tagCount?: number | null;
+};
 
-        $("#btnSearch").on("click", this.btnSearch_onClick);
+type DeviceSaveRequest = {
+    id?: string | null;
+    deviceName: string;
+    deviceType: string;
+    deviceAddress: string;
+    port: number;
+    endpointUrl: string;
+    isCollectEnabled: boolean;
+    isEnabled: boolean;
+    useSecurity: boolean;
+    useAnonymous: boolean;
+    userName: string;
+    password: string;
+    publishingIntervalMs: number;
+    samplingIntervalMs: number;
+    description: string;
+};
 
-        this.load();
-    }
+type DeviceDeleteRequest = {
+    id: string;
+};
 
-    btnNew_onClick = (): void => {
+type EndpointPreviewDto = {
+    endpointUrl: string;
+};
+
+
+export default class Page {
+    grid: WebFlexGrid<DeviceRowDto> | null = null;
+    rows: DeviceRowDto[] = [];
+    selectedId = "";
+
+    public init(): void {
+        this.initGrid();
+        this.bindEvents();
         this.clearForm();
-    };
 
-    btnSearch_onClick = (): void => {
-        this.load();
-    };
+        void this.loadDeviceTypes();
+        void this.loadList();
 
-    btnSave_onClick = async (): Promise<void> => {
-        const data = this.getFormData();
+        window.addEventListener("webflex:layoutChanged", () => {
+            this.grid?.redraw(true);
+        });
+    }
 
+    bindEvents(): void {
+        $("#btnNew").on("click", () => {
+            this.clearForm();
+        });
+
+        $("#btnSave").on("click", () => {
+            void this.save();
+        });
+
+        $("#btnDelete").on("click", () => {
+            void this.delete();
+        });
+
+        $("#btnSearch").on("click", () => {
+            void this.loadList();
+        });
+
+        $("#txtGridKeyword").on("keydown", event => {
+            if (event.key === "Enter") {
+                void this.loadList();
+            }
+        });
+
+        $("#txtGridKeyword").on("input", () => {
+            this.applyClientFilter();
+        });
+
+        $("#btnPreviewEndpoint").on("click", () => {
+            void this.previewEndpoint();
+        });
+
+        $("#selDeviceType, #txtDeviceAddress, #txtPort").on("change", () => {
+            this.applyEndpointPlaceholder();
+        });
+    }
+
+    initGrid(): void {
+        this.grid = new WebFlexGrid<DeviceRowDto>({
+            selector: "#gridDevice",
+            height: "100%",
+            pagination: true,
+            paginationSize: 12,
+            selectableRows: 1,
+            columns: [
+                {
+                    title: "코드",
+                    field: "deviceCode",
+                    width: 120,
+                    formatter: textFormatter
+                },
+                {
+                    title: "디바이스명",
+                    field: "deviceName",
+                    minWidth: 190,
+                    formatter: textFormatter
+                },
+                {
+                    title: "타입",
+                    field: "deviceType",
+                    width: 120,
+                    formatter: (cell: { getValue: () => any; }) => {
+                        const value = String(cell.getValue() ?? "");
+                        const className = value === "OPCUA" ? "good" : "warning";
+                        return `<span class="wf-status ${className}">${value}</span>`;
+                    }
+                },
+                {
+                    title: "주소",
+                    field: "deviceAddress",
+                    minWidth: 160,
+                    formatter: textFormatter
+                },
+                {
+                    title: "포트",
+                    field: "port",
+                    width: 100,
+                    hozAlign: "right",
+                    formatter: numberFormatter
+                },
+                {
+                    title: "태그",
+                    field: "tagCount",
+                    width: 90,
+                    hozAlign: "right",
+                    formatter: numberFormatter
+                },
+                {
+                    title: "수집",
+                    field: "isCollectEnabled",
+                    width: 90,
+                    formatter: (cell: { getValue: () => boolean; }) => {
+                        return cell.getValue() === true
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
+                    }
+                },
+                {
+                    title: "사용",
+                    field: "isEnabled",
+                    width: 90,
+                    formatter: (cell: { getValue: () => boolean; }) => {
+                        return cell.getValue() === true
+                            ? `<span class="wf-bool-dot good">Y</span>`
+                            : `<span class="wf-bool-dot muted">N</span>`;
+                    }
+                }
+            ],
+            onRowClick: row => {
+                this.selectRow(row);
+            },
+            onRowDoubleClick: row => {
+                this.selectRow(row);
+                notify.info(`${row.deviceName} 상세를 열었습니다.`);
+            }
+        });
+    }
+
+    async loadDeviceTypes(): Promise<void> {
         try {
-            const res = await api.post({
-                url: "/device/manage/insert",
-                data
+            const result = await api.get<DeviceTypeDto[]>({
+                url: "/device/manage/types"
             });
 
-            if (!res.success) {
-                alert(res.message ?? "저장에 실패했습니다.");
+            if (!result.success || result.data == null) {
+                notify.warning(result.message ?? "디바이스 타입 조회에 실패했습니다.");
                 return;
             }
 
-            alert(res.message ?? "저장되었습니다.");
-            await this.load();
-            this.clearForm();
+            const $formType = $("#selDeviceType");
+            $formType.empty();
+
+            for (const item of result.data) {
+                $formType.append(`<option value="${item.value}">${item.text}</option>`);
+            }
+
+            $formType.val("OPCUA");
         } catch (e) {
-            alert(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
         }
-    };
+    }
 
-    btnDelete_onClick = async (): Promise<void> => {
-        if (!this.selectedId) {
-            alert("삭제할 디바이스를 선택하세요.");
-            return;
-        }
-
-        if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) return;
-
+    async loadList(): Promise<void> {
         try {
-            const res = await api.post({
-                url: "/device/manage/delete",
-                data: this.selectedId
+            this.grid?.showLoading("디바이스 목록 조회 중입니다...");
+
+            const result = await api.get<DeviceRowDto[]>({
+                url: "/device/manage/list"
             });
 
-            if (!res.success) {
-                alert(res.message ?? "삭제에 실패했습니다.");
+            if (!result.success) {
+                notify.warning(result.message ?? "디바이스 목록 조회에 실패했습니다.");
                 return;
             }
 
-            alert(res.message ?? "삭제되었습니다.");
-            await this.load();
-            this.clearForm();
-        } catch (e) {
-            alert(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
-        }
-    };
+            this.rows = result.data ?? [];
+            await this.applyClientFilter();
 
-    async load(): Promise<void> {
-        try {
-            const res = await api.get<any[]>({ url: "/device/manage/list" });
-
-            this.rows = res.data ?? [];
-            this.renderGrid();
+            notify.success("디바이스 목록을 조회했습니다.");
         } catch (e) {
-            alert(e instanceof Error ? e.message : "조회 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
+        } finally {
+            this.grid?.hideLoading();
         }
     }
 
-    renderGrid(): void {
-        const $body = $("#grid1Body");
-        $body.empty();
+    async applyClientFilter(): Promise<void> {
+        const keyword = String($("#txtGridKeyword").val() ?? "").trim().toLowerCase();
 
-        for (const row of this.rows) {
-            const $tr = $(`
-                <tr>
-                    <td>${row.id}</td>
-                    <td>${row.deviceName}</td>
-                    <td>${row.deviceType}</td>
-                    <td>${row.deviceAddress}</td>
-                    <td>${row.port}</td>
-                    <td>${row.isCollectEnabled ? "Y" : "N"}</td>
-                    <td>${row.isEnabled ? "Y" : "N"}</td>
-                </tr>
-            `);
+        const filteredRows = keyword.length === 0
+            ? this.rows
+            : this.rows.filter(x =>
+                String(x.deviceCode ?? "").toLowerCase().includes(keyword) ||
+                String(x.deviceName ?? "").toLowerCase().includes(keyword) ||
+                String(x.deviceAddress ?? "").toLowerCase().includes(keyword) ||
+                String(x.endpointUrl ?? "").toLowerCase().includes(keyword)
+            );
 
-            $tr.on("click", () => this.grid1_onClick(row));
-            $body.append($tr);
-        }
+        await this.grid?.setData(filteredRows);
+        this.updateGridSummary(filteredRows.length, this.rows.length);
     }
 
-    grid1_onClick = (row: any): void => {
+    updateGridSummary(visibleCount: number, totalCount: number): void {
+        $("#lblDeviceGridCount").text(`${totalCount.toLocaleString()}건`);
+        $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
+    }
+
+    selectRow(row: DeviceRowDto): void {
+        console.log("selected device row", row);
+
         this.selectedId = row.id;
 
         $("#hidId").val(row.id);
@@ -120,14 +280,16 @@ export default class {
         $("#chkUseAnonymous").prop("checked", row.useAnonymous);
         $("#txtUserName").val(row.userName ?? "");
         $("#txtPassword").val(row.password ?? "");
-        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs);
-        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs);
-        $("#txtSortOrder").val(row.sortOrder);
+        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs ?? 1000);
+        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs ?? 1000);
         $("#txtDescription").val(row.description ?? "");
-    };
+
+        this.setEditMode(row.deviceName);
+        this.applyEndpointPlaceholder();
+    }
 
     clearForm(): void {
-        this.selectedId = 0;
+        this.selectedId = "";
 
         $("#hidId").val("");
         $("#txtDeviceCode").val("");
@@ -144,28 +306,173 @@ export default class {
         $("#txtPassword").val("");
         $("#txtPublishingIntervalMs").val(1000);
         $("#txtSamplingIntervalMs").val(1000);
-        $("#txtSortOrder").val(0);
         $("#txtDescription").val("");
+
+        this.setCreateMode();
+        this.applyEndpointPlaceholder();
     }
 
-    getFormData() {
+    setCreateMode(): void {
+        $("#lblFormMode")
+            .removeClass("edit")
+            .addClass("create")
+            .text("신규");
+
+        $("#lblSelectedDevice").text("선택 없음");
+    }
+
+    setEditMode(deviceName: string): void {
+        $("#lblFormMode")
+            .removeClass("create")
+            .addClass("edit")
+            .text("수정");
+
+        $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
+    }
+
+    getFormData(): DeviceSaveRequest {
         return {
             id: this.selectedId || null,
-            deviceName: String($("#txtDeviceName").val() ?? ""),
+            deviceName: String($("#txtDeviceName").val() ?? "").trim(),
             deviceType: String($("#selDeviceType").val() ?? "OPCUA"),
-            deviceAddress: String($("#txtDeviceAddress").val() ?? ""),
+            deviceAddress: String($("#txtDeviceAddress").val() ?? "").trim(),
             port: Number($("#txtPort").val() ?? 0),
-            endpointUrl: String($("#txtEndpointUrl").val() ?? ""),
+            endpointUrl: String($("#txtEndpointUrl").val() ?? "").trim(),
             isCollectEnabled: $("#chkCollect").prop("checked") === true,
             isEnabled: $("#chkEnabled").prop("checked") === true,
             useSecurity: $("#chkUseSecurity").prop("checked") === true,
             useAnonymous: $("#chkUseAnonymous").prop("checked") === true,
-            userName: String($("#txtUserName").val() ?? ""),
+            userName: String($("#txtUserName").val() ?? "").trim(),
             password: String($("#txtPassword").val() ?? ""),
             publishingIntervalMs: Number($("#txtPublishingIntervalMs").val() ?? 1000),
             samplingIntervalMs: Number($("#txtSamplingIntervalMs").val() ?? 1000),
-            sortOrder: Number($("#txtSortOrder").val() ?? 0),
-            description: String($("#txtDescription").val() ?? "")
+            description: String($("#txtDescription").val() ?? "").trim()
         };
+    }
+
+    validate(request: DeviceSaveRequest): string | null {
+        if (request.deviceName.length === 0) {
+            return "디바이스명을 입력해 주세요.";
+        }
+
+        if (request.deviceType.length === 0) {
+            return "디바이스 타입을 선택해 주세요.";
+        }
+
+        if (request.deviceAddress.length === 0) {
+            return "주소를 입력해 주세요.";
+        }
+
+        if (request.port <= 0) {
+            return "포트를 입력해 주세요.";
+        }
+
+        if (request.publishingIntervalMs <= 0) {
+            return "Publishing Interval을 입력해 주세요.";
+        }
+
+        if (request.samplingIntervalMs <= 0) {
+            return "Sampling Interval을 입력해 주세요.";
+        }
+
+        return null;
+    }
+
+    async save(): Promise<void> {
+        const request = this.getFormData();
+        const errorMessage = this.validate(request);
+
+        if (errorMessage != null) {
+            notify.warning(errorMessage);
+            return;
+        }
+
+        try {
+            const result = await api.post<{ id: string }, DeviceSaveRequest>({
+                url: "/device/manage/save",
+                data: request
+            });
+
+            if (!result.success) {
+                notify.warning(result.message ?? "저장에 실패했습니다.");
+                return;
+            }
+
+            notify.success(result.message ?? "저장되었습니다.");
+
+            await this.loadList();
+            this.clearForm();
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
+        }
+    }
+
+    async delete(): Promise<void> {
+        if (this.selectedId.length === 0) {
+            notify.warning("삭제할 디바이스를 선택해 주세요.");
+            return;
+        }
+
+        if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) {
+            return;
+        }
+
+        const request: DeviceDeleteRequest = {
+            id: this.selectedId
+        };
+
+        try {
+            const result = await api.post<unknown, DeviceDeleteRequest>({
+                url: "/device/manage/delete",
+                data: request
+            });
+
+            if (!result.success) {
+                notify.warning(result.message ?? "삭제에 실패했습니다.");
+                return;
+            }
+
+            notify.success(result.message ?? "삭제되었습니다.");
+
+            await this.loadList();
+            this.clearForm();
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "삭제 중 오류가 발생했습니다.");
+        }
+    }
+
+    async previewEndpoint(): Promise<void> {
+        const deviceType = encodeURIComponent(String($("#selDeviceType").val() ?? ""));
+        const address = encodeURIComponent(String($("#txtDeviceAddress").val() ?? "").trim());
+        const port = Number($("#txtPort").val() ?? 0);
+
+        try {
+            const result = await api.get<EndpointPreviewDto>({
+                url: `/device/manage/endpoint-preview?deviceType=${deviceType}&address=${address}&port=${port}`
+            });
+
+            if (!result.success || result.data == null) {
+                notify.warning(result.message ?? "Endpoint 생성에 실패했습니다.");
+                return;
+            }
+
+            $("#txtEndpointUrl").val(result.data.endpointUrl);
+            notify.success("Endpoint URL을 생성했습니다.");
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "Endpoint 생성 중 오류가 발생했습니다.");
+        }
+    }
+
+    applyEndpointPlaceholder(): void {
+        const deviceType = String($("#selDeviceType").val() ?? "");
+        const address = String($("#txtDeviceAddress").val() ?? "").trim();
+        const port = Number($("#txtPort").val() ?? 0);
+
+        if (deviceType === "OPCUA" && address.length > 0 && port > 0) {
+            $("#txtEndpointUrl").attr("placeholder", `opc.tcp://${address}:${port}`);
+            return;
+        }
+
+        $("#txtEndpointUrl").attr("placeholder", "비워두면 자동 생성");
     }
 }
