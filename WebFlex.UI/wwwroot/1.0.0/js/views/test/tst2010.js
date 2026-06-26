@@ -11850,6 +11850,7 @@ class Page {
         this.selectedDeviceId = "";
         this.selectedTagIds = [];
         this.tagRows = [];
+        this.connectionCheckSeq = 0;
         this.tagGrid = null;
         this.modalPopup = null;
         this.drawerPopup = null;
@@ -11886,14 +11887,16 @@ class Page {
             this.nodes = [];
             this.treeNodes = [];
             this.selectedTagIds = [];
-            this.updateSelectedDeviceInfo();
             void ((_b = this.tagGrid) === null || _b === void 0 ? void 0 : _b.setData([]));
             this.updateTagGridFooter();
+            this.updateSelectedDeviceInfo();
             if (this.selectedDeviceId.length > 0) {
+                void this.checkDeviceConnection();
                 void this.loadTags();
                 void this.loadSummary();
             }
             else {
+                this.setDeviceConnectionStatus("empty");
                 jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblTagCount").text("0개");
                 jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridTagCount").text("0건");
             }
@@ -12031,8 +12034,12 @@ class Page {
                 this.selectedDeviceId = this.devices[0].id;
                 $sel.val(this.selectedDeviceId);
                 this.updateSelectedDeviceInfo();
+                void this.checkDeviceConnection();
                 await this.loadTags();
                 await this.loadSummary();
+            }
+            else {
+                this.setDeviceConnectionStatus("empty");
             }
         }
         catch (e) {
@@ -12225,20 +12232,70 @@ class Page {
     updateSelectedDeviceInfo() {
         const device = this.getSelectedDevice();
         if (device == null) {
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceStatus")
-                .removeClass("is-connected")
-                .addClass("is-empty")
-                .find("span:last")
-                .text("미선택");
+            this.setDeviceConnectionStatus("empty");
             jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblEndpoint").text("Endpoint 없음");
             return;
         }
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceStatus")
-            .removeClass("is-empty")
-            .find("span:last")
-            .text(device.isCollectEnabled ? "연결됨" : "수집 중지");
+        this.setDeviceConnectionStatus("checking");
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblEndpoint").text(device.endpointUrl || "Endpoint 없음");
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblTagCount").text(`${device.tagCount.toLocaleString()}개`);
+    }
+    async checkDeviceConnection() {
+        var _a;
+        if (this.selectedDeviceId.length === 0) {
+            this.setDeviceConnectionStatus("empty");
+            return;
+        }
+        const seq = ++this.connectionCheckSeq;
+        const deviceId = this.selectedDeviceId;
+        this.setDeviceConnectionStatus("checking");
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.get({
+                url: `/test/devicetag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
+            });
+            if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
+                return;
+            }
+            if (!result.success || result.data == null) {
+                this.setDeviceConnectionStatus("failed", (_a = result.message) !== null && _a !== void 0 ? _a : "연결 확인 실패");
+                return;
+            }
+            if (result.data.connected) {
+                this.setDeviceConnectionStatus("connected");
+            }
+            else {
+                this.setDeviceConnectionStatus("failed", result.data.errorMessage || result.message || "연결 실패");
+            }
+        }
+        catch (e) {
+            if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
+                return;
+            }
+            this.setDeviceConnectionStatus("failed", e instanceof Error ? e.message : "연결 확인 중 오류가 발생했습니다.");
+        }
+    }
+    setDeviceConnectionStatus(status, message) {
+        const $status = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceStatus");
+        $status
+            .removeClass("is-empty is-checking is-connected is-failed")
+            .addClass(`is-${status}`);
+        if (status === "empty") {
+            $status.find("span:last").text("미선택");
+            $status.attr("title", "");
+            return;
+        }
+        if (status === "checking") {
+            $status.find("span:last").text("확인 중");
+            $status.attr("title", "디바이스 연결 상태를 확인하고 있습니다.");
+            return;
+        }
+        if (status === "connected") {
+            $status.find("span:last").text("연결됨");
+            $status.attr("title", "OPC 서버에 연결되었습니다.");
+            return;
+        }
+        $status.find("span:last").text("연결 실패");
+        $status.attr("title", message !== null && message !== void 0 ? message : "OPC 서버 연결에 실패했습니다.");
     }
     updateTagGridFooter() {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridSummary").text(`총 ${this.tagRows.length.toLocaleString()}건`);

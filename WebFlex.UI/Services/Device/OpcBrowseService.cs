@@ -73,6 +73,68 @@ public class OpcBrowseService {
         }
     }
 
+    public async Task CheckConnectionAsync(
+    OpcDevice device,
+    CancellationToken cancellationToken = default) {
+        if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
+            throw new InvalidOperationException("Endpoint URL이 없습니다.");
+        }
+
+        var config = await CreateConfigAsync();
+
+#pragma warning disable CS0618
+        var selectedEndpoint = CoreClientUtils.SelectEndpoint(
+            config,
+            device.ENDPOINT_URL,
+            device.USESECURITY
+        );
+#pragma warning restore CS0618
+
+        var endpoint = new ConfiguredEndpoint(
+            null,
+            selectedEndpoint,
+            EndpointConfiguration.Create(config)
+        );
+
+        var userName = "";
+        var password = "";
+
+        var userIdentity = device.USE_ANONYMOUS || string.IsNullOrWhiteSpace(userName)
+            ? new UserIdentity(new AnonymousIdentityToken())
+            : new UserIdentity(new UserNameIdentityToken {
+                UserName = userName,
+                Password = System.Text.Encoding.UTF8.GetBytes(password ?? "")
+            });
+
+#pragma warning disable CS0618
+        var session = await Session.Create(
+            config,
+            endpoint,
+            false,
+            false,
+            $"WebFlexCheck-{device.ID}",
+            10000,
+            userIdentity,
+            Array.Empty<string>()
+        );
+#pragma warning restore CS0618
+
+        try {
+            if (cancellationToken.IsCancellationRequested) {
+                return;
+            }
+
+            if (session == null || session.Connected == false) {
+                throw new InvalidOperationException("OPC 세션 연결에 실패했습니다.");
+            }
+        } finally {
+            if (session != null) {
+                await session.CloseAsync();
+                session.Dispose();
+            }
+        }
+    }
+
     private static async Task<ApplicationConfiguration> CreateConfigAsync() {
         var config = new ApplicationConfiguration {
             ApplicationName = "WebFlexOpcBrowser",

@@ -31,6 +31,13 @@ type DeviceTagSummaryDto = {
     collectTagCount: number;
 };
 
+type DeviceConnectionCheckDto = {
+    connected: boolean;
+    errorMessage: string;
+};
+
+type DeviceConnectionStatus = "empty" | "checking" | "connected" | "failed";
+
 type BrowseNodeDto = WebFlexTagRegisterNode & {
     deviceId: string;
     accessLevel: string;
@@ -71,9 +78,11 @@ export default class Page {
      devices: DeviceRowDto[] = [];
      nodes: BrowseNodeDto[] = [];
      treeNodes: BrowseNodeDto[] = [];
-     selectedDeviceId = "";
-     selectedTagIds: string[] = [];
-     tagRows: TagRowDto[] = [];
+    selectedDeviceId = "";
+    selectedTagIds: string[] = [];
+    tagRows: TagRowDto[] = [];
+
+    connectionCheckSeq = 0;
 
      tagGrid: WebFlexGrid<TagRowDto> | null = null;
      modalPopup: WebFlexTagRegisterPopup | null = null;
@@ -109,24 +118,26 @@ export default class Page {
     }
 
      bindEvents(): void {
-        $("#selDevice").on("change", () => {
-            this.selectedDeviceId = String($("#selDevice").val() ?? "");
-            this.nodes = [];
-            this.treeNodes = [];
-            this.selectedTagIds = [];
+         $("#selDevice").on("change", () => {
+             this.selectedDeviceId = String($("#selDevice").val() ?? "");
+             this.nodes = [];
+             this.treeNodes = [];
+             this.selectedTagIds = [];
 
-            this.updateSelectedDeviceInfo();
-            void this.tagGrid?.setData([]);
-            this.updateTagGridFooter();
+             void this.tagGrid?.setData([]);
+             this.updateTagGridFooter();
+             this.updateSelectedDeviceInfo();
 
-            if (this.selectedDeviceId.length > 0) {
-                void this.loadTags();
-                void this.loadSummary();
-            } else {
-                $("#lblTagCount").text("0개");
-                $("#lblGridTagCount").text("0건");
-            }
-        });
+             if (this.selectedDeviceId.length > 0) {
+                 void this.checkDeviceConnection();
+                 void this.loadTags();
+                 void this.loadSummary();
+             } else {
+                 this.setDeviceConnectionStatus("empty");
+                 $("#lblTagCount").text("0개");
+                 $("#lblGridTagCount").text("0건");
+             }
+         });
 
         $("#btnSearch").on("click", () => {
             void this.loadTags();
@@ -274,8 +285,13 @@ export default class Page {
                 this.selectedDeviceId = this.devices[0].id;
                 $sel.val(this.selectedDeviceId);
                 this.updateSelectedDeviceInfo();
+
+                void this.checkDeviceConnection();
+
                 await this.loadTags();
                 await this.loadSummary();
+            } else {
+                this.setDeviceConnectionStatus("empty");
             }
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "디바이스 조회 중 오류가 발생했습니다.");
@@ -491,27 +507,89 @@ export default class Page {
         this.updateTagGridFooter();
     }
 
-     updateSelectedDeviceInfo(): void {
+    updateSelectedDeviceInfo(): void {
         const device = this.getSelectedDevice();
 
         if (device == null) {
-            $("#lblDeviceStatus")
-                .removeClass("is-connected")
-                .addClass("is-empty")
-                .find("span:last")
-                .text("미선택");
-
+            this.setDeviceConnectionStatus("empty");
             $("#lblEndpoint").text("Endpoint 없음");
             return;
         }
 
-        $("#lblDeviceStatus")
-            .removeClass("is-empty")
-            .find("span:last")
-            .text(device.isCollectEnabled ? "연결됨" : "수집 중지");
-
+        this.setDeviceConnectionStatus("checking");
         $("#lblEndpoint").text(device.endpointUrl || "Endpoint 없음");
         $("#lblTagCount").text(`${device.tagCount.toLocaleString()}개`);
+    }
+
+    async checkDeviceConnection(): Promise<void> {
+        if (this.selectedDeviceId.length === 0) {
+            this.setDeviceConnectionStatus("empty");
+            return;
+        }
+
+        const seq = ++this.connectionCheckSeq;
+        const deviceId = this.selectedDeviceId;
+
+        this.setDeviceConnectionStatus("checking");
+
+        try {
+            const result = await api.get<DeviceConnectionCheckDto>({
+                url: `/test/devicetag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
+            });
+
+            if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
+                return;
+            }
+
+            if (!result.success || result.data == null) {
+                this.setDeviceConnectionStatus("failed", result.message ?? "연결 확인 실패");
+                return;
+            }
+
+            if (result.data.connected) {
+                this.setDeviceConnectionStatus("connected");
+            } else {
+                this.setDeviceConnectionStatus("failed", result.data.errorMessage || result.message || "연결 실패");
+            }
+        } catch (e) {
+            if (seq !== this.connectionCheckSeq || deviceId !== this.selectedDeviceId) {
+                return;
+            }
+
+            this.setDeviceConnectionStatus(
+                "failed",
+                e instanceof Error ? e.message : "연결 확인 중 오류가 발생했습니다."
+            );
+        }
+    }
+
+    setDeviceConnectionStatus(status: DeviceConnectionStatus, message?: string): void {
+        const $status = $("#lblDeviceStatus");
+
+        $status
+            .removeClass("is-empty is-checking is-connected is-failed")
+            .addClass(`is-${status}`);
+
+        if (status === "empty") {
+            $status.find("span:last").text("미선택");
+            $status.attr("title", "");
+            return;
+        }
+
+        if (status === "checking") {
+            $status.find("span:last").text("확인 중");
+            $status.attr("title", "디바이스 연결 상태를 확인하고 있습니다.");
+            return;
+        }
+
+        if (status === "connected") {
+            $status.find("span:last").text("연결됨");
+            $status.attr("title", "OPC 서버에 연결되었습니다.");
+            return;
+        }
+
+        $status.find("span:last").text("연결 실패");
+        $status.attr("title", message ?? "OPC 서버 연결에 실패했습니다.");
     }
 
      updateTagGridFooter(): void {

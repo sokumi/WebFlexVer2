@@ -44,14 +44,54 @@
 }
 
 .wf-tag-connect-chip {
-    background: var(--wf-success-soft);
-    color: var(--wf-success);
+    background: var(--wf-surface-soft);
+    color: var(--wf-text-muted);
 }
+
+    .wf-tag-connect-chip .wf-status-dot {
+        background: var(--wf-text-disabled);
+        box-shadow: 0 0 0 4px color-mix(in srgb, var(--wf-text-disabled) 18%, transparent);
+    }
 
     .wf-tag-connect-chip.is-empty {
         background: var(--wf-surface-soft);
         color: var(--wf-text-muted);
     }
+
+        .wf-tag-connect-chip.is-empty .wf-status-dot {
+            background: var(--wf-text-disabled);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--wf-text-disabled) 18%, transparent);
+        }
+
+    .wf-tag-connect-chip.is-checking {
+        background: var(--wf-surface-soft);
+        color: var(--wf-text-muted);
+    }
+
+        .wf-tag-connect-chip.is-checking .wf-status-dot {
+            background: var(--wf-text-disabled);
+            box-shadow: 0 0 0 4px color-mix(in srgb, var(--wf-text-disabled) 18%, transparent);
+        }
+
+    .wf-tag-connect-chip.is-connected {
+        background: var(--wf-success-soft);
+        color: var(--wf-success);
+    }
+
+        .wf-tag-connect-chip.is-connected .wf-status-dot {
+            background: var(--wf-success);
+            box-shadow: 0 0 0 4px var(--wf-success-soft);
+        }
+
+    .wf-tag-connect-chip.is-failed {
+        background: var(--wf-danger-soft);
+        color: var(--wf-danger);
+    }
+
+        .wf-tag-connect-chip.is-failed .wf-status-dot {
+            background: var(--wf-danger);
+            box-shadow: 0 0 0 4px var(--wf-danger-soft);
+        }
 
 .wf-tag-endpoint-chip {
     max-width: 360px;

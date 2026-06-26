@@ -67,6 +67,62 @@ public class TestDeviceTagController : Controller {
         });
     }
 
+    [HttpGet, ActionName("check-connection")]
+    public async Task<IActionResult> CheckConnection(
+    string deviceId,
+    CancellationToken cancellationToken = default) {
+        if (string.IsNullOrWhiteSpace(deviceId)) {
+            return Json(new {
+                success = false,
+                message = "디바이스를 선택해 주세요."
+            });
+        }
+
+        var device = await _db.Set<OpcDevice>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
+
+        if (device == null) {
+            return Json(new {
+                success = false,
+                message = "디바이스를 찾을 수 없습니다."
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
+            return Json(new {
+                success = true,
+                message = "Endpoint URL이 없습니다.",
+                data = new {
+                    connected = false,
+                    errorMessage = "Endpoint URL이 없습니다."
+                }
+            });
+        }
+
+        try {
+            await _opcBrowseService.CheckConnectionAsync(device, cancellationToken);
+
+            return Json(new {
+                success = true,
+                message = "연결되었습니다.",
+                data = new {
+                    connected = true,
+                    errorMessage = ""
+                }
+            });
+        } catch (Exception ex) {
+            return Json(new {
+                success = true,
+                message = "연결 실패",
+                data = new {
+                    connected = false,
+                    errorMessage = ex.Message
+                }
+            });
+        }
+    }
+
     [HttpGet, ActionName("browse")]
     public async Task<IActionResult> Browse(
         string deviceId,
