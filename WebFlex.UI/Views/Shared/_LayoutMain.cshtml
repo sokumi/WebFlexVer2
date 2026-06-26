@@ -19,17 +19,18 @@
     var hasPageCss = System.IO.File.Exists(pageCssPath);
 }
 
-<!DOCTYPE html>fltmxm vpdlwl
+<!DOCTYPE html>
 <html lang="ko" data-webflex-theme="light" data-bs-theme="light">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@title - WebFlexV2</title>
+     <link rel="stylesheet" href="~/1.0.0/css/views/main/index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/1.0.0/css/app.css" asp-append-version="true" />
 
     @if (hasPageCss)
     {
-        <link rel="stylesheet" href="@pageCssUrl" asp-append-version="true" />
+            <link rel="stylesheet" href="@pageCssUrl" asp-append-version="true" />
     }
 </head>
 <body>
