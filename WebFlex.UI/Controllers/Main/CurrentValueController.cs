@@ -1,122 +1,144 @@
+using System.Text.Json;
 using System.Threading.Channels;
-using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.Services;
 
-namespace WebFlex.UI.Controllers.Main;
+namespace WebFlex.UI.Controllers.Api;
 
 [ApiController]
 [Route("api/currentvalue")]
 public class CurrentValueController : ControllerBase {
     private readonly TsdReadDbContext _db;
     private readonly CurrentValueNotifyService _notifyService;
-    private readonly ILogger<CurrentValueController> _logger;
 
     public CurrentValueController(
         TsdReadDbContext db,
-        CurrentValueNotifyService notifyService,
-        ILogger<CurrentValueController> logger) {
+        CurrentValueNotifyService notifyService) {
         _db = db;
         _notifyService = notifyService;
-        _logger = logger;
     }
 
-    [HttpGet("list")]
-    public async Task<IActionResult> List(CancellationToken cancellationToken) {
-        var data = await _db.Set<CurrentValue>()
-            .AsNoTracking()
+    [HttpGet("page")]
+    public async Task<IActionResult> Page(
+        int skip = 0,
+        int take = 100,
+        string? groupId = null,
+        string? keyword = null,
+        CancellationToken cancellationToken = default) {
+        if (skip < 0) {
+            skip = 0;
+        }
+
+        if (take <= 0) {
+            take = 100;
+        }
+
+        if (take > 300) {
+            take = 300;
+        }
+
+        var query = _db.Set<CurrentValue>()
+            .AsNoTracking();
+
+        if (!string.IsNullOrWhiteSpace(groupId)) {
+            query = query.Where(x => x.GROUP_ID == groupId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword)) {
+            var q = keyword.Trim();
+
+            query = query.Where(x =>
+                x.TAG_ID.Contains(q) ||
+                x.GROUP_ID.Contains(q) ||
+                (x.VALUE != null && x.VALUE.Contains(q)));
+        }
+
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        var rows = await query
             .OrderBy(x => x.GROUP_ID)
             .ThenBy(x => x.TAG_ID)
-            .Select(x => new CurrentValueDto {
+            .Skip(skip)
+            .Take(take)
+            .Select(x => new CurrentValueRowDto {
                 GroupId = x.GROUP_ID,
                 TagId = x.TAG_ID,
                 Value = x.VALUE,
-                Status = x.STATUS,
+                Status = x.STATUS == null ? null : (short?)x.STATUS,
                 SourceTimestamp = x.SOURCETIMESTAMP,
                 ReceivedAt = x.RECEIVEDAT,
                 UpdatedAt = x.UPDATEDAT
             })
             .ToListAsync(cancellationToken);
 
-        return Ok(data);
+        return Ok(new {
+            success = true,
+            data = new {
+                totalCount,
+                skip,
+                take,
+                rows
+            }
+        });
     }
 
+    [HttpGet("groups")]
+    public async Task<IActionResult> Groups(CancellationToken cancellationToken = default) {
+        var groups = await _db.Set<CurrentValue>()
+            .AsNoTracking()
+            .GroupBy(x => x.GROUP_ID)
+            .Select(x => new {
+                groupId = x.Key,
+                count = x.Count(),
+                badCount = x.Count(v => v.STATUS != VaribaleStatusType.Good)
+            })
+            .OrderBy(x => x.groupId)
+            .ToListAsync(cancellationToken);
+
+        return Ok(new {
+            success = true,
+            data = groups
+        });
+    }
+
+    // 기존 main.ts가 쓰던 stream endpoint 유지
     [HttpGet("stream")]
     public async Task Stream(CancellationToken cancellationToken) {
         Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Connection = "keep-alive";
         Response.Headers.ContentType = "text/event-stream";
-        Response.Headers.Append("X-Accel-Buffering", "no");
 
-        HttpContext.Features.Get<IHttpResponseBodyFeature>()?.DisableBuffering();
-
-        var channel = Channel.CreateUnbounded<string>(new UnboundedChannelOptions {
-            SingleReader = true,
-            SingleWriter = false
-        });
-
+        var channel = Channel.CreateUnbounded<string>();
         var clientId = _notifyService.Subscribe(channel);
 
         try {
-            await WriteSseAsync("connected", "{}", cancellationToken);
-
-            var heartbeatTask = Task.Run(async () => {
-                try {
-                    while (!cancellationToken.IsCancellationRequested) {
-                        await Task.Delay(TimeSpan.FromSeconds(15), cancellationToken);
-
-                        await Response.WriteAsync(": heartbeat\n\n", cancellationToken);
-                        await Response.Body.FlushAsync(cancellationToken);
-                    }
-                } catch (OperationCanceledException) {
-                    // 정상 종료
-                } catch (Exception ex) {
-                    _logger.LogDebug(ex, "CurrentValue SSE heartbeat stopped.");
-                }
-            }, cancellationToken);
+            await WriteEventAsync("connected", "{}", cancellationToken);
 
             await foreach (var payload in channel.Reader.ReadAllAsync(cancellationToken)) {
-                await WriteSseAsync("currentvalue", payload, cancellationToken);
-            }
-
-            await heartbeatTask;
-        } catch (OperationCanceledException) {
-            // 브라우저 새로고침/페이지 이동으로 연결이 끊긴 정상 케이스
-        } catch (Exception ex) {
-            _logger.LogError(ex, "CurrentValue SSE stream error.");
-
-            if (!Response.HasStarted) {
-                Response.StatusCode = StatusCodes.Status500InternalServerError;
+                await WriteEventAsync("currentvalue", payload, cancellationToken);
             }
         } finally {
             _notifyService.Unsubscribe(clientId);
         }
     }
 
-    private async Task WriteSseAsync(
+    private async Task WriteEventAsync(
         string eventName,
         string data,
         CancellationToken cancellationToken) {
         await Response.WriteAsync($"event: {eventName}\n", cancellationToken);
-
-        var lines = data.Replace("\r\n", "\n").Split('\n');
-
-        foreach (var line in lines) {
-            await Response.WriteAsync($"data: {line}\n", cancellationToken);
-        }
-
-        await Response.WriteAsync("\n", cancellationToken);
+        await Response.WriteAsync($"data: {data}\n\n", cancellationToken);
         await Response.Body.FlushAsync(cancellationToken);
     }
 
-    public class CurrentValueDto {
-        public string GroupId { get; set; } = "";
+    private sealed class CurrentValueRowDto {
+        public string? GroupId { get; set; }
         public string TagId { get; set; } = "";
         public string? Value { get; set; }
-        public string? CookieValue { get; set; }
-        public VaribaleStatusType? Status { get; set; }
+        public short? Status { get; set; }
         public DateTime? SourceTimestamp { get; set; }
         public DateTime ReceivedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

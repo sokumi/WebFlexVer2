@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\views\opc - 복사\opc1000.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\system\svc1000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -40,7 +44,7 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="Scripts\src\css\views\opc\opc1000.css">
+    <Content Include="Scripts\src\css\views\main\index.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
@@ -60,7 +64,7 @@
     <Content Include="Scripts\src\ts\views\test\tst2010.ts" />
     <Content Include="Scripts\src\ts\views\test\tst2000.ts" />
     <Content Include="Scripts\src\ts\views\test\tst1000.ts" />
-    <Content Include="Scripts\src\ts\views\main\main.ts" />
+    <Content Include="Scripts\src\ts\views\main\index.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc1030.ts" />
