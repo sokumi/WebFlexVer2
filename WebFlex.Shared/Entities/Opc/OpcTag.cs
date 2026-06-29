@@ -46,28 +46,37 @@ public class OpcTag : BaseEntity {
     [DisplayName("entity.OpcTag.DATA_TYPE")]
     public string? DATA_TYPE { get; set; }
 
-    [Column(Order = 18), Comment("수집 사용 여부")]
+    [ColumnStringLength(20)]
+    [Column(Order = 18), Comment("권한 타입")]
+    [DisplayName("entity.OpcTag.PROTECT_TYPE")]
+    public string? PROTECT_TYPE { get; set; }
+
+    [Column(Order = 19), Comment("계산식")]
+    [DisplayName("entity.OpcTag.expressions")]
+    public string? EXPRESSIONS { get; set; }
+
+    [Column(Order = 30), Comment("수집 사용 여부")]
     [DisplayName("entity.OpcTag.IS_COLLECTENABLED")]
     public bool IS_COLLECTENABLED { get; set; }
 
-    [Column(Order = 19), Comment("DB 저장 여부")]
+    [Column(Order = 31), Comment("DB 저장 여부")]
     [DisplayName("entity.OpcTag.SAVE_TO_DATABASE")]
     public bool SAVE_TO_DATABASE { get; set; }
 
-    [Column(Order = 20), Comment("대시보드 표시 여부")]
+    [Column(Order = 32), Comment("대시보드 표시 여부")]
     [DisplayName("entity.OpcTag.SHOW_ON_DASHBOARD")]
     public bool SHOW_ON_DASHBOARD { get; set; }
 
-    [Column(Order = 21), Comment("Sampling Interval(ms)")]
+    [Column(Order = 33), Comment("Sampling Interval(ms)")]
     [DisplayName("entity.OpcTag.SAMPLINGINTERVALMS")]
     public int? SAMPLINGINTERVALMS { get; set; }
 
-    [Column(Order = 23), Comment("정렬 순서")]
+    [Column(Order = 34), Comment("정렬 순서")]
     [DisplayName("entity.OpcTag.SORT_ORDER")]
     public int? SORT_ORDER { get; set; }
 
     [ColumnStringLength(500)]
-    [Column(Order = 24), Comment("설명")]
+    [Column(Order = 35), Comment("설명")]
     [DisplayName("entity.OpcTag.DESCRIPTION")]
     public string? DESCRIPTION { get; set; }
 }

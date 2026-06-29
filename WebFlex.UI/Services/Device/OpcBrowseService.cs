@@ -258,8 +258,11 @@ public class OpcBrowseService {
                 IsCollectable = false
             };
 
+
             if (reference.NodeClass == NodeClass.Variable) {
                 dto.DataType = ReadDataTypeText(session, childNodeId);
+                dto.Description = ReadDescriptionText(session, childNodeId);
+
                 // AccessLevel로 1차 필터 — 배치 Read에서 2차 필터
                 dto.IsCollectable = CanCurrentRead(session, childNodeId);
 
@@ -281,6 +284,133 @@ public class OpcBrowseService {
         }
     }
 
+    private static string ReadDescriptionText(Session session, NodeId nodeId) {
+        var attributeDescription = ReadAttributeText(session, nodeId, Attributes.Description);
+
+        if (!string.IsNullOrWhiteSpace(attributeDescription)) {
+            return attributeDescription;
+        }
+
+        var propertyDescription = ReadPropertyValueText(session, nodeId, "_Description");
+
+        if (!string.IsNullOrWhiteSpace(propertyDescription)) {
+            return propertyDescription;
+        }
+
+        propertyDescription = ReadPropertyValueText(session, nodeId, "Description");
+
+        if (!string.IsNullOrWhiteSpace(propertyDescription)) {
+            return propertyDescription;
+        }
+
+        return ReadKepwarePropertyNodeValueText(session, nodeId, "_Description");
+    }
+
+    private static string ReadAttributeText(Session session, NodeId nodeId, uint attributeId) {
+        try {
+            var value = ReadAttribute(session, nodeId, attributeId);
+
+            if (value == null ||
+                StatusCode.IsBad(value.StatusCode) ||
+                value.Value == null) {
+                return "";
+            }
+
+            return ConvertOpcValueToText(value.Value);
+        } catch {
+            return "";
+        }
+    }
+
+    private static string ReadPropertyValueText(
+        Session session,
+        NodeId nodeId,
+        string propertyName) {
+        try {
+            var refs = BrowsePropertyReferences(session, nodeId);
+
+            foreach (var reference in refs) {
+                var browseName = reference.BrowseName.Name ?? "";
+                var displayName = reference.DisplayName.Text ?? "";
+
+                if (!string.Equals(browseName, propertyName, StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(displayName, propertyName, StringComparison.OrdinalIgnoreCase)) {
+                    continue;
+                }
+
+                var propertyNodeId = ExpandedNodeId.ToNodeId(
+                    reference.NodeId,
+                    session.NamespaceUris);
+
+                if (propertyNodeId == null) {
+                    continue;
+                }
+
+                var value = ReadAttribute(session, propertyNodeId, Attributes.Value);
+
+                if (value == null ||
+                    StatusCode.IsBad(value.StatusCode) ||
+                    value.Value == null) {
+                    continue;
+                }
+
+                return ConvertOpcValueToText(value.Value);
+            }
+
+            return "";
+        } catch {
+            return "";
+        }
+    }
+
+    private static ReferenceDescriptionCollection BrowsePropertyReferences(
+        Session session,
+        NodeId nodeId) {
+        var browser = new Browser(session) {
+            BrowseDirection = BrowseDirection.Forward,
+            ReferenceTypeId = ReferenceTypeIds.HasProperty,
+            IncludeSubtypes = true,
+            NodeClassMask = 0
+        };
+
+        return browser.Browse(nodeId);
+    }
+
+    private static string ReadKepwarePropertyNodeValueText(
+        Session session,
+        NodeId nodeId,
+        string suffix) {
+        try {
+            if (nodeId.IdType != IdType.String || nodeId.Identifier is not string identifier) {
+                return "";
+            }
+
+            var propertyNodeId = new NodeId(
+                $"{identifier}.{suffix}",
+                nodeId.NamespaceIndex
+            );
+
+            var value = ReadAttribute(session, propertyNodeId, Attributes.Value);
+
+            if (value == null ||
+                StatusCode.IsBad(value.StatusCode) ||
+                value.Value == null) {
+                return "";
+            }
+
+            return ConvertOpcValueToText(value.Value);
+        } catch {
+            return "";
+        }
+    }
+
+    private static string ConvertOpcValueToText(object value) {
+        return value switch {
+            LocalizedText localizedText => localizedText.Text ?? "",
+            Variant variant => variant.Value == null ? "" : ConvertOpcValueToText(variant.Value),
+            _ => Convert.ToString(value) ?? ""
+        };
+    }
 
     private static ReferenceDescriptionCollection BrowseChildReferences(
         Session session,

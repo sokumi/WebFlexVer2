@@ -23,11 +23,6 @@
                 태그 <strong id="lblTagCount">0개</strong>
             </span>
 
-            <button id="btnOpenTagModal" type="button" class="btn btn-primary btn-sm">
-                <i data-lucide="plus-circle"></i>
-                태그 등록
-            </button>
-
             <button id="btnOpenTagDrawer" type="button" class="btn btn-outline-primary btn-sm">
                 <i data-lucide="panel-right-open"></i>
                 드로어 등록
@@ -35,49 +30,183 @@
         </div>
     </section>
 
-    <section class="wf-card wf-tag-list-card">
-        <div class="wf-card-body">
-            <div class="wf-grid-toolbar">
-                <div class="wf-grid-toolbar-left">
-                    <div class="wf-grid-toolbar-title">
-                        <span>등록된 태그</span>
-                        <span id="lblGridTagCount" class="wf-count-badge">0건</span>
+    <section class="wf-tag-content">
+        <section class="wf-card wf-tag-list-card">
+            <div class="wf-card-body">
+                <div class="wf-grid-toolbar">
+                    <div class="wf-grid-toolbar-left">
+                        <div class="wf-grid-toolbar-title">
+                            <span>등록된 태그</span>
+                            <span id="lblGridTagCount" class="wf-count-badge">0건</span>
+                        </div>
+                        <div class="wf-grid-toolbar-desc">
+                            선택한 태그를 클릭하면 오른쪽에서 상세 정보를 수정할 수 있습니다.
+                        </div>
                     </div>
-                    <div class="wf-grid-toolbar-desc">
-                        선택한 디바이스에 등록된 태그 목록입니다.
+
+                    <div class="wf-grid-toolbar-right">
+                        <div class="wf-grid-search">
+                            <i data-lucide="search"></i>
+                            <input id="txtTagKeyword" type="text" class="form-control" placeholder="태그코드/명/설명 검색" />
+                        </div>
+
+                        <button id="btnSearch" type="button" class="btn btn-outline-secondary btn-sm">
+                            <i data-lucide="refresh-cw"></i>
+                            조회
+                        </button>
+
+                        <button id="btnDelete" type="button" class="btn btn-outline-danger btn-sm">
+                            <i data-lucide="trash-2"></i>
+                            삭제
+                        </button>
                     </div>
                 </div>
 
-                <div class="wf-grid-toolbar-right">
-                    <div class="wf-grid-search">
-                        <i data-lucide="search"></i>
-                        <input id="txtTagKeyword"
+                <div class="wf-grid-wrap wf-fill">
+                    <div id="gridTag" class="wf-grid"></div>
+                </div>
+
+                <div class="wf-grid-footer">
+                    <span id="lblGridSummary">총 0건</span>
+                    <span id="lblSelectedTag">선택 없음</span>
+                </div>
+            </div>
+        </section>
+
+        <aside id="tagDetailPanel" class="wf-tag-detail-panel is-hidden">
+            <div class="wf-tag-detail-header">
+                <div>
+                    <strong>태그 상세</strong>
+                    <span id="lblDetailSubTitle">선택 없음</span>
+                </div>
+                <button id="btnCloseTagDetail" type="button" class="btn btn-light btn-sm">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="wf-tag-detail-body">
+                <input id="txtDetailId" type="hidden" />
+                <input id="txtDetailIdView" type="hidden" />
+                <input id="txtDetailDeviceId" type="hidden" />
+                <input id="txtDetailGroupId" type="hidden" />
+                <input id="numDetailSamplingIntervalMs" type="hidden" />
+                <input id="chkDetailCollect" type="checkbox" class="d-none" />
+                <input id="chkDetailSaveDb" type="checkbox" class="d-none" />
+                <input id="chkDetailEnabled" type="checkbox" class="d-none" />
+
+                <div class="wf-form-row">
+                    <label>설명</label>
+                    <input id="txtDetailDescription"
+                           type="text"
+                           class="form-control"
+                           placeholder="설명" />
+                </div>
+
+                <div class="wf-form-grid two">
+                    <div class="wf-form-row">
+                        <label>NodeId</label>
+                        <input id="txtDetailNodeId"
+                               type="text"
+                               class="form-control" />
+                    </div>
+
+                    <div class="wf-form-row">
+                        <label>태그명</label>
+                        <input id="txtDetailTagName"
+                               type="text"
+                               class="form-control" />
+                    </div>
+                </div>
+
+                <div class="wf-form-grid two">
+                    <div class="wf-form-row">
+                        <label>데이터 타입</label>
+                        <select id="selDetailDataType" class="form-select"></select>
+                    </div>
+
+                    <div class="wf-form-row">
+                        <label>권한</label>
+                        <select id="selDetailProtectType" class="form-select"></select>
+                    </div>
+                </div>
+
+                <div class="wf-form-grid two">
+                    <div class="wf-form-row">
+                        <label>대시보드</label>
+                        <label class="wf-switch-field">
+                            <input id="chkDetailDashboard"
+                                   type="checkbox"
+                                   class="form-check-input" />
+                            <span>표시</span>
+                        </label>
+                    </div>
+
+                    <div class="wf-form-row">
+                        <label>정렬</label>
+                        <input id="numDetailSortOrder"
+                               type="number"
+                               class="form-control" />
+                    </div>
+                </div>
+
+                <div class="wf-check-grid three">
+                    <label class="wf-switch-field">
+                        <input id="chkDetailCollect"
+                               type="checkbox"
+                               class="form-check-input" />
+                        <span>수집</span>
+                    </label>
+
+                    <label class="wf-switch-field">
+                        <input id="chkDetailSaveDb"
+                               type="checkbox"
+                               class="form-check-input" />
+                        <span>DB 저장</span>
+                    </label>
+
+                    <label class="wf-switch-field">
+                        <input id="chkDetailEnabled"
+                               type="checkbox"
+                               class="form-check-input" />
+                        <span>사용</span>
+                    </label>
+                </div>
+
+                <div class="wf-form-grid two">
+                    <div class="wf-form-row">
+                        <label>&nbsp;</label>
+                        <input id="txtDetailTestValue"
                                type="text"
                                class="form-control"
-                               placeholder="태그코드/명/설명 검색" />
+                               placeholder="테스트 값" />
                     </div>
 
-                    <button id="btnSearch" type="button" class="btn btn-outline-secondary btn-sm">
-                        <i data-lucide="refresh-cw"></i>
-                        조회
-                    </button>
+                    <div class="wf-form-row">
+                        <label>&nbsp;</label>
+                        <button id="btnTestTagDetail"
+                                type="button"
+                                class="btn btn-outline-primary">
+                            테스트
+                        </button>
+                    </div>
+                </div>
 
-                    <button id="btnDelete" type="button" class="btn btn-outline-danger btn-sm">
-                        <i data-lucide="trash-2"></i>
-                        삭제
-                    </button>
+                <div class="wf-form-row">
+                    <label>계산식</label>
+                    <textarea id="txtDetailSetting"
+                              class="form-control"
+                              rows="6"
+                              placeholder="계산식"></textarea>
                 </div>
             </div>
 
-            <div class="wf-grid-wrap wf-fill">
-                <div id="gridTag" class="wf-grid"></div>
+            <div class="wf-tag-detail-footer">
+                <button id="btnSaveTagDetail" type="button" class="btn btn-primary btn-sm">
+                    <i data-lucide="save"></i>
+                    저장
+                </button>
             </div>
-
-            <div class="wf-grid-footer">
-                <span id="lblGridSummary">총 0건</span>
-                <span id="lblSelectedTag">선택 없음</span>
-            </div>
-        </div>
+        </aside>
     </section>
 </div>
 
@@ -149,7 +278,8 @@
                                 <th class="wf-check-col">✓</th>
                                 <th>원본 노드명</th>
                                 <th>태그명 <span class="text-danger">*</span></th>
-                                <th>DataType</th>
+                                <th>데이터 타입</th>
+                                <th>권한</th>
                                 <th>설명</th>
                                 <th>수집</th>
                                 <th>사용</th>

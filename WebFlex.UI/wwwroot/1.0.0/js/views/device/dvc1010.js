@@ -11700,26 +11700,53 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
+const DATA_TYPE_OPTIONS = [
+    "bit",
+    "bool",
+    "uint8",
+    "int8",
+    "uint16",
+    "int16",
+    "bcd16",
+    "uint32",
+    "int32",
+    "float",
+    "bcd32",
+    "uint64",
+    "int64",
+    "double",
+    "ascii",
+    "utf8",
+    "datetime",
+    "timestamp(ms)",
+    "timestamp(s)"
+];
+const PROTECT_TYPE_OPTIONS = [
+    { value: "ReadOnly", text: "읽기 전용" },
+    { value: "ReadWrite", text: "읽고 쓰기" },
+    { value: "WriteOnly", text: "쓰기 전용" }
+];
 class Page {
     constructor() {
         this.devices = [];
         this.rows = [];
         this.selectedDeviceId = "";
         this.selectedTagIds = [];
+        this.selectedTagRow = null;
         this.browseRows = [];
         this.treeItems = [];
         this.selectedTreeItems = [];
         this.connectionCheckSeq = 0;
         this.tagGrid = null;
-        this.modalPopup = null;
         this.drawerPopup = null;
-        this.modalTree = null;
         this.drawerTree = null;
-        this.activePopupType = null;
     }
     init() {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(".wf-tag-content").removeClass("has-detail");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagDetailPanel").addClass("is-hidden");
         this.initTagGrid();
-        this.initPopups();
+        this.initPopup();
+        this.initDetailOptions();
         this.bindEvents();
         void this.loadDevices();
         void this.loadSummary();
@@ -11770,6 +11797,12 @@ class Page {
                 formatter: (cell) => { var _a; return this.createDataTypeBadge(String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "")); }
             },
             {
+                title: "권한",
+                field: "protectType",
+                width: 110,
+                formatter: (cell) => { var _a; return this.createProtectTypeBadge(String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "ReadOnly")); }
+            },
+            {
                 title: "설명",
                 field: "description",
                 minWidth: 220,
@@ -11798,7 +11831,7 @@ class Page {
             }
         ])
             .onRowClick(row => {
-            this.toggleTagSelection(row.id);
+            this.openTagDetail(row);
         })
             .build();
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#gridTag").on("change", ".wf-tag-check", event => {
@@ -11813,37 +11846,32 @@ class Page {
             this.toggleAllTagSelection(checked);
         });
     }
-    initPopups() {
-        this.modalPopup = new _components_webflexPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexPopup({
-            selector: "#tagRegisterModal",
-            widthPercent: 55,
-            heightPercent: 72
-        });
+    initPopup() {
         this.drawerPopup = new _components_webflexPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexPopup({
             selector: "#tagRegisterDrawer",
-            widthPercent: 60,
+            widthPercent: 70,
             heightPercent: 100
-        });
-        this.modalTree = new _components_webflexCheckTree__WEBPACK_IMPORTED_MODULE_5__.WebFlexCheckTree({
-            selector: "#tagRegisterModal [data-tree-host]",
-            cascadeCheck: true,
-            classPrefix: "wf-tag-tree",
-            onSelectionChanged: items => {
-                if (this.activePopupType === "modal") {
-                    this.syncSelectedTreeItems(items);
-                }
-            }
         });
         this.drawerTree = new _components_webflexCheckTree__WEBPACK_IMPORTED_MODULE_5__.WebFlexCheckTree({
             selector: "#tagRegisterDrawer [data-tree-host]",
             cascadeCheck: true,
             classPrefix: "wf-tag-tree",
             onSelectionChanged: items => {
-                if (this.activePopupType === "drawer") {
-                    this.syncSelectedTreeItems(items);
-                }
+                this.syncSelectedTreeItems(items);
             }
         });
+    }
+    initDetailOptions() {
+        const $dataType = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailDataType");
+        $dataType.empty();
+        for (const item of DATA_TYPE_OPTIONS) {
+            $dataType.append(`<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item)}</option>`);
+        }
+        const $protectType = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailProtectType");
+        $protectType.empty();
+        for (const item of PROTECT_TYPE_OPTIONS) {
+            $protectType.append(`<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item.value)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item.text)}</option>`);
+        }
     }
     bindEvents() {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDevice").on("change", () => {
@@ -11852,6 +11880,7 @@ class Page {
             this.browseRows = [];
             this.treeItems = [];
             this.selectedTagIds = [];
+            this.closeTagDetail();
             void ((_b = this.tagGrid) === null || _b === void 0 ? void 0 : _b.setData([]));
             this.updateTagGridFooter();
             this.updateSelectedDeviceInfo();
@@ -11874,65 +11903,69 @@ class Page {
                 void this.loadTags();
             }
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnOpenTagModal").on("click", () => {
-            void this.openRegisterPopup("modal");
-        });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnOpenTagDrawer").on("click", () => {
-            void this.openRegisterPopup("drawer");
+            void this.openRegisterPopup();
         });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnDelete").on("click", () => {
             void this.deleteTags();
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-select-all]", () => {
-            const tree = this.getActiveTree();
-            if (tree == null) {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnCloseTagDetail").on("click", () => {
+            this.closeTagDetail();
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnSaveTagDetail").on("click", () => {
+            void this.saveTagDetail();
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-select-all]", () => {
+            if (this.drawerTree == null) {
                 return;
             }
-            tree.toggleAll(!tree.isAllSelected());
+            this.drawerTree.toggleAll(!this.drawerTree.isAllSelected());
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("change", "[data-check-all]", event => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("change", "[data-check-all]", event => {
             const checked = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]`).prop("checked", checked);
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-row-check]`).prop("checked", checked);
+            this.updatePopupCount();
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-on]", () => {
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check]:checked, ${this.getActiveRootSelector()} [data-row-check]:checked`)
-                .each((_, el) => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("change", "[data-row-check]", () => {
+            this.updatePopupCount();
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-collect-on]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-row-check]:checked`).each((_, el) => {
                 var _a;
                 const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
-                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
             });
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-off]", () => {
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-collect-off]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-row-check]:checked`).each((_, el) => {
                 var _a;
                 const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
-                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
             });
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-on]", () => {
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-use-on]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-row-check]:checked`).each((_, el) => {
                 var _a;
                 const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
-                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
             });
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-off]", () => {
-            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-use-off]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-row-check]:checked`).each((_, el) => {
                 var _a;
                 const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
-                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
             });
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-remove-row]", event => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-remove-row]", event => {
             var _a;
             const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).data("id")) !== null && _a !== void 0 ? _a : "");
-            const tree = this.getActiveTree();
-            if (tree == null) {
+            if (this.drawerTree == null) {
                 return;
             }
-            tree.setSelectedIds(tree.getSelectedIds().filter(x => x !== id));
+            this.drawerTree.setSelectedIds(this.drawerTree.getSelectedIds().filter(x => x !== id));
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-save]", () => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterDrawer").on("click", "[data-save]", () => {
             void this.saveSelectedTags();
         });
         window.addEventListener("webflex:layoutChanged", () => {
@@ -12012,6 +12045,15 @@ class Page {
             this.updateTagGridFooter();
             this.updateTagCheckAllState();
             await this.loadSummary();
+            if (this.selectedTagRow != null) {
+                const nextRow = this.rows.find(x => x.id === this.selectedTagRow.id);
+                if (nextRow != null) {
+                    this.openTagDetail(nextRow);
+                }
+                else {
+                    this.closeTagDetail();
+                }
+            }
         }
         catch (e) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "태그 조회 중 오류가 발생했습니다.");
@@ -12020,7 +12062,7 @@ class Page {
             (_e = this.tagGrid) === null || _e === void 0 ? void 0 : _e.hideLoading();
         }
     }
-    async openRegisterPopup(type) {
+    async openRegisterPopup() {
         var _a, _b;
         if (this.selectedDeviceId.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("디바이스를 선택해 주세요.");
@@ -12032,21 +12074,14 @@ class Page {
                 return;
             }
         }
-        this.activePopupType = type;
         this.selectedTreeItems = [];
         const device = this.getSelectedDevice();
-        const rootSelector = this.getRootSelector(type);
-        const tree = this.getTree(type);
+        const rootSelector = this.getRootSelector();
         jquery__WEBPACK_IMPORTED_MODULE_0___default()(rootSelector).find("[data-device-name]").text(device == null ? "-" : `${device.deviceName} (${device.deviceType})`);
-        tree === null || tree === void 0 ? void 0 : tree.setItems(this.treeItems);
-        this.renderSelectedTable(type);
-        this.updatePopupCount(type);
-        if (type === "modal") {
-            (_a = this.modalPopup) === null || _a === void 0 ? void 0 : _a.open();
-        }
-        else {
-            (_b = this.drawerPopup) === null || _b === void 0 ? void 0 : _b.open();
-        }
+        (_a = this.drawerTree) === null || _a === void 0 ? void 0 : _a.setItems(this.treeItems);
+        this.renderSelectedTable();
+        this.updatePopupCount();
+        (_b = this.drawerPopup) === null || _b === void 0 ? void 0 : _b.open();
         this.refreshIcons();
     }
     async browseNodes() {
@@ -12061,14 +12096,20 @@ class Page {
                 return false;
             }
             this.browseRows = result.data;
-            this.treeItems = this.browseRows.map(x => ({
-                id: x.nodeId,
-                parentId: x.parentNodeId,
-                text: x.displayName,
-                tooltip: x.nodeId,
-                selectable: x.nodeClass === "Variable",
-                data: x
-            }));
+            this.treeItems = this.browseRows.map(x => {
+                var _a;
+                return ({
+                    id: x.nodeId,
+                    parentId: x.parentNodeId,
+                    text: x.displayName,
+                    tooltip: x.nodeId,
+                    selectable: x.nodeClass === "Variable",
+                    data: {
+                        ...x,
+                        protectType: (_a = x.protectType) !== null && _a !== void 0 ? _a : "ReadOnly"
+                    }
+                });
+            });
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success("OPC 노드를 조회했습니다.");
             return true;
         }
@@ -12078,14 +12119,13 @@ class Page {
         }
     }
     syncSelectedTreeItems(items) {
-        var _a, _b;
         this.selectedTreeItems = items;
-        this.renderSelectedTable((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
-        this.updatePopupCount((_b = this.activePopupType) !== null && _b !== void 0 ? _b : "modal");
+        this.renderSelectedTable();
+        this.updatePopupCount();
     }
-    renderSelectedTable(type) {
-        var _a, _b, _c, _d, _e;
-        const rootSelector = this.getRootSelector(type);
+    renderSelectedTable() {
+        var _a, _b, _c, _d, _e, _f;
+        const rootSelector = this.getRootSelector();
         const $host = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-selected-host]`);
         const $empty = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-empty-host]`);
         $host.empty();
@@ -12099,8 +12139,9 @@ class Page {
             const row = (_a = item.data) !== null && _a !== void 0 ? _a : {};
             const id = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item.id);
             const displayName = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_c = (_b = row.displayName) !== null && _b !== void 0 ? _b : item.text) !== null && _c !== void 0 ? _c : item.id);
-            const dataType = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_d = row.dataType) !== null && _d !== void 0 ? _d : "");
-            const description = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_e = row.description) !== null && _e !== void 0 ? _e : "");
+            const dataType = String((_d = row.dataType) !== null && _d !== void 0 ? _d : "");
+            const protectType = String((_e = row.protectType) !== null && _e !== void 0 ? _e : "ReadOnly");
+            const description = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_f = row.description) !== null && _f !== void 0 ? _f : "");
             $host.append(`
                 <tr>
                     <td class="wf-check-col">
@@ -12123,7 +12164,20 @@ class Page {
                                data-id="${id}"
                                value="${displayName}" />
                     </td>
-                    <td>${this.createDataTypeBadge(dataType)}</td>
+                    <td>
+                        <select class="form-select form-select-sm wf-edit-select wf-edit-select-datatype"
+                                data-data-type
+                                data-id="${id}">
+                            ${this.createDataTypeOptions(dataType)}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm wf-edit-select wf-edit-select-protect"
+                                data-protect-type
+                                data-id="${id}">
+                            ${this.createProtectTypeOptions(protectType)}
+                        </select>
+                    </td>
                     <td>
                         <input type="text"
                                class="form-control"
@@ -12155,26 +12209,26 @@ class Page {
                 </tr>
             `);
         }
-        this.updatePopupCount(type);
+        this.updatePopupCount();
     }
     async saveSelectedTags() {
-        var _a, _b, _c, _d, _e;
-        const type = (_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal";
-        const rootSelector = this.getRootSelector(type);
+        var _a, _b, _c;
+        const rootSelector = this.getRootSelector();
         if (this.selectedTreeItems.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("등록할 노드를 선택해 주세요.");
             return;
         }
         const nodes = this.selectedTreeItems.map(item => {
-            var _a, _b, _c;
+            var _a, _b, _c, _d, _e, _f;
             const row = (_a = item.data) !== null && _a !== void 0 ? _a : {};
             const selectorId = this.escapeSelector(item.id);
             return {
                 nodeId: item.id,
                 tagName: String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-tag-name][data-id="${selectorId}"]`).val()) !== null && _b !== void 0 ? _b : "").trim(),
                 nodeClass: row.nodeClass,
-                dataType: row.dataType,
-                description: String((_c = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-description][data-id="${selectorId}"]`).val()) !== null && _c !== void 0 ? _c : "").trim(),
+                dataType: String((_d = (_c = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-data-type][data-id="${selectorId}"]`).val()) !== null && _c !== void 0 ? _c : row.dataType) !== null && _d !== void 0 ? _d : "").trim(),
+                protectType: String((_e = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-protect-type][data-id="${selectorId}"]`).val()) !== null && _e !== void 0 ? _e : "ReadOnly").trim(),
+                description: String((_f = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-description][data-id="${selectorId}"]`).val()) !== null && _f !== void 0 ? _f : "").trim(),
                 isCollectEnabled: jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-collect-check][data-id="${selectorId}"]`).prop("checked") === true,
                 saveToDatabase: true,
                 showOnDashboard: false,
@@ -12195,23 +12249,94 @@ class Page {
                 }
             });
             if (!result.success) {
-                _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_b = result.message) !== null && _b !== void 0 ? _b : "태그 저장에 실패했습니다.");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "태그 저장에 실패했습니다.");
                 return;
             }
-            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success((_c = result.message) !== null && _c !== void 0 ? _c : "태그가 저장되었습니다.");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "태그가 저장되었습니다.");
             this.browseRows = [];
             this.treeItems = [];
-            if (type === "modal") {
-                (_d = this.modalPopup) === null || _d === void 0 ? void 0 : _d.close();
-            }
-            else {
-                (_e = this.drawerPopup) === null || _e === void 0 ? void 0 : _e.close();
-            }
+            (_c = this.drawerPopup) === null || _c === void 0 ? void 0 : _c.close();
             await this.loadTags();
             await this.loadSummary();
         }
         catch (e) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "태그 저장 중 오류가 발생했습니다.");
+        }
+    }
+    openTagDetail(row) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+        this.selectedTagRow = row;
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(".wf-tag-content").addClass("has-detail");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagDetailPanel").removeClass("is-hidden");
+        (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.refreshLayout();
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagDetailPanel").removeClass("is-hidden");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailId").val((_b = row.id) !== null && _b !== void 0 ? _b : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailIdView").val((_c = row.id) !== null && _c !== void 0 ? _c : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailDeviceId").val((_d = row.deviceId) !== null && _d !== void 0 ? _d : this.selectedDeviceId);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailGroupId").val((_e = row.groupId) !== null && _e !== void 0 ? _e : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailNodeId").val((_f = row.nodeId) !== null && _f !== void 0 ? _f : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailTagName").val((_g = row.tagName) !== null && _g !== void 0 ? _g : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailDataType").val((_h = row.dataType) !== null && _h !== void 0 ? _h : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailProtectType").val((_j = row.protectType) !== null && _j !== void 0 ? _j : "ReadOnly");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#numDetailSamplingIntervalMs").val((_k = row.samplingIntervalMs) !== null && _k !== void 0 ? _k : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#numDetailSortOrder").val((_l = row.sortOrder) !== null && _l !== void 0 ? _l : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailDescription").val((_m = row.description) !== null && _m !== void 0 ? _m : "");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailCollect").prop("checked", row.isCollectEnabled === true);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailSaveDb").prop("checked", row.saveToDatabase === true);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailDashboard").prop("checked", row.showOnDashboard === true);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailEnabled").prop("checked", row.isEnabled !== false);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDetailSubTitle").text(`${(_o = row.id) !== null && _o !== void 0 ? _o : ""} / ${(_p = row.tagName) !== null && _p !== void 0 ? _p : ""}`);
+        this.refreshIcons();
+    }
+    closeTagDetail() {
+        var _a;
+        this.selectedTagRow = null;
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(".wf-tag-content").removeClass("has-detail");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagDetailPanel").addClass("is-hidden");
+        (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.refreshLayout();
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+    }
+    async saveTagDetail() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+        const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailId").val()) !== null && _a !== void 0 ? _a : "");
+        if (id.length === 0) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("수정할 태그를 선택해 주세요.");
+            return;
+        }
+        const tagName = String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailTagName").val()) !== null && _b !== void 0 ? _b : "").trim();
+        if (tagName.length === 0) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("태그명을 입력해 주세요.");
+            return;
+        }
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
+                url: "/device/tag/update",
+                data: {
+                    id,
+                    deviceId: String((_c = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailDeviceId").val()) !== null && _c !== void 0 ? _c : "").trim(),
+                    groupId: String((_d = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailGroupId").val()) !== null && _d !== void 0 ? _d : "").trim(),
+                    nodeId: String((_e = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailNodeId").val()) !== null && _e !== void 0 ? _e : "").trim(),
+                    tagName,
+                    dataType: String((_f = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailDataType").val()) !== null && _f !== void 0 ? _f : "").trim(),
+                    protectType: String((_g = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDetailProtectType").val()) !== null && _g !== void 0 ? _g : "ReadOnly"),
+                    samplingIntervalMs: Number((_h = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#numDetailSamplingIntervalMs").val()) !== null && _h !== void 0 ? _h : 0),
+                    sortOrder: Number((_j = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#numDetailSortOrder").val()) !== null && _j !== void 0 ? _j : 0),
+                    description: String((_k = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#txtDetailDescription").val()) !== null && _k !== void 0 ? _k : "").trim(),
+                    isCollectEnabled: jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailCollect").prop("checked") === true,
+                    saveToDatabase: jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailSaveDb").prop("checked") === true,
+                    showOnDashboard: jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailDashboard").prop("checked") === true,
+                    isEnabled: jquery__WEBPACK_IMPORTED_MODULE_0___default()("#chkDetailEnabled").prop("checked") === true
+                }
+            });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_l = result.message) !== null && _l !== void 0 ? _l : "태그 수정에 실패했습니다.");
+                return;
+            }
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success((_m = result.message) !== null && _m !== void 0 ? _m : "태그 정보가 수정되었습니다.");
+            await this.loadTags();
+        }
+        catch (e) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "태그 수정 중 오류가 발생했습니다.");
         }
     }
     async deleteTags() {
@@ -12289,11 +12414,10 @@ class Page {
             ? "선택 없음"
             : `${this.selectedTagIds.length.toLocaleString()}개 선택`);
     }
-    updatePopupCount(type) {
-        var _a;
-        const rootSelector = this.getRootSelector(type);
-        const tree = this.getTree(type);
-        const variableCount = (_a = tree === null || tree === void 0 ? void 0 : tree.getSelectableItems().length) !== null && _a !== void 0 ? _a : 0;
+    updatePopupCount() {
+        var _a, _b;
+        const rootSelector = this.getRootSelector();
+        const variableCount = (_b = (_a = this.drawerTree) === null || _a === void 0 ? void 0 : _a.getSelectableItems().length) !== null && _b !== void 0 ? _b : 0;
         const selectedCount = this.selectedTreeItems.length;
         const checkedCount = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-row-check]:checked`).length;
         jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-selected-count]`).text(`${selectedCount}/${variableCount}`);
@@ -12379,34 +12503,47 @@ class Page {
         var _a;
         return (_a = this.devices.find(x => x.id === this.selectedDeviceId)) !== null && _a !== void 0 ? _a : null;
     }
-    getRootSelector(type) {
-        return type === "modal" ? "#tagRegisterModal" : "#tagRegisterDrawer";
-    }
-    getActiveRootSelector() {
-        var _a;
-        return this.getRootSelector((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
-    }
-    getTree(type) {
-        return type === "modal" ? this.modalTree : this.drawerTree;
-    }
-    getActiveTree() {
-        var _a;
-        return this.getTree((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
+    getRootSelector() {
+        return "#tagRegisterDrawer";
     }
     createDataTypeBadge(dataType) {
         const value = String(dataType !== null && dataType !== void 0 ? dataType : "");
         const lower = value.toLowerCase();
         let className = "default";
-        if (lower.includes("string")) {
+        if (lower.includes("string") || lower === "ascii" || lower === "utf8") {
             className = "string";
         }
-        else if (lower.includes("bool")) {
+        else if (lower.includes("bool") || lower === "bit") {
             className = "boolean";
         }
-        else if (lower.includes("int") || lower.includes("float") || lower.includes("double") || lower.includes("decimal")) {
+        else if (lower.includes("int") ||
+            lower.includes("float") ||
+            lower.includes("double") ||
+            lower.includes("decimal") ||
+            lower.includes("bcd")) {
             className = "number";
         }
         return `<span class="wf-tag-badge ${className}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(value || "-")}</span>`;
+    }
+    createProtectTypeBadge(value) {
+        var _a;
+        const item = PROTECT_TYPE_OPTIONS.find(x => x.value === value);
+        return `<span class="wf-tag-badge default">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_a = item === null || item === void 0 ? void 0 : item.text) !== null && _a !== void 0 ? _a : "읽기 전용")}</span>`;
+    }
+    createDataTypeOptions(selected) {
+        const values = DATA_TYPE_OPTIONS.includes(selected)
+            ? DATA_TYPE_OPTIONS
+            : selected.length > 0
+                ? [selected, ...DATA_TYPE_OPTIONS]
+                : DATA_TYPE_OPTIONS;
+        return values
+            .map(x => `<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(x)}" ${x === selected ? "selected" : ""}>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(x)}</option>`)
+            .join("");
+    }
+    createProtectTypeOptions(selected) {
+        return PROTECT_TYPE_OPTIONS
+            .map(x => `<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(x.value)}" ${x.value === selected ? "selected" : ""}>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(x.text)}</option>`)
+            .join("");
     }
     refreshIcons() {
         const lucide = window.lucide;

@@ -239,7 +239,10 @@ public class DeviceTagController : Controller {
                 samplingIntervalMs = x.SAMPLINGINTERVALMS,
                 queueSize = 1,
                 sortOrder = x.SORT_ORDER,
-                description = x.DESCRIPTION
+                description = x.DESCRIPTION,
+                protectType = x.PROTECT_TYPE ?? "ReadOnly",
+                showOnDashboard = x.SHOW_ON_DASHBOARD,
+                isEnabled = x.IsEnabled,
             })
             .ToListAsync();
 
@@ -332,7 +335,8 @@ public class DeviceTagController : Controller {
                     DESCRIPTION = node.Description,
                     IsEnabled = node.IsEnabled,
                     CreatedAt = now,
-                    UpdatedAt = now
+                    UpdatedAt = now,
+                    PROTECT_TYPE = NormalizeProtectType(node.ProtectType)
                 };
 
                 _db.Set<OpcTag>().Add(tag);
@@ -377,6 +381,15 @@ public class DeviceTagController : Controller {
                 message = ex.InnerException?.Message ?? ex.Message
             });
         }
+    }
+
+    private static string NormalizeProtectType(string? value) {
+        return value switch {
+            "ReadOnly" => "ReadOnly",
+            "ReadWrite" => "ReadWrite",
+            "WriteOnly" => "WriteOnly",
+            _ => "ReadOnly"
+        };
     }
 
     private async Task<OpcGroup> GetOrCreateDeviceGroupAsync(OpcDevice device) {
@@ -461,6 +474,61 @@ public class DeviceTagController : Controller {
         await _tsdDb.SaveChangesAsync();
     }
 
+    [HttpPost, ActionName("update")]
+    public async Task<IActionResult> Update([FromBody] DeviceTagUpdateRequest request) {
+        if (string.IsNullOrWhiteSpace(request.Id)) {
+            return ErrorData("태그 아이디가 없습니다.");
+        }
+
+        await using var tran = await _db.Database.BeginTransactionAsync();
+
+        try {
+            var tag = await _db.Set<OpcTag>()
+                .FirstOrDefaultAsync(x => x.ID == request.Id);
+
+            if (tag == null) {
+                throw new WebFlexMessageException("태그를 찾을 수 없습니다.");
+            }
+
+            if (string.IsNullOrWhiteSpace(request.TagName)) {
+                throw new WebFlexMessageException("태그명을 입력해 주세요.");
+            }
+
+            tag.DEVICE_ID = string.IsNullOrWhiteSpace(request.DeviceId) ? tag.DEVICE_ID : request.DeviceId;
+            tag.GROUP_ID = string.IsNullOrWhiteSpace(request.GroupId) ? null : request.GroupId;
+            tag.NODE_ID = string.IsNullOrWhiteSpace(request.NodeId) ? tag.NODE_ID : request.NodeId;
+            tag.TAG_NAME = request.TagName;
+            tag.DATA_TYPE = request.DataType;
+            tag.PROTECT_TYPE = NormalizeProtectType(request.ProtectType);
+            tag.DESCRIPTION = request.Description;
+            tag.IS_COLLECTENABLED = request.IsCollectEnabled;
+            tag.SAVE_TO_DATABASE = request.SaveToDatabase;
+            tag.SHOW_ON_DASHBOARD = request.ShowOnDashboard;
+            tag.SAMPLINGINTERVALMS = request.SamplingIntervalMs <= 0 ? null : request.SamplingIntervalMs;
+            tag.SORT_ORDER = request.SortOrder <= 0 ? null : request.SortOrder;
+            tag.IsEnabled = request.IsEnabled;
+            tag.UpdatedAt = DateTime.UtcNow;
+
+            await _db.SaveChangesAsync();
+            await tran.CommitAsync();
+
+            await _tsdDb.Set<CurrentValue>()
+                .Where(x => x.TAG_ID == tag.ID)
+                .ExecuteUpdateAsync(x => x
+                    .SetProperty(v => v.GROUP_ID, tag.GROUP_ID)
+                    .SetProperty(v => v.UPDATEDAT, DateTime.UtcNow)
+                );
+
+            return Success("태그 정보가 수정되었습니다.");
+        } catch (WebFlexMessageException ex) {
+            await tran.RollbackAsync();
+            return ErrorData(ex.Message);
+        } catch (Exception ex) {
+            await tran.RollbackAsync();
+            return ErrorData(ex.InnerException?.Message ?? ex.Message);
+        }
+    }
+
     [HttpPost, ActionName("delete")]
     public async Task<IActionResult> Delete([FromBody] DeviceTagDeleteRequest request) {
         if (request.Ids == null || request.Ids.Count == 0) {
@@ -511,14 +579,6 @@ public class DeviceTagController : Controller {
             .Max() + 1;
     }
 
-    private async Task<int> CreateSortOrderAsync(string deviceId) {
-        var max = await _db.Set<OpcTag>()
-            .AsNoTracking()
-            .Where(x => x.DEVICE_ID == deviceId)
-            .MaxAsync(x => x.SORT_ORDER);
-
-        return (max ?? 0) + 1;
-    }
 }
 
 public class DeviceTagSaveRequest {
@@ -536,8 +596,25 @@ public class DeviceTagSaveNode {
     public bool SaveToDatabase { get; set; } = true;
     public bool ShowOnDashboard { get; set; }
     public bool IsEnabled { get; set; } = true;
+    public string? ProtectType { get; set; } = "ReadOnly";
 }
 
+public class DeviceTagUpdateRequest {
+    public string Id { get; set; } = "";
+    public string DeviceId { get; set; } = "";
+    public string? GroupId { get; set; }
+    public string NodeId { get; set; } = "";
+    public string TagName { get; set; } = "";
+    public string? DataType { get; set; }
+    public string? ProtectType { get; set; } = "ReadOnly";
+    public string? Description { get; set; }
+    public bool IsCollectEnabled { get; set; }
+    public bool SaveToDatabase { get; set; }
+    public bool ShowOnDashboard { get; set; }
+    public bool IsEnabled { get; set; } = true;
+    public int? SamplingIntervalMs { get; set; }
+    public int? SortOrder { get; set; }
+}
 public class DeviceTagDeleteRequest {
     public List<string> Ids { get; set; } = new();
 }

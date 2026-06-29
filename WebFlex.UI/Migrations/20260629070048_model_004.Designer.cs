@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebFlex.UI.Data;
@@ -11,9 +12,11 @@ using WebFlex.UI.Data;
 namespace WebFlex.UI.Migrations
 {
     [DbContext(typeof(WebFlexDbContext))]
-    partial class WebFlexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629070048_model_004")]
+    partial class model_004
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -996,12 +999,6 @@ namespace WebFlex.UI.Migrations
                         .HasColumnName("device_id")
                         .HasColumnOrder(11)
                         .HasComment("디바이스 아이디");
-
-                    b.Property<string>("EXPRESSIONS")
-                        .HasColumnType("text")
-                        .HasColumnName("expressions")
-                        .HasColumnOrder(19)
-                        .HasComment("계산식");
 
                     b.Property<string>("GROUP_ID")
                         .HasMaxLength(15)
