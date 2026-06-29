@@ -11071,10 +11071,24 @@ class WebFlexCheckTree {
         return Array.from(this.selectedIds);
     }
     getSelectedItems() {
-        return this.items.filter(x => this.selectedIds.has(x.id));
+        return this.getAllTreeItems().filter(x => this.selectedIds.has(x.id));
     }
     getSelectableItems() {
-        return this.items.filter(x => this.isSelectable(x));
+        return this.getAllTreeItems().filter(x => this.isSelectable(x));
+    }
+    getAllTreeItems() {
+        const result = [];
+        const walk = (item) => {
+            var _a;
+            result.push(item);
+            for (const child of (_a = item.children) !== null && _a !== void 0 ? _a : []) {
+                walk(child);
+            }
+        };
+        for (const item of this.treeItems) {
+            walk(item);
+        }
+        return result;
     }
     setSelectedIds(ids) {
         this.selectedIds = new Set(ids);
@@ -11172,17 +11186,21 @@ class WebFlexCheckTree {
     }
     findItem(id) {
         var _a;
-        return (_a = this.items.find(x => x.id === id)) !== null && _a !== void 0 ? _a : null;
+        return (_a = this.getAllTreeItems().find(x => x.id === id)) !== null && _a !== void 0 ? _a : null;
     }
     isSelectable(item) {
-        return item.selectable !== false;
+        var _a;
+        if (item.selectable != null) {
+            return item.selectable;
+        }
+        return ((_a = item.children) !== null && _a !== void 0 ? _a : []).length === 0;
     }
     isItemChecked(item) {
-        if (this.isSelectable(item)) {
-            return this.selectedIds.has(item.id);
+        const children = this.getDescendantSelectableItems(item, false);
+        if (children.length > 0) {
+            return children.every(x => this.selectedIds.has(x.id));
         }
-        const children = this.getDescendantSelectableItems(item);
-        return children.length > 0 && children.every(x => this.selectedIds.has(x.id));
+        return this.isSelectable(item) && this.selectedIds.has(item.id);
     }
     toggleExpanded(item) {
         if (this.collapsedIds.has(item.id)) {
@@ -11194,13 +11212,14 @@ class WebFlexCheckTree {
         this.render();
     }
     toggleItem(item, checked) {
-        if (this.isSelectable(item)) {
-            this.toggleSingleItem(item, checked);
-        }
-        else if (this.cascadeCheck) {
-            for (const child of this.getDescendantSelectableItems(item)) {
+        const children = this.getDescendantSelectableItems(item, false);
+        if (this.cascadeCheck && children.length > 0) {
+            for (const child of children) {
                 this.toggleSingleItem(child, checked);
             }
+        }
+        else if (this.isSelectable(item)) {
+            this.toggleSingleItem(item, checked);
         }
         this.render();
         this.emitSelectionChanged();
@@ -11220,7 +11239,7 @@ class WebFlexCheckTree {
         const selectable = this.isSelectable(item);
         const selected = this.selectedIds.has(item.id);
         const isCollapsed = this.collapsedIds.has(item.id);
-        const childSelectableItems = this.getDescendantSelectableItems(item);
+        const childSelectableItems = this.getDescendantSelectableItems(item, false);
         const selectedChildCount = childSelectableItems.filter(x => this.selectedIds.has(x.id)).length;
         const hasSelectedChild = selectedChildCount > 0;
         const allChildSelected = childSelectableItems.length > 0 && selectedChildCount === childSelectableItems.length;
@@ -11277,18 +11296,18 @@ class WebFlexCheckTree {
         }
         return wrapper;
     }
-    getDescendantSelectableItems(item) {
+    getDescendantSelectableItems(item, includeSelf = true) {
         const result = [];
-        const walk = (target) => {
+        const walk = (target, isSelf) => {
             var _a;
-            if (this.isSelectable(target)) {
+            if ((includeSelf || !isSelf) && this.isSelectable(target)) {
                 result.push(target);
             }
             for (const child of (_a = target.children) !== null && _a !== void 0 ? _a : []) {
-                walk(child);
+                walk(child, false);
             }
         };
-        walk(item);
+        walk(item, true);
         return result;
     }
     collapseAll() {

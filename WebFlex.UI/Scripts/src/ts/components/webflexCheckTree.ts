@@ -70,11 +70,29 @@ export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
     }
 
     getSelectedItems(): TItem[] {
-        return this.items.filter(x => this.selectedIds.has(x.id));
+        return this.getAllTreeItems().filter(x => this.selectedIds.has(x.id));
     }
 
     getSelectableItems(): TItem[] {
-        return this.items.filter(x => this.isSelectable(x));
+        return this.getAllTreeItems().filter(x => this.isSelectable(x));
+    }
+
+    private getAllTreeItems(): TItem[] {
+        const result: TItem[] = [];
+
+        const walk = (item: TItem): void => {
+            result.push(item);
+
+            for (const child of item.children ?? []) {
+                walk(child as TItem);
+            }
+        };
+
+        for (const item of this.treeItems) {
+            walk(item);
+        }
+
+        return result;
     }
 
     setSelectedIds(ids: string[]): void {
@@ -191,20 +209,26 @@ export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
     }
 
     private findItem(id: string): TItem | null {
-        return this.items.find(x => x.id === id) ?? null;
+        return this.getAllTreeItems().find(x => x.id === id) ?? null;
     }
 
+
     private isSelectable(item: TItem): boolean {
-        return item.selectable !== false;
+        if (item.selectable != null) {
+            return item.selectable;
+        }
+
+        return (item.children ?? []).length === 0;
     }
 
     private isItemChecked(item: TItem): boolean {
-        if (this.isSelectable(item)) {
-            return this.selectedIds.has(item.id);
+        const children = this.getDescendantSelectableItems(item, false);
+
+        if (children.length > 0) {
+            return children.every(x => this.selectedIds.has(x.id));
         }
 
-        const children = this.getDescendantSelectableItems(item);
-        return children.length > 0 && children.every(x => this.selectedIds.has(x.id));
+        return this.isSelectable(item) && this.selectedIds.has(item.id);
     }
 
     private toggleExpanded(item: TItem): void {
@@ -218,12 +242,14 @@ export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
     }
 
     private toggleItem(item: TItem, checked: boolean): void {
-        if (this.isSelectable(item)) {
-            this.toggleSingleItem(item, checked);
-        } else if (this.cascadeCheck) {
-            for (const child of this.getDescendantSelectableItems(item)) {
+        const children = this.getDescendantSelectableItems(item, false);
+
+        if (this.cascadeCheck && children.length > 0) {
+            for (const child of children) {
                 this.toggleSingleItem(child, checked);
             }
+        } else if (this.isSelectable(item)) {
+            this.toggleSingleItem(item, checked);
         }
 
         this.render();
@@ -245,7 +271,7 @@ export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
         const selected = this.selectedIds.has(item.id);
         const isCollapsed = this.collapsedIds.has(item.id);
 
-        const childSelectableItems = this.getDescendantSelectableItems(item);
+        const childSelectableItems = this.getDescendantSelectableItems(item, false);
         const selectedChildCount = childSelectableItems.filter(x => this.selectedIds.has(x.id)).length;
         const hasSelectedChild = selectedChildCount > 0;
         const allChildSelected = childSelectableItems.length > 0 && selectedChildCount === childSelectableItems.length;
@@ -315,20 +341,20 @@ export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
         return wrapper;
     }
 
-    private getDescendantSelectableItems(item: TItem): TItem[] {
+    private getDescendantSelectableItems(item: TItem, includeSelf = true): TItem[] {
         const result: TItem[] = [];
 
-        const walk = (target: TItem): void => {
-            if (this.isSelectable(target)) {
+        const walk = (target: TItem, isSelf: boolean): void => {
+            if ((includeSelf || !isSelf) && this.isSelectable(target)) {
                 result.push(target);
             }
 
             for (const child of target.children ?? []) {
-                walk(child as TItem);
+                walk(child as TItem, false);
             }
         };
 
-        walk(item);
+        walk(item, true);
 
         return result;
     }
