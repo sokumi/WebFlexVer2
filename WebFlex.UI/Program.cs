@@ -12,6 +12,7 @@ builder.Services.AddDbContext<WebFlexDbContext>(options =>
         })
     .UseSnakeCaseNamingConvention());
 
+builder.Services.AddScoped<INewNoService, NewNoService>();
 builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));
 

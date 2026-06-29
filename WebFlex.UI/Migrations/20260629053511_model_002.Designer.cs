@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebFlex.UI.Data;
@@ -11,9 +12,11 @@ using WebFlex.UI.Data;
 namespace WebFlex.UI.Migrations
 {
     [DbContext(typeof(WebFlexDbContext))]
-    partial class WebFlexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629053511_model_002")]
+    partial class model_002
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -113,56 +116,6 @@ namespace WebFlex.UI.Migrations
                     b.ToTable("s_menu", null, t =>
                         {
                             t.HasComment("시스템 메뉴 정보");
-                        });
-                });
-
-            modelBuilder.Entity("WebFlex.Shared.Entities.System.SNewNo", b =>
-                {
-                    b.Property<string>("ID")
-                        .HasColumnType("text")
-                        .HasColumnName("no_id")
-                        .HasColumnOrder(1);
-
-                    b.Property<int>("CURRENT_NO")
-                        .HasColumnType("integer")
-                        .HasColumnName("current_no")
-                        .HasColumnOrder(13)
-                        .HasComment("현재 번호");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at");
-
-                    b.Property<string>("DATE_PART")
-                        .IsRequired()
-                        .HasMaxLength(6)
-                        .HasColumnType("character varying(6)")
-                        .HasColumnName("date_part")
-                        .HasColumnOrder(12)
-                        .HasComment("날짜");
-
-                    b.Property<bool>("IsEnabled")
-                        .HasColumnType("boolean")
-                        .HasColumnName("is_enabled");
-
-                    b.Property<string>("PREFIX")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)")
-                        .HasColumnName("prefix")
-                        .HasColumnOrder(11)
-                        .HasComment("번호 접두어");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("updated_at");
-
-                    b.HasKey("ID")
-                        .HasName("pk_s_new_no");
-
-                    b.ToTable("s_new_no", null, t =>
-                        {
-                            t.HasComment("공통 번호 채번 정보");
                         });
                 });
 

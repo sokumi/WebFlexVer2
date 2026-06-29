@@ -14,15 +14,18 @@ public class DeviceTagController : Controller {
     private readonly WebFlexDbContext _db;
     private readonly TsdReadDbContext _tsdDb;
     private readonly OpcBrowseService _opcBrowseService;
+    private readonly INewNoService _newNo;
 
     public DeviceTagController(
         WebFlexDbContext db,
         TsdReadDbContext tsdDb,
         OpcBrowseService opcBrowseService,
+        INewNoService newNo,
         IConfiguration configuration) {
         _db = db;
         _tsdDb = tsdDb;
         _opcBrowseService = opcBrowseService;
+        _newNo = newNo;
     }
 
     private IActionResult Success(string message = "처리되었습니다.", object? data = null) {
@@ -298,6 +301,9 @@ public class DeviceTagController : Controller {
 
             var currentValues = new List<CurrentValue>();
 
+            var tagIds = await _newNo.NewNosAsync("GT", variableNodes.Count);
+            var tagIdIndex = 0;
+
             foreach (var node in variableNodes) {
                 var exists = await _db.Set<OpcTag>()
                     .AnyAsync(x => x.DEVICE_ID == request.DeviceId && x.NODE_ID == node.NodeId);
@@ -307,7 +313,7 @@ public class DeviceTagController : Controller {
                     continue;
                 }
 
-                var tagId = $"TAG{nextTagNo++:0000}";
+                var tagId = tagIds[tagIdIndex++];
 
                 var tag = new OpcTag {
                     ID = tagId,
@@ -386,7 +392,7 @@ public class DeviceTagController : Controller {
         group = new OpcGroup {
             ID = await CreateGroupIdAsync(),
             GROUP_NAME = device.DEVICE_NAME,
-            SORT_ORDER = await CreateGroupSortOrderAsync(),
+            SORT_ORDER = await CreateGroupSortOrderAsync (),
             DESCRIPTION = $"{device.DEVICE_NAME} 자동 생성 그룹",
             IsEnabled = true,
             CreatedAt = now,
@@ -423,7 +429,7 @@ public class DeviceTagController : Controller {
 
         return (values.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty(0).Max()) + 1;
     }
-     
+
 
     private async Task<int> CreateNextSortOrderAsync(string deviceId) {
         var values = await _db.Set<OpcTag>()
@@ -474,6 +480,12 @@ public class DeviceTagController : Controller {
                 message = "삭제할 태그를 찾을 수 없습니다."
             });
         }
+
+        var tagIds = tags.Select(x => x.ID).ToList();
+
+        await _tsdDb.Set<CurrentValue>()
+            .Where(x => tagIds.Contains(x.TAG_ID))
+            .ExecuteDeleteAsync();
 
         _db.Set<OpcTag>().RemoveRange(tags);
         await _db.SaveChangesAsync();
@@ -529,4 +541,3 @@ public class DeviceTagSaveNode {
 public class DeviceTagDeleteRequest {
     public List<string> Ids { get; set; } = new();
 }
- 

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebFlex.UI.Data;
@@ -11,9 +12,11 @@ using WebFlex.UI.Data;
 namespace WebFlex.UI.Migrations
 {
     [DbContext(typeof(WebFlexDbContext))]
-    partial class WebFlexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629054403_model_003")]
+    partial class model_003
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
