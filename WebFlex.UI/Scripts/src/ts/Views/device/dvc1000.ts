@@ -2,65 +2,14 @@
 import { notify } from "../../framework/notify";
 import { WebFlexGrid } from "../../components/grid/webflexGrid";
 import {
+    boolFormatter,
     numberFormatter,
     textFormatter
 } from "../../components/grid/webflexGridFormatters";
 
-type DeviceTypeDto = {
-    value: string;
-    text: string;
-};
-
-type DeviceRowDto = {
-    id: string;
-    deviceCode: string;
-    deviceName: string;
-    deviceType: string;
-    deviceAddress: string;
-    port: number;
-    endpointUrl: string;
-    isCollectEnabled: boolean;
-    isEnabled: boolean;
-    useSecurity: boolean;
-    useAnonymous: boolean;
-    userName: string;
-    password: string;
-    publishingIntervalMs: number;
-    samplingIntervalMs: number;
-    description: string;
-    tagCount?: number | null;
-};
-
-type DeviceSaveRequest = {
-    id?: string | null;
-    deviceName: string;
-    deviceType: string;
-    deviceAddress: string;
-    port: number;
-    endpointUrl: string;
-    isCollectEnabled: boolean;
-    isEnabled: boolean;
-    useSecurity: boolean;
-    useAnonymous: boolean;
-    userName: string;
-    password: string;
-    publishingIntervalMs: number;
-    samplingIntervalMs: number;
-    description: string;
-};
-
-type DeviceDeleteRequest = {
-    id: string;
-};
-
-type EndpointPreviewDto = {
-    endpointUrl: string;
-};
-
-
 export default class Page {
-    grid: WebFlexGrid<DeviceRowDto> | null = null;
-    rows: DeviceRowDto[] = [];
+    grid: WebFlexGrid<any> | null = null;
+    rows: any[] = [];
     selectedId = "";
 
     public init(): void {
@@ -77,21 +26,10 @@ export default class Page {
     }
 
     bindEvents(): void {
-        $("#btnNew").on("click", () => {
-            this.clearForm();
-        });
-
-        $("#btnSave").on("click", () => {
-            void this.save();
-        });
-
-        $("#btnDelete").on("click", () => {
-            void this.delete();
-        });
-
-        $("#btnSearch").on("click", () => {
-            void this.loadList();
-        });
+        $("#btnNew").on("click", () => this.clearForm());
+        $("#btnSave").on("click", () => void this.save());
+        $("#btnDelete").on("click", () => void this.delete());
+        $("#btnSearch").on("click", () => void this.loadList());
 
         $("#txtGridKeyword").on("keydown", event => {
             if (event.key === "Enter") {
@@ -100,7 +38,7 @@ export default class Page {
         });
 
         $("#txtGridKeyword").on("input", () => {
-            this.applyClientFilter();
+            void this.applyClientFilter();
         });
 
         $("#btnPreviewEndpoint").on("click", () => {
@@ -113,13 +51,12 @@ export default class Page {
     }
 
     initGrid(): void {
-        this.grid = new WebFlexGrid<DeviceRowDto>({
-            selector: "#gridDevice",
-            height: "100%",
-            pagination: true,
-            paginationSize: 12,
-            selectableRows: 1,
-            columns: [
+        this.grid = WebFlexGrid
+            .create<any>("#gridDevice")
+            .height("100%")
+            .pagination(12)
+            .selectableRows(1)
+            .columns([
                 {
                     title: "코드",
                     field: "deviceCode",
@@ -136,7 +73,7 @@ export default class Page {
                     title: "타입",
                     field: "deviceType",
                     width: 120,
-                    formatter: (cell: { getValue: () => any; }) => {
+                    formatter: (cell: any) => {
                         const value = String(cell.getValue() ?? "");
                         const className = value === "OPCUA" ? "good" : "warning";
                         return `<span class="wf-status ${className}">${value}</span>`;
@@ -166,36 +103,30 @@ export default class Page {
                     title: "수집",
                     field: "isCollectEnabled",
                     width: 90,
-                    formatter: (cell: { getValue: () => boolean; }) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-bool-dot good">Y</span>`
-                            : `<span class="wf-bool-dot muted">N</span>`;
-                    }
+                    hozAlign: "center",
+                    formatter: boolFormatter
                 },
                 {
                     title: "사용",
                     field: "isEnabled",
                     width: 90,
-                    formatter: (cell: { getValue: () => boolean; }) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-bool-dot good">Y</span>`
-                            : `<span class="wf-bool-dot muted">N</span>`;
-                    }
+                    hozAlign: "center",
+                    formatter: boolFormatter
                 }
-            ],
-            onRowClick: row => {
+            ])
+            .onRowClick(row => {
                 this.selectRow(row);
-            },
-            onRowDoubleClick: row => {
+            })
+            .onRowDoubleClick(row => {
                 this.selectRow(row);
                 notify.info(`${row.deviceName} 상세를 열었습니다.`);
-            }
-        });
+            })
+            .build();
     }
 
     async loadDeviceTypes(): Promise<void> {
         try {
-            const result = await api.get<DeviceTypeDto[]>({
+            const result = await api.get({
                 url: "/device/manage/types"
             });
 
@@ -221,7 +152,7 @@ export default class Page {
         try {
             this.grid?.showLoading("디바이스 목록 조회 중입니다...");
 
-            const result = await api.get<DeviceRowDto[]>({
+            const result = await api.get({
                 url: "/device/manage/list"
             });
 
@@ -262,9 +193,7 @@ export default class Page {
         $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
     }
 
-    selectRow(row: DeviceRowDto): void {
-        console.log("selected device row", row);
-
+    selectRow(row: any): void {
         this.selectedId = row.id;
 
         $("#hidId").val(row.id);
@@ -330,7 +259,7 @@ export default class Page {
         $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
 
-    getFormData(): DeviceSaveRequest {
+    getFormData(): any {
         return {
             id: this.selectedId || null,
             deviceName: String($("#txtDeviceName").val() ?? "").trim(),
@@ -350,7 +279,7 @@ export default class Page {
         };
     }
 
-    validate(request: DeviceSaveRequest): string | null {
+    validate(request: any): string | null {
         if (request.deviceName.length === 0) {
             return "디바이스명을 입력해 주세요.";
         }
@@ -388,7 +317,7 @@ export default class Page {
         }
 
         try {
-            const result = await api.post<{ id: string }, DeviceSaveRequest>({
+            const result = await api.post({
                 url: "/device/manage/save",
                 data: request
             });
@@ -417,14 +346,12 @@ export default class Page {
             return;
         }
 
-        const request: DeviceDeleteRequest = {
-            id: this.selectedId
-        };
-
         try {
-            const result = await api.post<unknown, DeviceDeleteRequest>({
+            const result = await api.post({
                 url: "/device/manage/delete",
-                data: request
+                data: {
+                    id: this.selectedId
+                }
             });
 
             if (!result.success) {
@@ -447,7 +374,7 @@ export default class Page {
         const port = Number($("#txtPort").val() ?? 0);
 
         try {
-            const result = await api.get<EndpointPreviewDto>({
+            const result = await api.get({
                 url: `/device/manage/endpoint-preview?deviceType=${deviceType}&address=${address}&port=${port}`
             });
 

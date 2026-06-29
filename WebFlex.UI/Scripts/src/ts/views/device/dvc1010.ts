@@ -1,92 +1,40 @@
 ﻿import $ from "jquery";
 
-import { api } from "../../framework/common";
+import { api, escapeHtml } from "../../framework/common";
 import { notify } from "../../framework/notify";
 import { WebFlexGrid } from "../../components/grid/webflexGrid";
+import { WebFlexPopup } from "../../components/webflexPopup";
+import { WebFlexCheckTree, type WebFlexTreeItem } from "../../components/webflexCheckTree";
 import {
-    WebFlexTagRegisterPopup,
-    type WebFlexTagRegisterNode,
-    type WebFlexTagRegisterSaveNode
-} from "../../components/webflexTagRegisterPopup";
-
-import {
+    boolFormatter,
     numberFormatter,
     textFormatter
 } from "../../components/grid/webflexGridFormatters";
 
-type DeviceRowDto = {
-    id: string;
-    deviceName: string;
-    deviceType: string;
-    endpointUrl: string;
-    isCollectEnabled: boolean;
-    tagCount: number;
-};
-
-type DeviceTagSummaryDto = {
-    deviceCount: number;
-    nodeCount: number;
-    variableNodeCount: number;
-    tagCount: number;
-    collectTagCount: number;
-};
-
-type DeviceConnectionCheckDto = {
-    connected: boolean;
-    errorMessage: string;
-};
-
+type PopupType = "modal" | "drawer";
 type DeviceConnectionStatus = "empty" | "checking" | "connected" | "failed";
 
-type BrowseNodeDto = WebFlexTagRegisterNode & {
-    deviceId: string;
-    accessLevel: string;
-    engineeringUnit: string;
-    children?: BrowseNodeDto[];
-};
-
-type SelectedNodeDto = WebFlexTagRegisterSaveNode;
-
-
-type TagRowDto = {
-    id: string;
-    deviceId: string;
-    groupId: string;
-    tagName: string;
-    displayName: string;
-    nodeId: string;
-    dataType: string;
-    isCollectEnabled: boolean;
-    saveToDatabase: boolean;
-    samplingIntervalMs: number;
-    queueSize: number;
-    sortOrder: number;
-    description: string;
-};
-
-type SaveRequest = {
-    deviceId: string;
-    nodes: SelectedNodeDto[];
-};
-
-type DeleteRequest = {
-    ids: string[];
-};
-
-
 export default class Page {
-    devices: DeviceRowDto[] = [];
-    nodes: BrowseNodeDto[] = [];
-    treeNodes: BrowseNodeDto[] = [];
+    devices: any[] = [];
+    rows: any[] = [];
     selectedDeviceId = "";
     selectedTagIds: string[] = [];
-    tagRows: TagRowDto[] = [];
+
+    browseRows: any[] = [];
+    treeItems: WebFlexTreeItem[] = [];
+    selectedTreeItems: WebFlexTreeItem[] = [];
 
     connectionCheckSeq = 0;
 
-    tagGrid: WebFlexGrid<TagRowDto> | null = null;
-    modalPopup: WebFlexTagRegisterPopup | null = null;
-    drawerPopup: WebFlexTagRegisterPopup | null = null;
+    tagGrid: WebFlexGrid<any> | null = null;
+
+    modalPopup: WebFlexPopup | null = null;
+    drawerPopup: WebFlexPopup | null = null;
+
+    modalTree: WebFlexCheckTree | null = null;
+    drawerTree: WebFlexCheckTree | null = null;
+
+    activePopupType: PopupType | null = null;
 
     init(): void {
         this.initTagGrid();
@@ -97,31 +45,139 @@ export default class Page {
         void this.loadSummary();
     }
 
-    initPopups(): void {
-        this.modalPopup = new WebFlexTagRegisterPopup({
-            selector: "#tagRegisterModal",
-            cascadeCheck: true,
-            widthPercent: 55,
-            heightPercent: 72,
-            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
-            onSave: nodes => this.saveTags(nodes)
+    initTagGrid(): void {
+        this.tagGrid = WebFlexGrid
+            .create<any>("#gridTag")
+            .height("100%")
+            .pagination(20)
+            .selectableRows(false)
+            .placeholder("등록된 태그가 없습니다.")
+            .columns([
+                {
+                    title: `<input type="checkbox" class="wf-tag-check-all" />`,
+                    field: "id",
+                    width: 48,
+                    hozAlign: "center",
+                    headerSort: false,
+                    formatter: (cell: any) => {
+                        const id = String(cell.getValue() ?? "");
+                        const checked = this.selectedTagIds.includes(id) ? "checked" : "";
+                        return `<input type="checkbox" class="wf-tag-check" data-id="${escapeHtml(id)}" ${checked} />`;
+                    }
+                },
+                {
+                    title: "태그코드",
+                    field: "id",
+                    width: 130,
+                    formatter: textFormatter
+                },
+                {
+                    title: "태그명",
+                    field: "tagName",
+                    minWidth: 220,
+                    formatter: textFormatter
+                },
+                {
+                    title: "NodeId",
+                    field: "nodeId",
+                    minWidth: 360,
+                    formatter: textFormatter
+                },
+                {
+                    title: "DataType",
+                    field: "dataType",
+                    width: 120,
+                    formatter: (cell: any) => this.createDataTypeBadge(String(cell.getValue() ?? ""))
+                },
+                {
+                    title: "설명",
+                    field: "description",
+                    minWidth: 220,
+                    formatter: textFormatter
+                },
+                {
+                    title: "수집",
+                    field: "isCollectEnabled",
+                    width: 80,
+                    hozAlign: "center",
+                    formatter: boolFormatter
+                },
+                {
+                    title: "DB저장",
+                    field: "saveToDatabase",
+                    width: 90,
+                    hozAlign: "center",
+                    formatter: boolFormatter
+                },
+                {
+                    title: "Sampling",
+                    field: "samplingIntervalMs",
+                    width: 110,
+                    hozAlign: "right",
+                    formatter: numberFormatter
+                }
+            ])
+            .onRowClick(row => {
+                this.toggleTagSelection(row.id);
+            })
+            .build();
+
+        $("#gridTag").on("change", ".wf-tag-check", event => {
+            event.stopPropagation();
+
+            const id = String($(event.currentTarget).data("id") ?? "");
+            this.toggleTagSelection(id);
         });
 
-        this.drawerPopup = new WebFlexTagRegisterPopup({
+        $("#gridTag").on("change", ".wf-tag-check-all", event => {
+            event.stopPropagation();
+
+            const checked = $(event.currentTarget).prop("checked") === true;
+            this.toggleAllTagSelection(checked);
+        });
+    }
+
+    initPopups(): void {
+        this.modalPopup = new WebFlexPopup({
+            selector: "#tagRegisterModal",
+            widthPercent: 55,
+            heightPercent: 72
+        });
+
+        this.drawerPopup = new WebFlexPopup({
             selector: "#tagRegisterDrawer",
-            cascadeCheck: true,
             widthPercent: 60,
-            heightPercent: 100,
-            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
-            onSave: nodes => this.saveTags(nodes)
+            heightPercent: 100
+        });
+
+        this.modalTree = new WebFlexCheckTree({
+            selector: "#tagRegisterModal [data-tree-host]",
+            cascadeCheck: true,
+            classPrefix: "wf-tag-tree",
+            onSelectionChanged: items => {
+                if (this.activePopupType === "modal") {
+                    this.syncSelectedTreeItems(items);
+                }
+            }
+        });
+
+        this.drawerTree = new WebFlexCheckTree({
+            selector: "#tagRegisterDrawer [data-tree-host]",
+            cascadeCheck: true,
+            classPrefix: "wf-tag-tree",
+            onSelectionChanged: items => {
+                if (this.activePopupType === "drawer") {
+                    this.syncSelectedTreeItems(items);
+                }
+            }
         });
     }
 
     bindEvents(): void {
         $("#selDevice").on("change", () => {
             this.selectedDeviceId = String($("#selDevice").val() ?? "");
-            this.nodes = [];
-            this.treeNodes = [];
+            this.browseRows = [];
+            this.treeItems = [];
             this.selectedTagIds = [];
 
             void this.tagGrid?.setData([]);
@@ -161,10 +217,66 @@ export default class Page {
             void this.deleteTags();
         });
 
-        $(document).on("keydown", event => {
-            if (event.key === "Escape") {
-                $(".wf-tag-popup.is-open [data-popup-close]").first().trigger("click");
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-select-all]", () => {
+            const tree = this.getActiveTree();
+
+            if (tree == null) {
+                return;
             }
+
+            tree.toggleAll(!tree.isAllSelected());
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("change", "[data-check-all]", event => {
+            const checked = $(event.currentTarget).prop("checked") === true;
+
+            $(`${this.getActiveRootSelector()} [data-row-check]`).prop("checked", checked);
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-on]", () => {
+            $(`${this.getActiveRootSelector()} [data-collect-check]:checked, ${this.getActiveRootSelector()} [data-row-check]:checked`)
+                .each((_, el) => {
+                    const id = String($(el).data("id") ?? "");
+                    $(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+                });
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-off]", () => {
+            $(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                const id = String($(el).data("id") ?? "");
+                $(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+            });
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-on]", () => {
+            $(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                const id = String($(el).data("id") ?? "");
+                $(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+            });
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-off]", () => {
+            $(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                const id = String($(el).data("id") ?? "");
+                $(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+            });
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-remove-row]", event => {
+            const id = String($(event.currentTarget).data("id") ?? "");
+            const tree = this.getActiveTree();
+
+            if (tree == null) {
+                return;
+            }
+
+            tree.setSelectedIds(
+                tree.getSelectedIds().filter(x => x !== id)
+            );
+        });
+
+        $("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-save]", () => {
+            void this.saveSelectedTags();
         });
 
         window.addEventListener("webflex:layoutChanged", () => {
@@ -172,95 +284,9 @@ export default class Page {
         });
     }
 
-    initTagGrid(): void {
-        this.tagGrid = new WebFlexGrid<TagRowDto>({
-            selector: "#gridTag",
-            height: "100%",
-            pagination: true,
-            paginationSize: 20,
-            selectableRows: false,
-            placeholder: "등록된 태그가 없습니다.",
-            columns: [
-                {
-                    title: "",
-                    field: "id",
-                    width: 48,
-                    hozAlign: "center",
-                    headerSort: false,
-                    formatter: (cell: { getValue: () => unknown }) => {
-                        const id = String(cell.getValue() ?? "");
-                        const checked = this.selectedTagIds.includes(id) ? "checked" : "";
-                        return `<input type="checkbox" class="wf-tag-check" data-id="${this.escapeHtml(id)}" ${checked} />`;
-                    }
-                },
-                {
-                    title: "태그코드",
-                    field: "id",
-                    width: 130,
-                    formatter: textFormatter
-                },
-                {
-                    title: "태그명",
-                    field: "tagName",
-                    minWidth: 220,
-                    formatter: textFormatter
-                },
-                {
-                    title: "NodeId",
-                    field: "nodeId",
-                    minWidth: 360,
-                    formatter: textFormatter
-                },
-                {
-                    title: "DataType",
-                    field: "dataType",
-                    width: 120,
-                    formatter: (cell: { getValue: () => unknown }) => this.createDataTypeBadge(String(cell.getValue() ?? ""))
-                },
-                {
-                    title: "설명",
-                    field: "description",
-                    minWidth: 220,
-                    formatter: textFormatter
-                },
-                {
-                    title: "수집",
-                    field: "isCollectEnabled",
-                    width: 80,
-                    hozAlign: "center",
-                    formatter: (cell: { getValue: () => boolean }) => this.createYn(cell.getValue())
-                },
-                {
-                    title: "사용",
-                    field: "saveToDatabase",
-                    width: 80,
-                    hozAlign: "center",
-                    formatter: (cell: { getValue: () => boolean }) => this.createYn(cell.getValue())
-                },
-                {
-                    title: "Sampling",
-                    field: "samplingIntervalMs",
-                    width: 110,
-                    hozAlign: "right",
-                    formatter: numberFormatter
-                }
-            ],
-            onRowClick: row => {
-                this.toggleTagSelection(row.id);
-            }
-        });
-
-        $("#gridTag").on("change", ".wf-tag-check", event => {
-            event.stopPropagation();
-
-            const id = String($(event.currentTarget).data("id") ?? "");
-            this.toggleTagSelection(id);
-        });
-    }
-
     async loadDevices(): Promise<void> {
         try {
-            const result = await api.get<DeviceRowDto[]>({
+            const result = await api.get({
                 url: "/device/tag/devices"
             });
 
@@ -277,15 +303,15 @@ export default class Page {
 
             for (const device of this.devices) {
                 $sel.append(
-                    `<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`
+                    `<option value="${escapeHtml(device.id)}">${escapeHtml(device.deviceName)} (${escapeHtml(device.deviceType)})</option>`
                 );
             }
 
             if (this.devices.length > 0) {
                 this.selectedDeviceId = this.devices[0].id;
                 $sel.val(this.selectedDeviceId);
-                this.updateSelectedDeviceInfo();
 
+                this.updateSelectedDeviceInfo();
                 void this.checkDeviceConnection();
 
                 await this.loadTags();
@@ -300,7 +326,7 @@ export default class Page {
 
     async loadSummary(): Promise<void> {
         try {
-            const result = await api.get<DeviceTagSummaryDto>({
+            const result = await api.get({
                 url: `/device/tag/summary?deviceId=${encodeURIComponent(this.selectedDeviceId)}`
             });
 
@@ -327,7 +353,7 @@ export default class Page {
 
             const keyword = encodeURIComponent(String($("#txtTagKeyword").val() ?? "").trim());
 
-            const result = await api.get<TagRowDto[]>({
+            const result = await api.get({
                 url: `/device/tag/list?deviceId=${encodeURIComponent(this.selectedDeviceId)}&keyword=${keyword}&onlyCollect=false`
             });
 
@@ -337,10 +363,12 @@ export default class Page {
             }
 
             this.selectedTagIds = [];
-            this.tagRows = result.data;
-            await this.tagGrid?.setData(this.tagRows);
+            this.rows = result.data;
+
+            await this.tagGrid?.setData(this.rows);
 
             this.updateTagGridFooter();
+            this.updateTagCheckAllState();
             await this.loadSummary();
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "태그 조회 중 오류가 발생했습니다.");
@@ -349,13 +377,13 @@ export default class Page {
         }
     }
 
-    async openRegisterPopup(type: "modal" | "drawer"): Promise<void> {
+    async openRegisterPopup(type: PopupType): Promise<void> {
         if (this.selectedDeviceId.length === 0) {
             notify.warning("디바이스를 선택해 주세요.");
             return;
         }
 
-        if (this.nodes.length === 0) {
+        if (this.browseRows.length === 0) {
             const success = await this.browseNodes();
 
             if (!success) {
@@ -363,26 +391,35 @@ export default class Page {
             }
         }
 
-        const device = this.getSelectedDevice();
+        this.activePopupType = type;
+        this.selectedTreeItems = [];
 
-        const options = {
-            deviceName: device == null ? "-" : `${device.deviceName} (${device.deviceType})`,
-            nodes: this.nodes,
-            treeNodes: this.treeNodes
-        };
+        const device = this.getSelectedDevice();
+        const rootSelector = this.getRootSelector(type);
+        const tree = this.getTree(type);
+
+        $(rootSelector).find("[data-device-name]").text(
+            device == null ? "-" : `${device.deviceName} (${device.deviceType})`
+        );
+
+        tree?.setItems(this.treeItems);
+        this.renderSelectedTable(type);
+        this.updatePopupCount(type);
 
         if (type === "modal") {
-            this.modalPopup?.open(options);
+            this.modalPopup?.open();
         } else {
-            this.drawerPopup?.open(options);
+            this.drawerPopup?.open();
         }
+
+        this.refreshIcons();
     }
 
     async browseNodes(): Promise<boolean> {
         try {
             notify.info("OPC 노드를 조회하고 있습니다.");
 
-            const result = await api.get<BrowseNodeDto[]>({
+            const result = await api.get({
                 url: `/device/tag/browse?deviceId=${encodeURIComponent(this.selectedDeviceId)}&onlyCollectable=true`
             });
 
@@ -391,8 +428,15 @@ export default class Page {
                 return false;
             }
 
-            this.nodes = result.data;
-            this.treeNodes = this.buildTree(this.nodes);
+            this.browseRows = result.data;
+            this.treeItems = this.browseRows.map(x => ({
+                id: x.nodeId,
+                parentId: x.parentNodeId,
+                text: x.displayName,
+                tooltip: x.nodeId,
+                selectable: x.nodeClass === "Variable",
+                data: x
+            }));
 
             notify.success("OPC 노드를 조회했습니다.");
             return true;
@@ -402,35 +446,152 @@ export default class Page {
         }
     }
 
-    async saveTags(nodes: SelectedNodeDto[]): Promise<boolean> {
-        const request: SaveRequest = {
-            deviceId: this.selectedDeviceId,
-            nodes
-        };
+    syncSelectedTreeItems(items: WebFlexTreeItem[]): void {
+        this.selectedTreeItems = items;
+        this.renderSelectedTable(this.activePopupType ?? "modal");
+        this.updatePopupCount(this.activePopupType ?? "modal");
+    }
+
+    renderSelectedTable(type: PopupType): void {
+        const rootSelector = this.getRootSelector(type);
+        const $host = $(`${rootSelector} [data-selected-host]`);
+        const $empty = $(`${rootSelector} [data-empty-host]`);
+
+        $host.empty();
+
+        if (this.selectedTreeItems.length === 0) {
+            $empty.removeClass("d-none");
+        } else {
+            $empty.addClass("d-none");
+        }
+
+        for (const item of this.selectedTreeItems) {
+            const row = item.data ?? {};
+            const id = escapeHtml(item.id);
+            const displayName = escapeHtml(row.displayName ?? item.text ?? item.id);
+            const dataType = escapeHtml(row.dataType ?? "");
+            const description = escapeHtml(row.description ?? "");
+
+            $host.append(`
+                <tr>
+                    <td class="wf-check-col">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-row-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td>
+                        <div class="wf-node-origin">
+                            <strong>${displayName}</strong>
+                            <span>${id}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text"
+                               class="form-control"
+                               data-tag-name
+                               data-id="${id}"
+                               value="${displayName}" />
+                    </td>
+                    <td>${this.createDataTypeBadge(dataType)}</td>
+                    <td>
+                        <input type="text"
+                               class="form-control"
+                               data-description
+                               data-id="${id}"
+                               value="${description}"
+                               placeholder="설명 (선택)" />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-collect-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-enabled-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="wf-row-remove"
+                                data-remove-row
+                                data-id="${id}">×</button>
+                    </td>
+                </tr>
+            `);
+        }
+
+        this.updatePopupCount(type);
+    }
+
+    async saveSelectedTags(): Promise<void> {
+        const type = this.activePopupType ?? "modal";
+        const rootSelector = this.getRootSelector(type);
+
+        if (this.selectedTreeItems.length === 0) {
+            notify.warning("등록할 노드를 선택해 주세요.");
+            return;
+        }
+
+        const nodes = this.selectedTreeItems.map(item => {
+            const row = item.data ?? {};
+            const selectorId = this.escapeSelector(item.id);
+
+            return {
+                nodeId: item.id,
+                tagName: String($(`${rootSelector} [data-tag-name][data-id="${selectorId}"]`).val() ?? "").trim(),
+                nodeClass: row.nodeClass,
+                dataType: row.dataType,
+                description: String($(`${rootSelector} [data-description][data-id="${selectorId}"]`).val() ?? "").trim(),
+                isCollectEnabled: $(`${rootSelector} [data-collect-check][data-id="${selectorId}"]`).prop("checked") === true,
+                saveToDatabase: true,
+                showOnDashboard: false,
+                isEnabled: $(`${rootSelector} [data-enabled-check][data-id="${selectorId}"]`).prop("checked") === true
+            };
+        });
+
+        const invalid = nodes.find(x => x.tagName.length === 0);
+
+        if (invalid != null) {
+            notify.warning("태그명을 입력해 주세요.");
+            return;
+        }
 
         try {
-            const result = await api.post<unknown, SaveRequest>({
+            const result = await api.post({
                 url: "/device/tag/save",
-                data: request
+                data: {
+                    deviceId: this.selectedDeviceId,
+                    nodes
+                }
             });
 
             if (!result.success) {
                 notify.error(result.message ?? "태그 저장에 실패했습니다.");
-                return false;
+                return;
             }
 
             notify.success(result.message ?? "태그가 저장되었습니다.");
 
-            this.nodes = [];
-            this.treeNodes = [];
+            this.browseRows = [];
+            this.treeItems = [];
+
+            if (type === "modal") {
+                this.modalPopup?.close();
+            } else {
+                this.drawerPopup?.close();
+            }
 
             await this.loadTags();
             await this.loadSummary();
-
-            return true;
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "태그 저장 중 오류가 발생했습니다.");
-            return false;
         }
     }
 
@@ -444,14 +605,12 @@ export default class Page {
             return;
         }
 
-        const request: DeleteRequest = {
-            ids: this.selectedTagIds
-        };
-
         try {
-            const result = await api.post<unknown, DeleteRequest>({
+            const result = await api.post({
                 url: "/device/tag/delete",
-                data: request
+                data: {
+                    ids: this.selectedTagIds
+                }
             });
 
             if (!result.success) {
@@ -469,29 +628,6 @@ export default class Page {
         }
     }
 
-    buildTree(nodes: BrowseNodeDto[]): BrowseNodeDto[] {
-        const map = new Map<string, BrowseNodeDto>();
-
-        for (const node of nodes) {
-            map.set(node.nodeId, {
-                ...node,
-                children: []
-            });
-        }
-
-        const roots: BrowseNodeDto[] = [];
-
-        for (const node of map.values()) {
-            if (node.parentNodeId && map.has(node.parentNodeId)) {
-                map.get(node.parentNodeId)?.children?.push(node);
-            } else {
-                roots.push(node);
-            }
-        }
-
-        return roots;
-    }
-
     toggleTagSelection(id: string): void {
         if (id.length === 0) {
             return;
@@ -505,6 +641,65 @@ export default class Page {
 
         this.tagGrid?.redraw(true);
         this.updateTagGridFooter();
+        this.updateTagCheckAllState();
+    }
+
+    toggleAllTagSelection(checked: boolean): void {
+        if (checked) {
+            this.selectedTagIds = this.rows
+                .map(x => String(x.id ?? ""))
+                .filter(x => x.length > 0);
+        } else {
+            this.selectedTagIds = [];
+        }
+
+        this.tagGrid?.redraw(true);
+        this.updateTagGridFooter();
+        this.updateTagCheckAllState();
+    }
+
+    updateTagCheckAllState(): void {
+        const $checkAll = $("#gridTag .wf-tag-check-all");
+
+        if ($checkAll.length === 0) {
+            return;
+        }
+
+        const totalCount = this.rows.length;
+        const selectedCount = this.selectedTagIds.length;
+
+        $checkAll.prop("checked", totalCount > 0 && selectedCount === totalCount);
+        $checkAll.prop("indeterminate", selectedCount > 0 && selectedCount < totalCount);
+    }
+
+    updateTagGridFooter(): void {
+        $("#lblGridSummary").text(`총 ${this.rows.length.toLocaleString()}건`);
+        $("#lblGridTagCount").text(`${this.rows.length.toLocaleString()}건`);
+        $("#lblSelectedTag").text(
+            this.selectedTagIds.length === 0
+                ? "선택 없음"
+                : `${this.selectedTagIds.length.toLocaleString()}개 선택`
+        );
+    }
+
+    updatePopupCount(type: PopupType): void {
+        const rootSelector = this.getRootSelector(type);
+        const tree = this.getTree(type);
+        const variableCount = tree?.getSelectableItems().length ?? 0;
+        const selectedCount = this.selectedTreeItems.length;
+        const checkedCount = $(`${rootSelector} [data-row-check]:checked`).length;
+
+        $(`${rootSelector} [data-selected-count]`).text(`${selectedCount}/${variableCount}`);
+        $(`${rootSelector} [data-selected-text]`).text(`${checkedCount}/${selectedCount}개 선택`);
+        $(`${rootSelector} [data-loaded-text]`).text(`총 ${variableCount.toLocaleString()}개 노드 로드됨`);
+        $(`${rootSelector} [data-loaded-count]`)
+            .toggleClass("d-none", variableCount === 0)
+            .text(`${variableCount.toLocaleString()}개 로드됨`);
+        $(`${rootSelector} [data-save-text]`).text(selectedCount > 0 ? `태그 등록 (${selectedCount})` : "태그 등록");
+
+        const $checkAll = $(`${rootSelector} [data-check-all]`);
+        $checkAll.prop("checked", selectedCount > 0 && checkedCount === selectedCount);
+        $checkAll.prop("indeterminate", checkedCount > 0 && checkedCount < selectedCount);
     }
 
     updateSelectedDeviceInfo(): void {
@@ -533,7 +728,7 @@ export default class Page {
         this.setDeviceConnectionStatus("checking");
 
         try {
-            const result = await api.get<DeviceConnectionCheckDto>({
+            const result = await api.get({
                 url: `/device/tag/check-connection?deviceId=${encodeURIComponent(deviceId)}`
             });
 
@@ -592,24 +787,24 @@ export default class Page {
         $status.attr("title", message ?? "OPC 서버 연결에 실패했습니다.");
     }
 
-    updateTagGridFooter(): void {
-        $("#lblGridSummary").text(`총 ${this.tagRows.length.toLocaleString()}건`);
-        $("#lblGridTagCount").text(`${this.tagRows.length.toLocaleString()}건`);
-        $("#lblSelectedTag").text(
-            this.selectedTagIds.length === 0
-                ? "선택 없음"
-                : `${this.selectedTagIds.length.toLocaleString()}개 선택`
-        );
-    }
-
-    getSelectedDevice(): DeviceRowDto | null {
+    getSelectedDevice(): any | null {
         return this.devices.find(x => x.id === this.selectedDeviceId) ?? null;
     }
 
-    createYn(value: boolean): string {
-        return value
-            ? `<span class="wf-tag-yn">Y</span>`
-            : `<span class="wf-tag-yn off">N</span>`;
+    getRootSelector(type: PopupType): string {
+        return type === "modal" ? "#tagRegisterModal" : "#tagRegisterDrawer";
+    }
+
+    getActiveRootSelector(): string {
+        return this.getRootSelector(this.activePopupType ?? "modal");
+    }
+
+    getTree(type: PopupType): WebFlexCheckTree | null {
+        return type === "modal" ? this.modalTree : this.drawerTree;
+    }
+
+    getActiveTree(): WebFlexCheckTree | null {
+        return this.getTree(this.activePopupType ?? "modal");
     }
 
     createDataTypeBadge(dataType: string): string {
@@ -626,15 +821,18 @@ export default class Page {
             className = "number";
         }
 
-        return `<span class="wf-tag-badge ${className}">${this.escapeHtml(value || "-")}</span>`;
+        return `<span class="wf-tag-badge ${className}">${escapeHtml(value || "-")}</span>`;
     }
 
-    escapeHtml(value: string | null | undefined): string {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    refreshIcons(): void {
+        const lucide = (window as any).lucide;
+
+        if (lucide?.createIcons != null) {
+            lucide.createIcons();
+        }
+    }
+
+    escapeSelector(value: string): string {
+        return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
 }

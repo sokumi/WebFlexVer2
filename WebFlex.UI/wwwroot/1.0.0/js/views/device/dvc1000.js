@@ -15,71 +15,165 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var tabulator_tables__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tabulator-tables */ "./node_modules/tabulator-tables/dist/js/tabulator_esm.mjs");
 
 class WebFlexGrid {
-    constructor(options) {
-        var _a, _b, _c, _d, _e;
-        this.element = this.resolveElement(options.selector);
-        const tableOptions = {
-            layout: (_a = options.layout) !== null && _a !== void 0 ? _a : "fitColumns",
-            height: options.height,
-            columns: options.columns,
-            data: options.data,
-            ajaxURL: options.ajaxUrl,
-            movableColumns: (_b = options.movableColumns) !== null && _b !== void 0 ? _b : true,
-            selectableRows: (_c = options.selectableRows) !== null && _c !== void 0 ? _c : false,
-            placeholder: (_d = options.placeholder) !== null && _d !== void 0 ? _d : "조회된 데이터가 없습니다.",
-            pagination: options.pagination === true,
-            paginationSize: (_e = options.paginationSize) !== null && _e !== void 0 ? _e : 20,
-            ...options.options
+    constructor(selector, options = {}) {
+        this.table = null;
+        this.tableOptions = {};
+        this.element = this.resolveElement(selector);
+        this.tableOptions = {
+            layout: "fitColumns",
+            height: "100%",
+            movableColumns: true,
+            selectableRows: false,
+            placeholder: "조회된 데이터가 없습니다.",
+            ...options
         };
-        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, tableOptions);
-        this.bindEvents(options);
+    }
+    static create(selector, options = {}) {
+        return new WebFlexGrid(selector, options);
+    }
+    options(options) {
+        this.tableOptions = {
+            ...this.tableOptions,
+            ...options
+        };
+        this.applyOptions();
+        return this;
+    }
+    height(value) {
+        return this.options({ height: value });
+    }
+    layout(value) {
+        return this.options({ layout: value });
+    }
+    columns(columns) {
+        return this.options({ columns });
+    }
+    data(rows) {
+        return this.options({ data: rows });
+    }
+    pagination(pageSize = 20) {
+        return this.options({
+            pagination: true,
+            paginationSize: pageSize
+        });
+    }
+    noPagination() {
+        return this.options({
+            pagination: false
+        });
+    }
+    selectableRows(value = true) {
+        return this.options({
+            selectableRows: value
+        });
+    }
+    movableColumns(value = true) {
+        return this.options({
+            movableColumns: value
+        });
+    }
+    placeholder(value) {
+        return this.options({
+            placeholder: value
+        });
+    }
+    ajaxUrl(value) {
+        return this.options({
+            ajaxURL: value
+        });
+    }
+    onRowClick(callback) {
+        return this.on("rowClick", (event, row) => {
+            callback(row.getData(), event, row);
+        });
+    }
+    onRowDoubleClick(callback) {
+        return this.on("rowDblClick", (event, row) => {
+            callback(row.getData(), event, row);
+        });
+    }
+    onSelectionChanged(callback) {
+        return this.on("rowSelectionChanged", (data) => {
+            callback(data);
+        });
+    }
+    on(eventName, callback) {
+        if (this.table != null) {
+            this.table.on(eventName, callback);
+            return this;
+        }
+        const oldBuild = this.build.bind(this);
+        this.build = () => {
+            var _a;
+            oldBuild();
+            (_a = this.table) === null || _a === void 0 ? void 0 : _a.on(eventName, callback);
+            return this;
+        };
+        return this;
+    }
+    build() {
+        if (this.table != null) {
+            this.table.destroy();
+        }
+        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, this.tableOptions);
+        return this;
     }
     get instance() {
+        if (this.table == null) {
+            this.build();
+        }
         return this.table;
     }
-    async setData(rows) {
-        await this.table.setData(rows);
+    async setData(rows = []) {
+        await this.instance.setData(rows);
     }
-    async replaceData(rows) {
-        await this.table.replaceData(rows);
+    async replaceData(rows = []) {
+        await this.instance.replaceData(rows);
     }
     async clearData() {
-        await this.table.clearData();
+        await this.instance.clearData();
     }
     async addRow(row, top = false) {
-        await this.table.addRow(row, top);
+        await this.instance.addRow(row, top);
     }
     async updateData(rows) {
-        await this.table.updateData(rows);
+        await this.instance.updateData(rows);
     }
     async deleteRow(row) {
-        await this.table.deleteRow(row);
+        await this.instance.deleteRow(row);
+    }
+    async refresh() {
+        await this.instance.redraw(true);
     }
     getData() {
-        return this.table.getData();
+        return this.instance.getData();
     }
     getSelectedData() {
-        return this.table.getSelectedData();
+        return this.instance.getSelectedData();
     }
     clearSelection() {
-        this.table.deselectRow();
+        this.instance.deselectRow();
     }
     setFilter(field, type, value) {
-        this.table.setFilter(field, type, value);
+        this.instance.setFilter(field, type, value);
+        return this;
     }
     clearFilter() {
-        this.table.clearFilter();
+        this.instance.clearFilter();
+        return this;
     }
     redraw(force = false) {
-        this.table.redraw(force);
+        this.instance.redraw(force);
     }
     refreshLayout() {
         window.requestAnimationFrame(() => {
-            this.table.redraw(true);
+            this.instance.redraw(true);
         });
     }
     destroy() {
-        this.table.destroy();
+        var _a;
+        (_a = this.table) === null || _a === void 0 ? void 0 : _a.destroy();
+        this.table = null;
     }
     showLoading(message = "조회 중입니다...") {
         this.element.classList.add("is-loading");
@@ -89,38 +183,12 @@ class WebFlexGrid {
         this.element.classList.remove("is-loading");
         this.element.removeAttribute("data-loading-message");
     }
-    selectRowByField(field, value) {
-        const rows = this.getData();
-        const target = rows.find(row => row[field] === value);
-        if (target == null) {
-            return false;
+    applyOptions() {
+        var _a, _b;
+        if (this.table == null) {
+            return;
         }
-        // Tabulator row component 직접 접근은 타입 선언을 단순화해둔 상태라,
-        // 현재는 데이터 기준 재선택 대신 선택값 유지용으로 true만 반환.
-        // 실제 row select까지 필요하면 getRows 타입을 추가해서 확장하면 됨.
-        return true;
-    }
-    bindEvents(options) {
-        if (options.onRowClick != null) {
-            this.table.on("rowClick", (event, row) => {
-                var _a;
-                const rowComponent = row;
-                (_a = options.onRowClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
-            });
-        }
-        if (options.onRowDoubleClick != null) {
-            this.table.on("rowDblClick", (event, row) => {
-                var _a;
-                const rowComponent = row;
-                (_a = options.onRowDoubleClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
-            });
-        }
-        if (options.onSelectionChanged != null) {
-            this.table.on("rowSelectionChanged", (data) => {
-                var _a;
-                (_a = options.onSelectionChanged) === null || _a === void 0 ? void 0 : _a.call(options, data);
-            });
-        }
+        (_b = (_a = this.table).setOptions) === null || _b === void 0 ? void 0 : _b.call(_a, this.tableOptions);
     }
     resolveElement(selector) {
         if (typeof selector !== "string") {
@@ -128,7 +196,7 @@ class WebFlexGrid {
         }
         const element = document.querySelector(selector);
         if (element == null) {
-            throw new Error(`Grid element not found. selector=${selector}`);
+            throw new Error(`WebFlexGrid element not found. selector=${selector}`);
         }
         return element;
     }
@@ -145,20 +213,22 @@ class WebFlexGrid {
 
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   boolFormatter: () => (/* binding */ boolFormatter),
 /* harmony export */   dateTimeFormatter: () => (/* binding */ dateTimeFormatter),
-/* harmony export */   escapeHtml: () => (/* binding */ escapeHtml),
 /* harmony export */   formatStatus: () => (/* binding */ formatStatus),
 /* harmony export */   isGoodStatus: () => (/* binding */ isGoodStatus),
 /* harmony export */   numberFormatter: () => (/* binding */ numberFormatter),
 /* harmony export */   statusFormatter: () => (/* binding */ statusFormatter),
 /* harmony export */   textFormatter: () => (/* binding */ textFormatter)
 /* harmony export */ });
+/* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
+
 function textFormatter(cell) {
     const value = cell.getValue();
     if (value == null || value === "") {
         return "";
     }
-    return escapeHtml(String(value));
+    return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
 }
 function numberFormatter(cell) {
     const value = cell.getValue();
@@ -167,15 +237,21 @@ function numberFormatter(cell) {
     }
     const numberValue = Number(value);
     if (Number.isNaN(numberValue)) {
-        return escapeHtml(String(value));
+        return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
     }
     return numberValue.toLocaleString();
+}
+function boolFormatter(cell) {
+    const value = cell.getValue() === true;
+    return value
+        ? `<span class="wf-bool-dot good">Y</span>`
+        : `<span class="wf-bool-dot muted">N</span>`;
 }
 function statusFormatter(cell) {
     const value = cell.getValue();
     const statusText = formatStatus(value);
     const statusClass = isGoodStatus(value) ? "good" : "bad";
-    return `<span class="wf-status ${statusClass}">${escapeHtml(statusText)}</span>`;
+    return `<span class="wf-status ${statusClass}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(statusText)}</span>`;
 }
 function dateTimeFormatter(cell) {
     const value = cell.getValue();
@@ -184,7 +260,7 @@ function dateTimeFormatter(cell) {
     }
     const date = new Date(String(value));
     if (Number.isNaN(date.getTime())) {
-        return escapeHtml(String(value));
+        return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
     }
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -198,18 +274,10 @@ function formatStatus(status) {
     if (status == null || status === "") {
         return "";
     }
-    if (typeof status === "number") {
-        if (status === 0)
-            return "Good";
-        if (status === 1)
-            return "Bad";
-        return String(status);
-    }
-    const normalized = String(status).toLowerCase();
-    if (normalized === "0" || normalized === "good") {
+    if (status === 0 || status === "0" || String(status).toLowerCase() === "good") {
         return "Good";
     }
-    if (normalized === "1" || normalized === "bad") {
+    if (status === 1 || status === "1" || String(status).toLowerCase() === "bad") {
         return "Bad";
     }
     return String(status);
@@ -218,30 +286,20 @@ function isGoodStatus(status) {
     if (status == null || status === "") {
         return true;
     }
-    if (typeof status === "number") {
-        return status === 0;
-    }
     const normalized = String(status).toLowerCase();
-    return normalized.includes("good") ||
-        normalized === "0" ||
-        normalized === "0x00000000";
-}
-function escapeHtml(value) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return normalized === "0" ||
+        normalized === "good" ||
+        normalized === "0x00000000" ||
+        normalized.includes("good");
 }
 
 
 /***/ },
 
-/***/ "./Scripts/src/ts/framework/common.ts"
-/*!********************************************!*\
-  !*** ./Scripts/src/ts/framework/common.ts ***!
-  \********************************************/
+/***/ "./Scripts/src/ts/framework/api.ts"
+/*!*****************************************!*\
+  !*** ./Scripts/src/ts/framework/api.ts ***!
+  \*****************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -256,8 +314,8 @@ const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
     }
 });
 instance.interceptors.response.use((response) => response, (error) => {
-    var _a, _b, _c;
-    const message = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.statusText) !== null && _b !== void 0 ? _b : error.message) !== null && _c !== void 0 ? _c : "알 수 없는 오류";
+    var _a, _b, _c, _d, _e, _f;
+    const message = (_f = (_e = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.message) !== null && _c !== void 0 ? _c : (_d = error.response) === null || _d === void 0 ? void 0 : _d.statusText) !== null && _e !== void 0 ? _e : error.message) !== null && _f !== void 0 ? _f : "알 수 없는 오류가 발생했습니다.";
     return Promise.reject(new Error(message));
 });
 const api = {
@@ -278,6 +336,69 @@ const api = {
         return res.data;
     }
 };
+
+
+/***/ },
+
+/***/ "./Scripts/src/ts/framework/common.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/common.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   api: () => (/* reexport safe */ _api__WEBPACK_IMPORTED_MODULE_0__.api),
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   dispatchLayoutChanged: () => (/* binding */ dispatchLayoutChanged),
+/* harmony export */   escapeHtml: () => (/* binding */ escapeHtml),
+/* harmony export */   getChecked: () => (/* binding */ getChecked),
+/* harmony export */   getValue: () => (/* binding */ getValue),
+/* harmony export */   setChecked: () => (/* binding */ setChecked),
+/* harmony export */   setValue: () => (/* binding */ setValue),
+/* harmony export */   toBool: () => (/* binding */ toBool),
+/* harmony export */   toNumber: () => (/* binding */ toNumber)
+/* harmony export */ });
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api */ "./Scripts/src/ts/framework/api.ts");
+
+function escapeHtml(value) {
+    return String(value !== null && value !== void 0 ? value : "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function toBool(value) {
+    return value === true || value === "true" || value === "Y" || value === "1" || value === 1;
+}
+function toNumber(value, defaultValue = 0) {
+    const result = Number(value);
+    return Number.isNaN(result) ? defaultValue : result;
+}
+function getValue(selector) {
+    var _a;
+    return String((_a = $(selector).val()) !== null && _a !== void 0 ? _a : "").trim();
+}
+function setValue(selector, value) {
+    $(selector).val(value !== null && value !== void 0 ? value : "");
+}
+function getChecked(selector) {
+    return $(selector).prop("checked") === true;
+}
+function setChecked(selector, value) {
+    $(selector).prop("checked", toBool(value));
+}
+function debounce(callback, delay = 250) {
+    let timer;
+    return function (...args) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => callback.apply(this, args), delay);
+    };
+}
+function dispatchLayoutChanged() {
+    window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+}
 
 
 /***/ },
@@ -439,25 +560,17 @@ class Page {
         });
     }
     bindEvents() {
-        $("#btnNew").on("click", () => {
-            this.clearForm();
-        });
-        $("#btnSave").on("click", () => {
-            void this.save();
-        });
-        $("#btnDelete").on("click", () => {
-            void this.delete();
-        });
-        $("#btnSearch").on("click", () => {
-            void this.loadList();
-        });
+        $("#btnNew").on("click", () => this.clearForm());
+        $("#btnSave").on("click", () => void this.save());
+        $("#btnDelete").on("click", () => void this.delete());
+        $("#btnSearch").on("click", () => void this.loadList());
         $("#txtGridKeyword").on("keydown", event => {
             if (event.key === "Enter") {
                 void this.loadList();
             }
         });
         $("#txtGridKeyword").on("input", () => {
-            this.applyClientFilter();
+            void this.applyClientFilter();
         });
         $("#btnPreviewEndpoint").on("click", () => {
             void this.previewEndpoint();
@@ -467,85 +580,78 @@ class Page {
         });
     }
     initGrid() {
-        this.grid = new _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__.WebFlexGrid({
-            selector: "#gridDevice",
-            height: "100%",
-            pagination: true,
-            paginationSize: 12,
-            selectableRows: 1,
-            columns: [
-                {
-                    title: "코드",
-                    field: "deviceCode",
-                    width: 120,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
-                },
-                {
-                    title: "디바이스명",
-                    field: "deviceName",
-                    minWidth: 190,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
-                },
-                {
-                    title: "타입",
-                    field: "deviceType",
-                    width: 120,
-                    formatter: (cell) => {
-                        var _a;
-                        const value = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
-                        const className = value === "OPCUA" ? "good" : "warning";
-                        return `<span class="wf-status ${className}">${value}</span>`;
-                    }
-                },
-                {
-                    title: "주소",
-                    field: "deviceAddress",
-                    minWidth: 160,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
-                },
-                {
-                    title: "포트",
-                    field: "port",
-                    width: 100,
-                    hozAlign: "right",
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
-                },
-                {
-                    title: "태그",
-                    field: "tagCount",
-                    width: 90,
-                    hozAlign: "right",
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
-                },
-                {
-                    title: "수집",
-                    field: "isCollectEnabled",
-                    width: 90,
-                    formatter: (cell) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-bool-dot good">Y</span>`
-                            : `<span class="wf-bool-dot muted">N</span>`;
-                    }
-                },
-                {
-                    title: "사용",
-                    field: "isEnabled",
-                    width: 90,
-                    formatter: (cell) => {
-                        return cell.getValue() === true
-                            ? `<span class="wf-bool-dot good">Y</span>`
-                            : `<span class="wf-bool-dot muted">N</span>`;
-                    }
-                }
-            ],
-            onRowClick: row => {
-                this.selectRow(row);
+        this.grid = _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_2__.WebFlexGrid
+            .create("#gridDevice")
+            .height("100%")
+            .pagination(12)
+            .selectableRows(1)
+            .columns([
+            {
+                title: "코드",
+                field: "deviceCode",
+                width: 120,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
             },
-            onRowDoubleClick: row => {
-                this.selectRow(row);
-                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.info(`${row.deviceName} 상세를 열었습니다.`);
+            {
+                title: "디바이스명",
+                field: "deviceName",
+                minWidth: 190,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
+            },
+            {
+                title: "타입",
+                field: "deviceType",
+                width: 120,
+                formatter: (cell) => {
+                    var _a;
+                    const value = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
+                    const className = value === "OPCUA" ? "good" : "warning";
+                    return `<span class="wf-status ${className}">${value}</span>`;
+                }
+            },
+            {
+                title: "주소",
+                field: "deviceAddress",
+                minWidth: 160,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.textFormatter
+            },
+            {
+                title: "포트",
+                field: "port",
+                width: 100,
+                hozAlign: "right",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
+            },
+            {
+                title: "태그",
+                field: "tagCount",
+                width: 90,
+                hozAlign: "right",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.numberFormatter
+            },
+            {
+                title: "수집",
+                field: "isCollectEnabled",
+                width: 90,
+                hozAlign: "center",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.boolFormatter
+            },
+            {
+                title: "사용",
+                field: "isEnabled",
+                width: 90,
+                hozAlign: "center",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_3__.boolFormatter
             }
-        });
+        ])
+            .onRowClick(row => {
+            this.selectRow(row);
+        })
+            .onRowDoubleClick(row => {
+            this.selectRow(row);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.info(`${row.deviceName} 상세를 열었습니다.`);
+        })
+            .build();
     }
     async loadDeviceTypes() {
         var _a;
@@ -611,7 +717,6 @@ class Page {
     }
     selectRow(row) {
         var _a, _b, _c, _d, _e;
-        console.log("selected device row", row);
         this.selectedId = row.id;
         $("#hidId").val(row.id);
         $("#txtDeviceCode").val(row.deviceCode);
@@ -742,13 +847,12 @@ class Page {
         if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) {
             return;
         }
-        const request = {
-            id: this.selectedId
-        };
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
                 url: "/device/manage/delete",
-                data: request
+                data: {
+                    id: this.selectedId
+                }
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "삭제에 실패했습니다.");

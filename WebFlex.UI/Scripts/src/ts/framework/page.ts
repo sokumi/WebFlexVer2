@@ -8,7 +8,7 @@ export function runPage(Page: PageConstructor): void {
     document.addEventListener("DOMContentLoaded", () => {
         const page = new Page();
 
-        window.viewModel = page;
+        (window as any).viewModel = page;
 
         page.init();
     });

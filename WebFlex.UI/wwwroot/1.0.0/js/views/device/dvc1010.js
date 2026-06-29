@@ -10742,71 +10742,165 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var tabulator_tables__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! tabulator-tables */ "./node_modules/tabulator-tables/dist/js/tabulator_esm.mjs");
 
 class WebFlexGrid {
-    constructor(options) {
-        var _a, _b, _c, _d, _e;
-        this.element = this.resolveElement(options.selector);
-        const tableOptions = {
-            layout: (_a = options.layout) !== null && _a !== void 0 ? _a : "fitColumns",
-            height: options.height,
-            columns: options.columns,
-            data: options.data,
-            ajaxURL: options.ajaxUrl,
-            movableColumns: (_b = options.movableColumns) !== null && _b !== void 0 ? _b : true,
-            selectableRows: (_c = options.selectableRows) !== null && _c !== void 0 ? _c : false,
-            placeholder: (_d = options.placeholder) !== null && _d !== void 0 ? _d : "조회된 데이터가 없습니다.",
-            pagination: options.pagination === true,
-            paginationSize: (_e = options.paginationSize) !== null && _e !== void 0 ? _e : 20,
-            ...options.options
+    constructor(selector, options = {}) {
+        this.table = null;
+        this.tableOptions = {};
+        this.element = this.resolveElement(selector);
+        this.tableOptions = {
+            layout: "fitColumns",
+            height: "100%",
+            movableColumns: true,
+            selectableRows: false,
+            placeholder: "조회된 데이터가 없습니다.",
+            ...options
         };
-        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, tableOptions);
-        this.bindEvents(options);
+    }
+    static create(selector, options = {}) {
+        return new WebFlexGrid(selector, options);
+    }
+    options(options) {
+        this.tableOptions = {
+            ...this.tableOptions,
+            ...options
+        };
+        this.applyOptions();
+        return this;
+    }
+    height(value) {
+        return this.options({ height: value });
+    }
+    layout(value) {
+        return this.options({ layout: value });
+    }
+    columns(columns) {
+        return this.options({ columns });
+    }
+    data(rows) {
+        return this.options({ data: rows });
+    }
+    pagination(pageSize = 20) {
+        return this.options({
+            pagination: true,
+            paginationSize: pageSize
+        });
+    }
+    noPagination() {
+        return this.options({
+            pagination: false
+        });
+    }
+    selectableRows(value = true) {
+        return this.options({
+            selectableRows: value
+        });
+    }
+    movableColumns(value = true) {
+        return this.options({
+            movableColumns: value
+        });
+    }
+    placeholder(value) {
+        return this.options({
+            placeholder: value
+        });
+    }
+    ajaxUrl(value) {
+        return this.options({
+            ajaxURL: value
+        });
+    }
+    onRowClick(callback) {
+        return this.on("rowClick", (event, row) => {
+            callback(row.getData(), event, row);
+        });
+    }
+    onRowDoubleClick(callback) {
+        return this.on("rowDblClick", (event, row) => {
+            callback(row.getData(), event, row);
+        });
+    }
+    onSelectionChanged(callback) {
+        return this.on("rowSelectionChanged", (data) => {
+            callback(data);
+        });
+    }
+    on(eventName, callback) {
+        if (this.table != null) {
+            this.table.on(eventName, callback);
+            return this;
+        }
+        const oldBuild = this.build.bind(this);
+        this.build = () => {
+            var _a;
+            oldBuild();
+            (_a = this.table) === null || _a === void 0 ? void 0 : _a.on(eventName, callback);
+            return this;
+        };
+        return this;
+    }
+    build() {
+        if (this.table != null) {
+            this.table.destroy();
+        }
+        this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, this.tableOptions);
+        return this;
     }
     get instance() {
+        if (this.table == null) {
+            this.build();
+        }
         return this.table;
     }
-    async setData(rows) {
-        await this.table.setData(rows);
+    async setData(rows = []) {
+        await this.instance.setData(rows);
     }
-    async replaceData(rows) {
-        await this.table.replaceData(rows);
+    async replaceData(rows = []) {
+        await this.instance.replaceData(rows);
     }
     async clearData() {
-        await this.table.clearData();
+        await this.instance.clearData();
     }
     async addRow(row, top = false) {
-        await this.table.addRow(row, top);
+        await this.instance.addRow(row, top);
     }
     async updateData(rows) {
-        await this.table.updateData(rows);
+        await this.instance.updateData(rows);
     }
     async deleteRow(row) {
-        await this.table.deleteRow(row);
+        await this.instance.deleteRow(row);
+    }
+    async refresh() {
+        await this.instance.redraw(true);
     }
     getData() {
-        return this.table.getData();
+        return this.instance.getData();
     }
     getSelectedData() {
-        return this.table.getSelectedData();
+        return this.instance.getSelectedData();
     }
     clearSelection() {
-        this.table.deselectRow();
+        this.instance.deselectRow();
     }
     setFilter(field, type, value) {
-        this.table.setFilter(field, type, value);
+        this.instance.setFilter(field, type, value);
+        return this;
     }
     clearFilter() {
-        this.table.clearFilter();
+        this.instance.clearFilter();
+        return this;
     }
     redraw(force = false) {
-        this.table.redraw(force);
+        this.instance.redraw(force);
     }
     refreshLayout() {
         window.requestAnimationFrame(() => {
-            this.table.redraw(true);
+            this.instance.redraw(true);
         });
     }
     destroy() {
-        this.table.destroy();
+        var _a;
+        (_a = this.table) === null || _a === void 0 ? void 0 : _a.destroy();
+        this.table = null;
     }
     showLoading(message = "조회 중입니다...") {
         this.element.classList.add("is-loading");
@@ -10816,38 +10910,12 @@ class WebFlexGrid {
         this.element.classList.remove("is-loading");
         this.element.removeAttribute("data-loading-message");
     }
-    selectRowByField(field, value) {
-        const rows = this.getData();
-        const target = rows.find(row => row[field] === value);
-        if (target == null) {
-            return false;
+    applyOptions() {
+        var _a, _b;
+        if (this.table == null) {
+            return;
         }
-        // Tabulator row component 직접 접근은 타입 선언을 단순화해둔 상태라,
-        // 현재는 데이터 기준 재선택 대신 선택값 유지용으로 true만 반환.
-        // 실제 row select까지 필요하면 getRows 타입을 추가해서 확장하면 됨.
-        return true;
-    }
-    bindEvents(options) {
-        if (options.onRowClick != null) {
-            this.table.on("rowClick", (event, row) => {
-                var _a;
-                const rowComponent = row;
-                (_a = options.onRowClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
-            });
-        }
-        if (options.onRowDoubleClick != null) {
-            this.table.on("rowDblClick", (event, row) => {
-                var _a;
-                const rowComponent = row;
-                (_a = options.onRowDoubleClick) === null || _a === void 0 ? void 0 : _a.call(options, rowComponent.getData(), event);
-            });
-        }
-        if (options.onSelectionChanged != null) {
-            this.table.on("rowSelectionChanged", (data) => {
-                var _a;
-                (_a = options.onSelectionChanged) === null || _a === void 0 ? void 0 : _a.call(options, data);
-            });
-        }
+        (_b = (_a = this.table).setOptions) === null || _b === void 0 ? void 0 : _b.call(_a, this.tableOptions);
     }
     resolveElement(selector) {
         if (typeof selector !== "string") {
@@ -10855,7 +10923,7 @@ class WebFlexGrid {
         }
         const element = document.querySelector(selector);
         if (element == null) {
-            throw new Error(`Grid element not found. selector=${selector}`);
+            throw new Error(`WebFlexGrid element not found. selector=${selector}`);
         }
         return element;
     }
@@ -10873,20 +10941,22 @@ class WebFlexGrid {
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   boolFormatter: () => (/* binding */ boolFormatter),
 /* harmony export */   dateTimeFormatter: () => (/* binding */ dateTimeFormatter),
-/* harmony export */   escapeHtml: () => (/* binding */ escapeHtml),
 /* harmony export */   formatStatus: () => (/* binding */ formatStatus),
 /* harmony export */   isGoodStatus: () => (/* binding */ isGoodStatus),
 /* harmony export */   numberFormatter: () => (/* binding */ numberFormatter),
 /* harmony export */   statusFormatter: () => (/* binding */ statusFormatter),
 /* harmony export */   textFormatter: () => (/* binding */ textFormatter)
 /* harmony export */ });
+/* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
+
 function textFormatter(cell) {
     const value = cell.getValue();
     if (value == null || value === "") {
         return "";
     }
-    return escapeHtml(String(value));
+    return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
 }
 function numberFormatter(cell) {
     const value = cell.getValue();
@@ -10895,15 +10965,21 @@ function numberFormatter(cell) {
     }
     const numberValue = Number(value);
     if (Number.isNaN(numberValue)) {
-        return escapeHtml(String(value));
+        return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
     }
     return numberValue.toLocaleString();
+}
+function boolFormatter(cell) {
+    const value = cell.getValue() === true;
+    return value
+        ? `<span class="wf-bool-dot good">Y</span>`
+        : `<span class="wf-bool-dot muted">N</span>`;
 }
 function statusFormatter(cell) {
     const value = cell.getValue();
     const statusText = formatStatus(value);
     const statusClass = isGoodStatus(value) ? "good" : "bad";
-    return `<span class="wf-status ${statusClass}">${escapeHtml(statusText)}</span>`;
+    return `<span class="wf-status ${statusClass}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(statusText)}</span>`;
 }
 function dateTimeFormatter(cell) {
     const value = cell.getValue();
@@ -10912,7 +10988,7 @@ function dateTimeFormatter(cell) {
     }
     const date = new Date(String(value));
     if (Number.isNaN(date.getTime())) {
-        return escapeHtml(String(value));
+        return (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value);
     }
     const yyyy = date.getFullYear();
     const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -10926,18 +11002,10 @@ function formatStatus(status) {
     if (status == null || status === "") {
         return "";
     }
-    if (typeof status === "number") {
-        if (status === 0)
-            return "Good";
-        if (status === 1)
-            return "Bad";
-        return String(status);
-    }
-    const normalized = String(status).toLowerCase();
-    if (normalized === "0" || normalized === "good") {
+    if (status === 0 || status === "0" || String(status).toLowerCase() === "good") {
         return "Good";
     }
-    if (normalized === "1" || normalized === "bad") {
+    if (status === 1 || status === "1" || String(status).toLowerCase() === "bad") {
         return "Bad";
     }
     return String(status);
@@ -10946,21 +11014,11 @@ function isGoodStatus(status) {
     if (status == null || status === "") {
         return true;
     }
-    if (typeof status === "number") {
-        return status === 0;
-    }
     const normalized = String(status).toLowerCase();
-    return normalized.includes("good") ||
-        normalized === "0" ||
-        normalized === "0x00000000";
-}
-function escapeHtml(value) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return normalized === "0" ||
+        normalized === "good" ||
+        normalized === "0x00000000" ||
+        normalized.includes("good");
 }
 
 
@@ -10979,46 +11037,47 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */ });
 class WebFlexCheckTree {
     constructor(options) {
-        var _a, _b, _c, _d;
-        this.collapsedIds = new Set();
+        var _a, _b, _c, _d, _e, _f;
+        this.items = [];
+        this.treeItems = [];
         this.selectedIds = new Set();
-        this.keySeq = 0;
-        this.keyById = new Map();
-        this.nodeByKey = new Map();
-        this.root = this.resolveElement(options.selector);
-        this.nodes = options.nodes;
-        this.treeNodes = options.treeNodes;
-        this.getId = options.getId;
-        this.getText = options.getText;
-        this.getChildren = options.getChildren;
-        this.isSelectable = options.isSelectable;
-        this.getTooltip = options.getTooltip;
-        this.cascadeCheck = (_a = options.cascadeCheck) !== null && _a !== void 0 ? _a : true;
-        this.showCount = (_b = options.showCount) !== null && _b !== void 0 ? _b : true;
-        this.defaultExpanded = (_c = options.defaultExpanded) !== null && _c !== void 0 ? _c : true;
-        this.classPrefix = (_d = options.classPrefix) !== null && _d !== void 0 ? _d : "wf-check-tree";
+        this.collapsedIds = new Set();
+        this.element = this.resolveElement(options.selector);
+        this.items = (_a = options.items) !== null && _a !== void 0 ? _a : [];
+        this.treeItems = (_b = options.treeItems) !== null && _b !== void 0 ? _b : this.buildTree(this.items);
+        this.cascadeCheck = (_c = options.cascadeCheck) !== null && _c !== void 0 ? _c : true;
+        this.showCount = (_d = options.showCount) !== null && _d !== void 0 ? _d : true;
+        this.defaultExpanded = (_e = options.defaultExpanded) !== null && _e !== void 0 ? _e : true;
+        this.classPrefix = (_f = options.classPrefix) !== null && _f !== void 0 ? _f : "wf-check-tree";
         this.onSelectionChanged = options.onSelectionChanged;
         this.bindEvents();
         this.render();
     }
-    setNodes(nodes, treeNodes) {
-        this.nodes = nodes;
-        this.treeNodes = treeNodes;
+    setItems(items, treeItems) {
+        this.items = items;
+        this.treeItems = treeItems !== null && treeItems !== void 0 ? treeItems : this.buildTree(items);
         this.selectedIds.clear();
         this.collapsedIds.clear();
-        this.resetKeys();
         if (!this.defaultExpanded) {
-            this.collapseAllGroups();
+            this.collapseAll();
         }
         this.render();
         this.emitSelectionChanged();
     }
     clear() {
-        this.nodes = [];
-        this.treeNodes = [];
-        this.selectedIds.clear();
-        this.collapsedIds.clear();
-        this.resetKeys();
+        this.setItems([]);
+    }
+    getSelectedIds() {
+        return Array.from(this.selectedIds);
+    }
+    getSelectedItems() {
+        return this.items.filter(x => this.selectedIds.has(x.id));
+    }
+    getSelectableItems() {
+        return this.items.filter(x => this.isSelectable(x));
+    }
+    setSelectedIds(ids) {
+        this.selectedIds = new Set(ids);
         this.render();
         this.emitSelectionChanged();
     }
@@ -11027,58 +11086,62 @@ class WebFlexCheckTree {
         this.render();
         this.emitSelectionChanged();
     }
-    setSelectedIds(ids) {
-        this.selectedIds = new Set(ids);
-        this.render();
-        this.emitSelectionChanged();
-    }
-    getSelectedIds() {
-        return Array.from(this.selectedIds);
-    }
-    getSelectedNodes() {
-        return this.nodes.filter(node => this.selectedIds.has(this.getId(node)));
-    }
-    getSelectableNodes() {
-        return this.nodes.filter(node => this.isSelectable(node));
-    }
     isAllSelected() {
-        const selectable = this.getSelectableNodes();
-        return selectable.length > 0 && selectable.every(node => this.selectedIds.has(this.getId(node)));
+        const selectable = this.getSelectableItems();
+        return selectable.length > 0 && selectable.every(x => this.selectedIds.has(x.id));
     }
     toggleAll(checked) {
-        const selectable = this.getSelectableNodes();
-        for (const node of selectable) {
-            const id = this.getId(node);
+        for (const item of this.getSelectableItems()) {
             if (checked) {
-                this.selectedIds.add(id);
+                this.selectedIds.add(item.id);
             }
             else {
-                this.selectedIds.delete(id);
+                this.selectedIds.delete(item.id);
             }
         }
         this.render();
         this.emitSelectionChanged();
     }
     render() {
-        this.root.innerHTML = "";
-        if (this.treeNodes.length === 0) {
-            this.root.innerHTML = `
+        this.element.innerHTML = "";
+        if (this.treeItems.length === 0) {
+            this.element.innerHTML = `
                 <div class="wf-tag-empty">
                     <i data-lucide="git-branch"></i>
-                    <strong>조회된 노드가 없습니다.</strong>
-                    <span>디바이스 연결 상태 또는 OPC 노드 조회 결과를 확인하세요.</span>
+                    <strong>조회된 항목이 없습니다.</strong>
+                    <span>데이터를 조회한 뒤 다시 시도하세요.</span>
                 </div>
             `;
             return;
         }
         const fragment = document.createDocumentFragment();
-        for (const node of this.treeNodes) {
-            fragment.appendChild(this.createNodeElement(node, 0));
+        for (const item of this.treeItems) {
+            fragment.appendChild(this.createItemElement(item, 0));
         }
-        this.root.appendChild(fragment);
+        this.element.appendChild(fragment);
+    }
+    buildTree(items) {
+        var _a, _b;
+        const map = new Map();
+        const roots = [];
+        for (const item of items) {
+            map.set(item.id, {
+                ...item,
+                children: []
+            });
+        }
+        for (const item of map.values()) {
+            if (item.parentId && map.has(item.parentId)) {
+                (_b = (_a = map.get(item.parentId)) === null || _a === void 0 ? void 0 : _a.children) === null || _b === void 0 ? void 0 : _b.push(item);
+            }
+            else {
+                roots.push(item);
+            }
+        }
+        return roots;
     }
     bindEvents() {
-        this.root.addEventListener("click", event => {
+        this.element.addEventListener("click", event => {
             var _a, _b;
             const target = event.target;
             if (target == null) {
@@ -11088,97 +11151,79 @@ class WebFlexCheckTree {
             if (toggle != null) {
                 event.preventDefault();
                 event.stopPropagation();
-                const key = (_a = toggle.getAttribute("data-wf-tree-key")) !== null && _a !== void 0 ? _a : "";
-                const node = this.nodeByKey.get(key);
-                if (node == null) {
-                    return;
+                const id = (_a = toggle.getAttribute("data-wf-tree-id")) !== null && _a !== void 0 ? _a : "";
+                const item = this.findItem(id);
+                if (item != null) {
+                    this.toggleExpanded(item);
                 }
-                this.toggleExpanded(node);
                 return;
             }
             const check = target.closest("[data-wf-tree-check]");
-            if (check == null) {
-                return;
+            if (check != null) {
+                event.preventDefault();
+                event.stopPropagation();
+                const id = (_b = check.getAttribute("data-wf-tree-id")) !== null && _b !== void 0 ? _b : "";
+                const item = this.findItem(id);
+                if (item != null) {
+                    this.toggleItem(item, !this.isItemChecked(item));
+                }
             }
-            event.preventDefault();
-            event.stopPropagation();
-            const key = (_b = check.getAttribute("data-wf-tree-key")) !== null && _b !== void 0 ? _b : "";
-            const node = this.nodeByKey.get(key);
-            if (node == null) {
-                return;
-            }
-            const nextChecked = !this.isNodeChecked(node);
-            this.toggleNode(node, nextChecked);
         });
     }
-    isNodeChecked(node) {
-        if (this.isSelectable(node)) {
-            return this.selectedIds.has(this.getId(node));
-        }
-        const childNodes = this.getDescendantSelectableNodes(node);
-        return childNodes.length > 0
-            && childNodes.every(child => this.selectedIds.has(this.getId(child)));
+    findItem(id) {
+        var _a;
+        return (_a = this.items.find(x => x.id === id)) !== null && _a !== void 0 ? _a : null;
     }
-    toggleExpanded(node) {
-        const id = this.getId(node);
-        if (this.collapsedIds.has(id)) {
-            this.collapsedIds.delete(id);
+    isSelectable(item) {
+        return item.selectable !== false;
+    }
+    isItemChecked(item) {
+        if (this.isSelectable(item)) {
+            return this.selectedIds.has(item.id);
+        }
+        const children = this.getDescendantSelectableItems(item);
+        return children.length > 0 && children.every(x => this.selectedIds.has(x.id));
+    }
+    toggleExpanded(item) {
+        if (this.collapsedIds.has(item.id)) {
+            this.collapsedIds.delete(item.id);
         }
         else {
-            this.collapsedIds.add(id);
+            this.collapsedIds.add(item.id);
         }
         this.render();
     }
-    collapseAllGroups() {
-        const walk = (node) => {
-            var _a;
-            const children = (_a = this.getChildren(node)) !== null && _a !== void 0 ? _a : [];
-            if (children.length > 0) {
-                this.collapsedIds.add(this.getId(node));
-            }
-            for (const child of children) {
-                walk(child);
-            }
-        };
-        for (const root of this.treeNodes) {
-            walk(root);
-        }
-    }
-    toggleNode(node, checked) {
-        if (this.isSelectable(node)) {
-            this.toggleSingleNode(node, checked);
+    toggleItem(item, checked) {
+        if (this.isSelectable(item)) {
+            this.toggleSingleItem(item, checked);
         }
         else if (this.cascadeCheck) {
-            const childNodes = this.getDescendantSelectableNodes(node);
-            for (const child of childNodes) {
-                this.toggleSingleNode(child, checked);
+            for (const child of this.getDescendantSelectableItems(item)) {
+                this.toggleSingleItem(child, checked);
             }
         }
         this.render();
         this.emitSelectionChanged();
     }
-    toggleSingleNode(node, checked) {
-        const id = this.getId(node);
+    toggleSingleItem(item, checked) {
         if (checked) {
-            this.selectedIds.add(id);
+            this.selectedIds.add(item.id);
         }
         else {
-            this.selectedIds.delete(id);
+            this.selectedIds.delete(item.id);
         }
     }
-    createNodeElement(node, depth) {
-        var _a, _b, _c;
-        const id = this.getId(node);
-        const key = this.getKey(node);
-        const children = (_a = this.getChildren(node)) !== null && _a !== void 0 ? _a : [];
+    createItemElement(item, depth) {
+        var _a, _b;
+        const children = (_a = item.children) !== null && _a !== void 0 ? _a : [];
         const hasChildren = children.length > 0;
-        const selectable = this.isSelectable(node);
-        const selected = this.selectedIds.has(id);
-        const isCollapsed = this.collapsedIds.has(id);
-        const childSelectableNodes = this.getDescendantSelectableNodes(node);
-        const selectedChildCount = childSelectableNodes.filter(x => this.selectedIds.has(this.getId(x))).length;
+        const selectable = this.isSelectable(item);
+        const selected = this.selectedIds.has(item.id);
+        const isCollapsed = this.collapsedIds.has(item.id);
+        const childSelectableItems = this.getDescendantSelectableItems(item);
+        const selectedChildCount = childSelectableItems.filter(x => this.selectedIds.has(x.id)).length;
         const hasSelectedChild = selectedChildCount > 0;
-        const allChildSelected = childSelectableNodes.length > 0 && selectedChildCount === childSelectableNodes.length;
+        const allChildSelected = childSelectableItems.length > 0 && selectedChildCount === childSelectableItems.length;
         const wrapper = document.createElement("div");
         wrapper.className = `${this.classPrefix}-node`;
         const row = document.createElement("div");
@@ -11190,12 +11235,12 @@ class WebFlexCheckTree {
             hasChildren ? "has-children" : ""
         ].filter(Boolean).join(" ");
         row.style.paddingLeft = `${depth * 14 + 7}px`;
-        row.title = (_c = (_b = this.getTooltip) === null || _b === void 0 ? void 0 : _b.call(this, node)) !== null && _c !== void 0 ? _c : id;
+        row.title = (_b = item.tooltip) !== null && _b !== void 0 ? _b : item.id;
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = `${this.classPrefix}-toggle ${hasChildren ? "" : "is-placeholder"}`;
         toggle.setAttribute("data-wf-tree-toggle", "true");
-        toggle.setAttribute("data-wf-tree-key", key);
+        toggle.setAttribute("data-wf-tree-id", item.id);
         toggle.setAttribute("aria-label", isCollapsed ? "펼치기" : "접기");
         toggle.setAttribute("aria-expanded", String(!isCollapsed));
         toggle.textContent = hasChildren ? "⌄" : "";
@@ -11204,68 +11249,65 @@ class WebFlexCheckTree {
         check.type = "checkbox";
         check.className = `form-check-input ${this.classPrefix}-check`;
         check.setAttribute("data-wf-tree-check", "true");
-        check.setAttribute("data-wf-tree-key", key);
+        check.setAttribute("data-wf-tree-id", item.id);
         if (selectable) {
             check.checked = selected;
         }
         else {
             check.checked = allChildSelected;
             check.indeterminate = hasSelectedChild && !allChildSelected;
-            check.disabled = childSelectableNodes.length === 0;
+            check.disabled = childSelectableItems.length === 0;
         }
         row.appendChild(check);
         const title = document.createElement("span");
         title.className = `${this.classPrefix}-title`;
-        title.textContent = this.getText(node);
+        title.textContent = item.text;
         row.appendChild(title);
         if (!selectable && this.showCount) {
             const count = document.createElement("span");
             count.className = `${this.classPrefix}-count`;
-            count.textContent = String(childSelectableNodes.length);
+            count.textContent = String(childSelectableItems.length);
             row.appendChild(count);
         }
         wrapper.appendChild(row);
         if (!isCollapsed) {
             for (const child of children) {
-                wrapper.appendChild(this.createNodeElement(child, depth + 1));
+                wrapper.appendChild(this.createItemElement(child, depth + 1));
             }
         }
         return wrapper;
     }
-    getDescendantSelectableNodes(node) {
+    getDescendantSelectableItems(item) {
         const result = [];
         const walk = (target) => {
             var _a;
             if (this.isSelectable(target)) {
                 result.push(target);
             }
-            for (const child of (_a = this.getChildren(target)) !== null && _a !== void 0 ? _a : []) {
+            for (const child of (_a = target.children) !== null && _a !== void 0 ? _a : []) {
                 walk(child);
             }
         };
-        walk(node);
+        walk(item);
         return result;
+    }
+    collapseAll() {
+        const walk = (item) => {
+            var _a, _b;
+            if (((_a = item.children) !== null && _a !== void 0 ? _a : []).length > 0) {
+                this.collapsedIds.add(item.id);
+            }
+            for (const child of (_b = item.children) !== null && _b !== void 0 ? _b : []) {
+                walk(child);
+            }
+        };
+        for (const item of this.treeItems) {
+            walk(item);
+        }
     }
     emitSelectionChanged() {
         var _a;
-        (_a = this.onSelectionChanged) === null || _a === void 0 ? void 0 : _a.call(this, this.getSelectedNodes());
-    }
-    getKey(node) {
-        const id = this.getId(node);
-        const exists = this.keyById.get(id);
-        if (exists != null) {
-            this.nodeByKey.set(exists, node);
-            return exists;
-        }
-        const key = `node_${++this.keySeq}`;
-        this.keyById.set(id, key);
-        this.nodeByKey.set(key, node);
-        return key;
-    }
-    resetKeys() {
-        this.keySeq = 0;
-        this.keyById.clear();
-        this.nodeByKey.clear();
+        (_a = this.onSelectionChanged) === null || _a === void 0 ? void 0 : _a.call(this, this.getSelectedItems());
     }
     resolveElement(selector) {
         if (typeof selector !== "string") {
@@ -11282,378 +11324,109 @@ class WebFlexCheckTree {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/components/webflexTagRegisterPopup.ts"
-/*!**************************************************************!*\
-  !*** ./Scripts/src/ts/components/webflexTagRegisterPopup.ts ***!
-  \**************************************************************/
+/***/ "./Scripts/src/ts/components/webflexPopup.ts"
+/*!***************************************************!*\
+  !*** ./Scripts/src/ts/components/webflexPopup.ts ***!
+  \***************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
-/* harmony export */   WebFlexTagRegisterPopup: () => (/* binding */ WebFlexTagRegisterPopup)
+/* harmony export */   WebFlexPopup: () => (/* binding */ WebFlexPopup)
 /* harmony export */ });
-/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! jquery */ "./node_modules/jquery/dist/jquery.js");
-/* harmony import */ var jquery__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(jquery__WEBPACK_IMPORTED_MODULE_0__);
-/* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../framework/notify */ "./Scripts/src/ts/framework/notify.ts");
-/* harmony import */ var _webflexCheckTree__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./webflexCheckTree */ "./Scripts/src/ts/components/webflexCheckTree.ts");
+/* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../framework/common */ "./Scripts/src/ts/framework/common.ts");
 
-
-
-class WebFlexTagRegisterPopup {
+class WebFlexPopup {
     constructor(options) {
-        var _a, _b;
-        this.tree = null;
-        this.nodes = [];
-        this.treeNodes = [];
-        this.selectedNodes = [];
-        this.$root = jquery__WEBPACK_IMPORTED_MODULE_0___default()(options.selector);
-        this.cascadeCheck = (_a = options.cascadeCheck) !== null && _a !== void 0 ? _a : true;
-        this.saveButtonText = (_b = options.saveButtonText) !== null && _b !== void 0 ? _b : (count => count > 0 ? `태그 등록 (${count})` : "태그 등록");
-        this.onSave = options.onSave;
+        var _a, _b, _c, _d;
+        this.element = this.resolveElement(options.selector);
+        this.openClass = (_a = options.openClass) !== null && _a !== void 0 ? _a : "is-open";
+        this.bodyOpenClass = (_b = options.bodyOpenClass) !== null && _b !== void 0 ? _b : "wf-popup-open";
+        this.closeSelector = (_c = options.closeSelector) !== null && _c !== void 0 ? _c : "[data-popup-close]";
+        this.closeOnEscape = (_d = options.closeOnEscape) !== null && _d !== void 0 ? _d : true;
         this.widthPercent = options.widthPercent;
         this.heightPercent = options.heightPercent;
-        this.initTree();
+        this.onOpen = options.onOpen;
+        this.onClose = options.onClose;
         this.bindEvents();
     }
-    open(options) {
+    open(options = {}) {
         var _a, _b, _c;
-        this.nodes = options.nodes;
-        this.treeNodes = options.treeNodes;
-        this.selectedNodes = [];
-        this.applySize({
-            widthPercent: (_a = options.widthPercent) !== null && _a !== void 0 ? _a : this.widthPercent,
-            heightPercent: (_b = options.heightPercent) !== null && _b !== void 0 ? _b : this.heightPercent
-        });
-        this.$root.find("[data-device-name]").text(options.deviceName);
-        this.$root.attr("aria-hidden", "false");
-        this.$root.addClass("is-open");
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("body").addClass("wf-popup-open");
-        (_c = this.tree) === null || _c === void 0 ? void 0 : _c.setNodes(this.nodes, this.treeNodes);
-        this.renderSelectedTable();
-        this.updateCount();
-        this.refreshIcons();
-        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+        this.applySize((_a = options.widthPercent) !== null && _a !== void 0 ? _a : this.widthPercent, (_b = options.heightPercent) !== null && _b !== void 0 ? _b : this.heightPercent);
+        this.element.classList.add(this.openClass);
+        this.element.setAttribute("aria-hidden", "false");
+        document.body.classList.add(this.bodyOpenClass);
+        (_c = this.onOpen) === null || _c === void 0 ? void 0 : _c.call(this);
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.dispatchLayoutChanged)();
     }
     close() {
-        this.$root.removeClass("is-open");
-        this.$root.attr("aria-hidden", "true");
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("body").removeClass("wf-popup-open");
-        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+        var _a;
+        this.element.classList.remove(this.openClass);
+        this.element.setAttribute("aria-hidden", "true");
+        document.body.classList.remove(this.bodyOpenClass);
+        (_a = this.onClose) === null || _a === void 0 ? void 0 : _a.call(this);
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.dispatchLayoutChanged)();
     }
-    applySize(options) {
-        const root = this.$root.get(0);
-        if (root == null) {
-            return;
-        }
-        const width = this.normalizePercent(options.widthPercent);
-        const height = this.normalizePercent(options.heightPercent);
-        if (width == null) {
-            root.style.removeProperty("--wf-tag-popup-width");
+    toggle() {
+        if (this.isOpen()) {
+            this.close();
         }
         else {
-            root.style.setProperty("--wf-tag-popup-width", `${width}vw`);
-        }
-        if (height == null) {
-            root.style.removeProperty("--wf-tag-popup-height");
-        }
-        else {
-            root.style.setProperty("--wf-tag-popup-height", `${height}vh`);
+            this.open();
         }
     }
-    normalizePercent(value) {
+    isOpen() {
+        return this.element.classList.contains(this.openClass);
+    }
+    applySize(widthPercent, heightPercent) {
+        this.setPercentProperty("--wf-popup-width", "--wf-tag-popup-width", widthPercent, "vw");
+        this.setPercentProperty("--wf-popup-height", "--wf-tag-popup-height", heightPercent, "vh");
+    }
+    setPercentProperty(primary, legacy, value, unit) {
         if (value == null || Number.isNaN(value)) {
-            return null;
-        }
-        if (value < 10) {
-            return 10;
-        }
-        if (value > 100) {
-            return 100;
-        }
-        return value;
-    }
-    initTree() {
-        const treeHost = this.$root.find("[data-tree-host]").get(0);
-        if (treeHost == null) {
+            this.element.style.removeProperty(primary);
+            this.element.style.removeProperty(legacy);
             return;
         }
-        this.tree = new _webflexCheckTree__WEBPACK_IMPORTED_MODULE_2__.WebFlexCheckTree({
-            selector: treeHost,
-            nodes: [],
-            treeNodes: [],
-            cascadeCheck: this.cascadeCheck,
-            classPrefix: "wf-tag-tree",
-            getId: node => node.nodeId,
-            getText: node => node.displayName,
-            getTooltip: node => node.nodeId,
-            getChildren: node => node.children,
-            isSelectable: node => node.nodeClass === "Variable",
-            onSelectionChanged: nodes => {
-                this.syncSelectedNodes(nodes);
-            }
-        });
+        const normalized = Math.min(100, Math.max(10, value));
+        this.element.style.setProperty(primary, `${normalized}${unit}`);
+        this.element.style.setProperty(legacy, `${normalized}${unit}`);
     }
     bindEvents() {
-        this.$root.on("click", "[data-popup-close]", () => {
-            this.close();
-        });
-        this.$root.on("click", "[data-select-all]", () => {
-            var _a, _b;
-            const allSelected = ((_a = this.tree) === null || _a === void 0 ? void 0 : _a.isAllSelected()) === true;
-            (_b = this.tree) === null || _b === void 0 ? void 0 : _b.toggleAll(!allSelected);
-        });
-        this.$root.on("change", "[data-row-check]", event => {
-            var _a;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const checked = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
-            const target = this.selectedNodes.find(x => x.nodeId === nodeId);
-            if (target != null) {
-                target.isChecked = checked;
-            }
-            this.renderSelectedTable();
-        });
-        this.$root.on("change", "[data-check-all]", event => {
-            const checked = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
-            for (const node of this.selectedNodes) {
-                node.isChecked = checked;
-            }
-            this.renderSelectedTable();
-        });
-        this.$root.on("input", "[data-tag-name]", event => {
-            var _a, _b;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const target = this.selectedNodes.find(x => x.nodeId === nodeId);
-            if (target != null) {
-                target.displayName = String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).val()) !== null && _b !== void 0 ? _b : "");
+        this.element.addEventListener("click", event => {
+            const target = event.target;
+            if ((target === null || target === void 0 ? void 0 : target.closest(this.closeSelector)) != null) {
+                this.close();
             }
         });
-        this.$root.on("input", "[data-description]", event => {
-            var _a, _b;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const target = this.selectedNodes.find(x => x.nodeId === nodeId);
-            if (target != null) {
-                target.description = String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).val()) !== null && _b !== void 0 ? _b : "");
-            }
-        });
-        this.$root.on("change", "[data-collect-check]", event => {
-            var _a;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const target = this.selectedNodes.find(x => x.nodeId === nodeId);
-            if (target != null) {
-                target.isCollectEnabled = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
-            }
-        });
-        this.$root.on("change", "[data-enabled-check]", event => {
-            var _a;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const target = this.selectedNodes.find(x => x.nodeId === nodeId);
-            if (target != null) {
-                target.isEnabled = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
-            }
-        });
-        this.$root.on("click", "[data-remove-row]", event => {
-            var _a, _b;
-            const nodeId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).attr("data-node-id")) !== null && _a !== void 0 ? _a : "");
-            const nextIds = this.selectedNodes
-                .filter(x => x.nodeId !== nodeId)
-                .map(x => x.nodeId);
-            (_b = this.tree) === null || _b === void 0 ? void 0 : _b.setSelectedIds(nextIds);
-        });
-        this.$root.on("click", "[data-collect-on]", () => {
-            this.applyCheckedRows(node => node.isCollectEnabled = true);
-        });
-        this.$root.on("click", "[data-collect-off]", () => {
-            this.applyCheckedRows(node => node.isCollectEnabled = false);
-        });
-        this.$root.on("click", "[data-use-on]", () => {
-            this.applyCheckedRows(node => node.isEnabled = true);
-        });
-        this.$root.on("click", "[data-use-off]", () => {
-            this.applyCheckedRows(node => node.isEnabled = false);
-        });
-        this.$root.on("click", "[data-save]", () => {
-            void this.save();
-        });
-    }
-    syncSelectedNodes(nodes) {
-        const oldMap = new Map(this.selectedNodes.map(node => [node.nodeId, node]));
-        this.selectedNodes = nodes.map(node => {
-            const exists = oldMap.get(node.nodeId);
-            if (exists != null) {
-                return exists;
-            }
-            return this.toSelectedNode(node);
-        });
-        this.renderSelectedTable();
-    }
-    renderSelectedTable() {
-        var _a;
-        const $host = this.$root.find("[data-selected-host]");
-        const $empty = this.$root.find("[data-empty-host]");
-        $host.empty();
-        if (this.selectedNodes.length === 0) {
-            $empty.removeClass("d-none");
-        }
-        else {
-            $empty.addClass("d-none");
-        }
-        for (const node of this.selectedNodes) {
-            const nodeId = this.escapeHtml(node.nodeId);
-            $host.append(`
-                <tr>
-                    <td class="wf-check-col">
-                        <input type="checkbox"
-                               class="form-check-input"
-                               data-row-check
-                               data-node-id="${nodeId}"
-                               ${node.isChecked ? "checked" : ""} />
-                    </td>
-                    <td>
-                        <div class="wf-node-origin">
-                            <strong>${this.escapeHtml(node.originalDisplayName)}</strong>
-                            <span>${nodeId}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <input type="text"
-                               class="form-control"
-                               data-tag-name
-                               data-node-id="${nodeId}"
-                               value="${this.escapeHtml(node.displayName)}" />
-                    </td>
-                    <td>${this.createDataTypeBadge(node.dataType)}</td>
-                    <td>
-                        <input type="text"
-                               class="form-control"
-                               data-description
-                               data-node-id="${nodeId}"
-                               value="${this.escapeHtml((_a = node.description) !== null && _a !== void 0 ? _a : "")}"
-                               placeholder="설명 (선택)" />
-                    </td>
-                    <td class="text-center">
-                        <input type="checkbox"
-                               class="form-check-input"
-                               data-collect-check
-                               data-node-id="${nodeId}"
-                               ${node.isCollectEnabled ? "checked" : ""} />
-                    </td>
-                    <td class="text-center">
-                        <input type="checkbox"
-                               class="form-check-input"
-                               data-enabled-check
-                               data-node-id="${nodeId}"
-                               ${node.isEnabled ? "checked" : ""} />
-                    </td>
-                    <td class="text-center">
-                        <button type="button"
-                                class="wf-row-remove"
-                                data-remove-row
-                                data-node-id="${nodeId}">×</button>
-                    </td>
-                </tr>
-            `);
-        }
-        this.updateCount();
-    }
-    updateCount() {
-        var _a, _b;
-        const variableCount = (_b = (_a = this.tree) === null || _a === void 0 ? void 0 : _a.getSelectableNodes().length) !== null && _b !== void 0 ? _b : 0;
-        const selectedCount = this.selectedNodes.length;
-        const checkedCount = this.selectedNodes.filter(x => x.isChecked).length;
-        this.$root.find("[data-selected-count]").text(`${selectedCount}/${variableCount}`);
-        this.$root.find("[data-selected-text]").text(`${checkedCount}/${selectedCount}개 선택`);
-        this.$root.find("[data-loaded-text]").text(`총 ${variableCount.toLocaleString()}개 노드 로드됨`);
-        this.$root.find("[data-loaded-count]")
-            .toggleClass("d-none", variableCount === 0)
-            .text(`${variableCount.toLocaleString()}개 로드됨`);
-        this.$root.find("[data-save-text]").text(this.saveButtonText(selectedCount));
-        this.$root.find("[data-check-all]").prop("checked", selectedCount > 0 && checkedCount === selectedCount);
-    }
-    applyCheckedRows(apply) {
-        const checkedRows = this.selectedNodes.filter(x => x.isChecked);
-        if (checkedRows.length === 0) {
-            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("적용할 행을 선택해 주세요.");
-            return;
-        }
-        for (const node of checkedRows) {
-            apply(node);
-        }
-        this.renderSelectedTable();
-    }
-    async save() {
-        if (this.selectedNodes.length === 0) {
-            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("등록할 노드를 선택해 주세요.");
-            return;
-        }
-        const invalid = this.selectedNodes.find(x => x.displayName.trim().length === 0);
-        if (invalid != null) {
-            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그명을 입력해 주세요.");
-            return;
-        }
-        const nodes = this.selectedNodes.map(x => ({
-            nodeId: x.nodeId,
-            displayName: x.displayName.trim(),
-            nodeClass: x.nodeClass,
-            dataType: x.dataType,
-            description: x.description
-        }));
-        const success = await this.onSave(nodes);
-        if (success) {
-            this.close();
+        if (this.closeOnEscape) {
+            document.addEventListener("keydown", event => {
+                if (event.key === "Escape" && this.isOpen()) {
+                    this.close();
+                }
+            });
         }
     }
-    toSelectedNode(node) {
-        return {
-            nodeId: node.nodeId,
-            displayName: node.displayName,
-            originalDisplayName: node.displayName,
-            nodeClass: node.nodeClass,
-            dataType: node.dataType,
-            description: node.description,
-            isChecked: true,
-            isCollectEnabled: true,
-            isEnabled: true
-        };
-    }
-    createDataTypeBadge(dataType) {
-        const value = String(dataType !== null && dataType !== void 0 ? dataType : "");
-        const lower = value.toLowerCase();
-        let className = "default";
-        if (lower.includes("string")) {
-            className = "string";
+    resolveElement(selector) {
+        if (typeof selector !== "string") {
+            return selector;
         }
-        else if (lower.includes("bool")) {
-            className = "boolean";
+        const element = document.querySelector(selector);
+        if (element == null) {
+            throw new Error(`WebFlexPopup element not found. selector=${selector}`);
         }
-        else if (lower.includes("int") || lower.includes("float") || lower.includes("double") || lower.includes("decimal")) {
-            className = "number";
-        }
-        return `<span class="wf-tag-badge ${className}">${this.escapeHtml(value || "-")}</span>`;
-    }
-    refreshIcons() {
-        const lucide = window.lucide;
-        if ((lucide === null || lucide === void 0 ? void 0 : lucide.createIcons) != null) {
-            lucide.createIcons();
-        }
-    }
-    escapeHtml(value) {
-        return String(value !== null && value !== void 0 ? value : "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+        return element;
     }
 }
 
 
 /***/ },
 
-/***/ "./Scripts/src/ts/framework/common.ts"
-/*!********************************************!*\
-  !*** ./Scripts/src/ts/framework/common.ts ***!
-  \********************************************/
+/***/ "./Scripts/src/ts/framework/api.ts"
+/*!*****************************************!*\
+  !*** ./Scripts/src/ts/framework/api.ts ***!
+  \*****************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -11669,8 +11442,8 @@ const instance = axios__WEBPACK_IMPORTED_MODULE_0__["default"].create({
     }
 });
 instance.interceptors.response.use((response) => response, (error) => {
-    var _a, _b, _c;
-    const message = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.statusText) !== null && _b !== void 0 ? _b : error.message) !== null && _c !== void 0 ? _c : "알 수 없는 오류";
+    var _a, _b, _c, _d, _e, _f;
+    const message = (_f = (_e = (_c = (_b = (_a = error.response) === null || _a === void 0 ? void 0 : _a.data) === null || _b === void 0 ? void 0 : _b.message) !== null && _c !== void 0 ? _c : (_d = error.response) === null || _d === void 0 ? void 0 : _d.statusText) !== null && _e !== void 0 ? _e : error.message) !== null && _f !== void 0 ? _f : "알 수 없는 오류가 발생했습니다.";
     return Promise.reject(new Error(message));
 });
 const api = {
@@ -11691,6 +11464,70 @@ const api = {
         return res.data;
     }
 };
+
+
+/***/ },
+
+/***/ "./Scripts/src/ts/framework/common.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/common.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   api: () => (/* reexport safe */ _api__WEBPACK_IMPORTED_MODULE_0__.api),
+/* harmony export */   debounce: () => (/* binding */ debounce),
+/* harmony export */   dispatchLayoutChanged: () => (/* binding */ dispatchLayoutChanged),
+/* harmony export */   escapeHtml: () => (/* binding */ escapeHtml),
+/* harmony export */   getChecked: () => (/* binding */ getChecked),
+/* harmony export */   getValue: () => (/* binding */ getValue),
+/* harmony export */   setChecked: () => (/* binding */ setChecked),
+/* harmony export */   setValue: () => (/* binding */ setValue),
+/* harmony export */   toBool: () => (/* binding */ toBool),
+/* harmony export */   toNumber: () => (/* binding */ toNumber)
+/* harmony export */ });
+/* harmony import */ var _api__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./api */ "./Scripts/src/ts/framework/api.ts");
+
+function escapeHtml(value) {
+    return String(value !== null && value !== void 0 ? value : "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function toBool(value) {
+    return value === true || value === "true" || value === "Y" || value === "1" || value === 1;
+}
+function toNumber(value, defaultValue = 0) {
+    const result = Number(value);
+    return Number.isNaN(result) ? defaultValue : result;
+}
+function getValue(selector) {
+    var _a;
+    return String((_a = $(selector).val()) !== null && _a !== void 0 ? _a : "").trim();
+}
+function setValue(selector, value) {
+    $(selector).val(value !== null && value !== void 0 ? value : "");
+}
+function getChecked(selector) {
+    return $(selector).prop("checked") === true;
+}
+function setChecked(selector, value) {
+    $(selector).prop("checked", toBool(value));
+}
+function debounce(callback, delay = 250) {
+    let timer;
+    return function (...args) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => callback.apply(this, args), delay);
+    };
+}
+function dispatchLayoutChanged() {
+    window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+}
 
 
 /***/ },
@@ -11834,8 +11671,10 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
 /* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../framework/notify */ "./Scripts/src/ts/framework/notify.ts");
 /* harmony import */ var _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../components/grid/webflexGrid */ "./Scripts/src/ts/components/grid/webflexGrid.ts");
-/* harmony import */ var _components_webflexTagRegisterPopup__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../components/webflexTagRegisterPopup */ "./Scripts/src/ts/components/webflexTagRegisterPopup.ts");
-/* harmony import */ var _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../components/grid/webflexGridFormatters */ "./Scripts/src/ts/components/grid/webflexGridFormatters.ts");
+/* harmony import */ var _components_webflexPopup__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../components/webflexPopup */ "./Scripts/src/ts/components/webflexPopup.ts");
+/* harmony import */ var _components_webflexCheckTree__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../../components/webflexCheckTree */ "./Scripts/src/ts/components/webflexCheckTree.ts");
+/* harmony import */ var _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../../components/grid/webflexGridFormatters */ "./Scripts/src/ts/components/grid/webflexGridFormatters.ts");
+
 
 
 
@@ -11845,15 +11684,19 @@ __webpack_require__.r(__webpack_exports__);
 class Page {
     constructor() {
         this.devices = [];
-        this.nodes = [];
-        this.treeNodes = [];
+        this.rows = [];
         this.selectedDeviceId = "";
         this.selectedTagIds = [];
-        this.tagRows = [];
+        this.browseRows = [];
+        this.treeItems = [];
+        this.selectedTreeItems = [];
         this.connectionCheckSeq = 0;
         this.tagGrid = null;
         this.modalPopup = null;
         this.drawerPopup = null;
+        this.modalTree = null;
+        this.drawerTree = null;
+        this.activePopupType = null;
     }
     init() {
         this.initTagGrid();
@@ -11862,30 +11705,133 @@ class Page {
         void this.loadDevices();
         void this.loadSummary();
     }
-    initPopups() {
-        this.modalPopup = new _components_webflexTagRegisterPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexTagRegisterPopup({
-            selector: "#tagRegisterModal",
-            cascadeCheck: true,
-            widthPercent: 55,
-            heightPercent: 72,
-            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
-            onSave: nodes => this.saveTags(nodes)
+    initTagGrid() {
+        this.tagGrid = _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_3__.WebFlexGrid
+            .create("#gridTag")
+            .height("100%")
+            .pagination(20)
+            .selectableRows(false)
+            .placeholder("등록된 태그가 없습니다.")
+            .columns([
+            {
+                title: `<input type="checkbox" class="wf-tag-check-all" />`,
+                field: "id",
+                width: 48,
+                hozAlign: "center",
+                headerSort: false,
+                formatter: (cell) => {
+                    var _a;
+                    const id = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
+                    const checked = this.selectedTagIds.includes(id) ? "checked" : "";
+                    return `<input type="checkbox" class="wf-tag-check" data-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(id)}" ${checked} />`;
+                }
+            },
+            {
+                title: "태그코드",
+                field: "id",
+                width: 130,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.textFormatter
+            },
+            {
+                title: "태그명",
+                field: "tagName",
+                minWidth: 220,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.textFormatter
+            },
+            {
+                title: "NodeId",
+                field: "nodeId",
+                minWidth: 360,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.textFormatter
+            },
+            {
+                title: "DataType",
+                field: "dataType",
+                width: 120,
+                formatter: (cell) => { var _a; return this.createDataTypeBadge(String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "")); }
+            },
+            {
+                title: "설명",
+                field: "description",
+                minWidth: 220,
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.textFormatter
+            },
+            {
+                title: "수집",
+                field: "isCollectEnabled",
+                width: 80,
+                hozAlign: "center",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.boolFormatter
+            },
+            {
+                title: "DB저장",
+                field: "saveToDatabase",
+                width: 90,
+                hozAlign: "center",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.boolFormatter
+            },
+            {
+                title: "Sampling",
+                field: "samplingIntervalMs",
+                width: 110,
+                hozAlign: "right",
+                formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_6__.numberFormatter
+            }
+        ])
+            .onRowClick(row => {
+            this.toggleTagSelection(row.id);
+        })
+            .build();
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#gridTag").on("change", ".wf-tag-check", event => {
+            var _a;
+            event.stopPropagation();
+            const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).data("id")) !== null && _a !== void 0 ? _a : "");
+            this.toggleTagSelection(id);
         });
-        this.drawerPopup = new _components_webflexTagRegisterPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexTagRegisterPopup({
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#gridTag").on("change", ".wf-tag-check-all", event => {
+            event.stopPropagation();
+            const checked = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
+            this.toggleAllTagSelection(checked);
+        });
+    }
+    initPopups() {
+        this.modalPopup = new _components_webflexPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexPopup({
+            selector: "#tagRegisterModal",
+            widthPercent: 55,
+            heightPercent: 72
+        });
+        this.drawerPopup = new _components_webflexPopup__WEBPACK_IMPORTED_MODULE_4__.WebFlexPopup({
             selector: "#tagRegisterDrawer",
-            cascadeCheck: true,
             widthPercent: 60,
-            heightPercent: 100,
-            saveButtonText: count => count > 0 ? `태그 등록 (${count})` : "태그 등록",
-            onSave: nodes => this.saveTags(nodes)
+            heightPercent: 100
+        });
+        this.modalTree = new _components_webflexCheckTree__WEBPACK_IMPORTED_MODULE_5__.WebFlexCheckTree({
+            selector: "#tagRegisterModal [data-tree-host]",
+            cascadeCheck: true,
+            classPrefix: "wf-tag-tree",
+            onSelectionChanged: items => {
+                if (this.activePopupType === "modal") {
+                    this.syncSelectedTreeItems(items);
+                }
+            }
+        });
+        this.drawerTree = new _components_webflexCheckTree__WEBPACK_IMPORTED_MODULE_5__.WebFlexCheckTree({
+            selector: "#tagRegisterDrawer [data-tree-host]",
+            cascadeCheck: true,
+            classPrefix: "wf-tag-tree",
+            onSelectionChanged: items => {
+                if (this.activePopupType === "drawer") {
+                    this.syncSelectedTreeItems(items);
+                }
+            }
         });
     }
     bindEvents() {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDevice").on("change", () => {
             var _a, _b;
             this.selectedDeviceId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#selDevice").val()) !== null && _a !== void 0 ? _a : "");
-            this.nodes = [];
-            this.treeNodes = [];
+            this.browseRows = [];
+            this.treeItems = [];
             this.selectedTagIds = [];
             void ((_b = this.tagGrid) === null || _b === void 0 ? void 0 : _b.setData([]));
             this.updateTagGridFooter();
@@ -11918,99 +11864,61 @@ class Page {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnDelete").on("click", () => {
             void this.deleteTags();
         });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()(document).on("keydown", event => {
-            if (event.key === "Escape") {
-                jquery__WEBPACK_IMPORTED_MODULE_0___default()(".wf-tag-popup.is-open [data-popup-close]").first().trigger("click");
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-select-all]", () => {
+            const tree = this.getActiveTree();
+            if (tree == null) {
+                return;
             }
+            tree.toggleAll(!tree.isAllSelected());
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("change", "[data-check-all]", event => {
+            const checked = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).prop("checked") === true;
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]`).prop("checked", checked);
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-on]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check]:checked, ${this.getActiveRootSelector()} [data-row-check]:checked`)
+                .each((_, el) => {
+                var _a;
+                const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+            });
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-collect-off]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                var _a;
+                const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-collect-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+            });
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-on]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                var _a;
+                const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", true);
+            });
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-use-off]", () => {
+            jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-row-check]:checked`).each((_, el) => {
+                var _a;
+                const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).data("id")) !== null && _a !== void 0 ? _a : "");
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${this.getActiveRootSelector()} [data-enabled-check][data-id="${this.escapeSelector(id)}"]`).prop("checked", false);
+            });
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-remove-row]", event => {
+            var _a;
+            const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).data("id")) !== null && _a !== void 0 ? _a : "");
+            const tree = this.getActiveTree();
+            if (tree == null) {
+                return;
+            }
+            tree.setSelectedIds(tree.getSelectedIds().filter(x => x !== id));
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#tagRegisterModal, #tagRegisterDrawer").on("click", "[data-save]", () => {
+            void this.saveSelectedTags();
         });
         window.addEventListener("webflex:layoutChanged", () => {
             var _a;
             (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.refreshLayout();
-        });
-    }
-    initTagGrid() {
-        this.tagGrid = new _components_grid_webflexGrid__WEBPACK_IMPORTED_MODULE_3__.WebFlexGrid({
-            selector: "#gridTag",
-            height: "100%",
-            pagination: true,
-            paginationSize: 20,
-            selectableRows: false,
-            placeholder: "등록된 태그가 없습니다.",
-            columns: [
-                {
-                    title: "",
-                    field: "id",
-                    width: 48,
-                    hozAlign: "center",
-                    headerSort: false,
-                    formatter: (cell) => {
-                        var _a;
-                        const id = String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "");
-                        const checked = this.selectedTagIds.includes(id) ? "checked" : "";
-                        return `<input type="checkbox" class="wf-tag-check" data-id="${this.escapeHtml(id)}" ${checked} />`;
-                    }
-                },
-                {
-                    title: "태그코드",
-                    field: "id",
-                    width: 130,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__.textFormatter
-                },
-                {
-                    title: "태그명",
-                    field: "tagName",
-                    minWidth: 220,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__.textFormatter
-                },
-                {
-                    title: "NodeId",
-                    field: "nodeId",
-                    minWidth: 360,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__.textFormatter
-                },
-                {
-                    title: "DataType",
-                    field: "dataType",
-                    width: 120,
-                    formatter: (cell) => { var _a; return this.createDataTypeBadge(String((_a = cell.getValue()) !== null && _a !== void 0 ? _a : "")); }
-                },
-                {
-                    title: "설명",
-                    field: "description",
-                    minWidth: 220,
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__.textFormatter
-                },
-                {
-                    title: "수집",
-                    field: "isCollectEnabled",
-                    width: 80,
-                    hozAlign: "center",
-                    formatter: (cell) => this.createYn(cell.getValue())
-                },
-                {
-                    title: "사용",
-                    field: "saveToDatabase",
-                    width: 80,
-                    hozAlign: "center",
-                    formatter: (cell) => this.createYn(cell.getValue())
-                },
-                {
-                    title: "Sampling",
-                    field: "samplingIntervalMs",
-                    width: 110,
-                    hozAlign: "right",
-                    formatter: _components_grid_webflexGridFormatters__WEBPACK_IMPORTED_MODULE_5__.numberFormatter
-                }
-            ],
-            onRowClick: row => {
-                this.toggleTagSelection(row.id);
-            }
-        });
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#gridTag").on("change", ".wf-tag-check", event => {
-            var _a;
-            event.stopPropagation();
-            const id = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget).data("id")) !== null && _a !== void 0 ? _a : "");
-            this.toggleTagSelection(id);
         });
     }
     async loadDevices() {
@@ -12028,7 +11936,7 @@ class Page {
             $sel.empty();
             $sel.append(`<option value="">디바이스 선택</option>`);
             for (const device of this.devices) {
-                $sel.append(`<option value="${this.escapeHtml(device.id)}">${this.escapeHtml(device.deviceName)} (${this.escapeHtml(device.deviceType)})</option>`);
+                $sel.append(`<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(device.id)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(device.deviceName)} (${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(device.deviceType)})</option>`);
             }
             if (this.devices.length > 0) {
                 this.selectedDeviceId = this.devices[0].id;
@@ -12080,9 +11988,10 @@ class Page {
                 return;
             }
             this.selectedTagIds = [];
-            this.tagRows = result.data;
-            await ((_d = this.tagGrid) === null || _d === void 0 ? void 0 : _d.setData(this.tagRows));
+            this.rows = result.data;
+            await ((_d = this.tagGrid) === null || _d === void 0 ? void 0 : _d.setData(this.rows));
             this.updateTagGridFooter();
+            this.updateTagCheckAllState();
             await this.loadSummary();
         }
         catch (e) {
@@ -12098,24 +12007,28 @@ class Page {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("디바이스를 선택해 주세요.");
             return;
         }
-        if (this.nodes.length === 0) {
+        if (this.browseRows.length === 0) {
             const success = await this.browseNodes();
             if (!success) {
                 return;
             }
         }
+        this.activePopupType = type;
+        this.selectedTreeItems = [];
         const device = this.getSelectedDevice();
-        const options = {
-            deviceName: device == null ? "-" : `${device.deviceName} (${device.deviceType})`,
-            nodes: this.nodes,
-            treeNodes: this.treeNodes
-        };
+        const rootSelector = this.getRootSelector(type);
+        const tree = this.getTree(type);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(rootSelector).find("[data-device-name]").text(device == null ? "-" : `${device.deviceName} (${device.deviceType})`);
+        tree === null || tree === void 0 ? void 0 : tree.setItems(this.treeItems);
+        this.renderSelectedTable(type);
+        this.updatePopupCount(type);
         if (type === "modal") {
-            (_a = this.modalPopup) === null || _a === void 0 ? void 0 : _a.open(options);
+            (_a = this.modalPopup) === null || _a === void 0 ? void 0 : _a.open();
         }
         else {
-            (_b = this.drawerPopup) === null || _b === void 0 ? void 0 : _b.open(options);
+            (_b = this.drawerPopup) === null || _b === void 0 ? void 0 : _b.open();
         }
+        this.refreshIcons();
     }
     async browseNodes() {
         var _a;
@@ -12128,8 +12041,15 @@ class Page {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "노드 조회에 실패했습니다.");
                 return false;
             }
-            this.nodes = result.data;
-            this.treeNodes = this.buildTree(this.nodes);
+            this.browseRows = result.data;
+            this.treeItems = this.browseRows.map(x => ({
+                id: x.nodeId,
+                parentId: x.parentNodeId,
+                text: x.displayName,
+                tooltip: x.nodeId,
+                selectable: x.nodeClass === "Variable",
+                data: x
+            }));
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success("OPC 노드를 조회했습니다.");
             return true;
         }
@@ -12138,31 +12058,141 @@ class Page {
             return false;
         }
     }
-    async saveTags(nodes) {
+    syncSelectedTreeItems(items) {
         var _a, _b;
-        const request = {
-            deviceId: this.selectedDeviceId,
-            nodes
-        };
+        this.selectedTreeItems = items;
+        this.renderSelectedTable((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
+        this.updatePopupCount((_b = this.activePopupType) !== null && _b !== void 0 ? _b : "modal");
+    }
+    renderSelectedTable(type) {
+        var _a, _b, _c, _d, _e;
+        const rootSelector = this.getRootSelector(type);
+        const $host = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-selected-host]`);
+        const $empty = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-empty-host]`);
+        $host.empty();
+        if (this.selectedTreeItems.length === 0) {
+            $empty.removeClass("d-none");
+        }
+        else {
+            $empty.addClass("d-none");
+        }
+        for (const item of this.selectedTreeItems) {
+            const row = (_a = item.data) !== null && _a !== void 0 ? _a : {};
+            const id = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(item.id);
+            const displayName = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_c = (_b = row.displayName) !== null && _b !== void 0 ? _b : item.text) !== null && _c !== void 0 ? _c : item.id);
+            const dataType = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_d = row.dataType) !== null && _d !== void 0 ? _d : "");
+            const description = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_e = row.description) !== null && _e !== void 0 ? _e : "");
+            $host.append(`
+                <tr>
+                    <td class="wf-check-col">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-row-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td>
+                        <div class="wf-node-origin">
+                            <strong>${displayName}</strong>
+                            <span>${id}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <input type="text"
+                               class="form-control"
+                               data-tag-name
+                               data-id="${id}"
+                               value="${displayName}" />
+                    </td>
+                    <td>${this.createDataTypeBadge(dataType)}</td>
+                    <td>
+                        <input type="text"
+                               class="form-control"
+                               data-description
+                               data-id="${id}"
+                               value="${description}"
+                               placeholder="설명 (선택)" />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-collect-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td class="text-center">
+                        <input type="checkbox"
+                               class="form-check-input"
+                               data-enabled-check
+                               data-id="${id}"
+                               checked />
+                    </td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="wf-row-remove"
+                                data-remove-row
+                                data-id="${id}">×</button>
+                    </td>
+                </tr>
+            `);
+        }
+        this.updatePopupCount(type);
+    }
+    async saveSelectedTags() {
+        var _a, _b, _c, _d, _e;
+        const type = (_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal";
+        const rootSelector = this.getRootSelector(type);
+        if (this.selectedTreeItems.length === 0) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("등록할 노드를 선택해 주세요.");
+            return;
+        }
+        const nodes = this.selectedTreeItems.map(item => {
+            var _a, _b, _c;
+            const row = (_a = item.data) !== null && _a !== void 0 ? _a : {};
+            const selectorId = this.escapeSelector(item.id);
+            return {
+                nodeId: item.id,
+                tagName: String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-tag-name][data-id="${selectorId}"]`).val()) !== null && _b !== void 0 ? _b : "").trim(),
+                nodeClass: row.nodeClass,
+                dataType: row.dataType,
+                description: String((_c = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-description][data-id="${selectorId}"]`).val()) !== null && _c !== void 0 ? _c : "").trim(),
+                isCollectEnabled: jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-collect-check][data-id="${selectorId}"]`).prop("checked") === true,
+                saveToDatabase: true,
+                showOnDashboard: false,
+                isEnabled: jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-enabled-check][data-id="${selectorId}"]`).prop("checked") === true
+            };
+        });
+        const invalid = nodes.find(x => x.tagName.length === 0);
+        if (invalid != null) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.warning("태그명을 입력해 주세요.");
+            return;
+        }
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
                 url: "/device/tag/save",
-                data: request
+                data: {
+                    deviceId: this.selectedDeviceId,
+                    nodes
+                }
             });
             if (!result.success) {
-                _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "태그 저장에 실패했습니다.");
-                return false;
+                _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_b = result.message) !== null && _b !== void 0 ? _b : "태그 저장에 실패했습니다.");
+                return;
             }
-            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "태그가 저장되었습니다.");
-            this.nodes = [];
-            this.treeNodes = [];
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success((_c = result.message) !== null && _c !== void 0 ? _c : "태그가 저장되었습니다.");
+            this.browseRows = [];
+            this.treeItems = [];
+            if (type === "modal") {
+                (_d = this.modalPopup) === null || _d === void 0 ? void 0 : _d.close();
+            }
+            else {
+                (_e = this.drawerPopup) === null || _e === void 0 ? void 0 : _e.close();
+            }
             await this.loadTags();
             await this.loadSummary();
-            return true;
         }
         catch (e) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "태그 저장 중 오류가 발생했습니다.");
-            return false;
         }
     }
     async deleteTags() {
@@ -12174,13 +12204,12 @@ class Page {
         if (!confirm(`${this.selectedTagIds.length}개의 태그를 삭제하시겠습니까?`)) {
             return;
         }
-        const request = {
-            ids: this.selectedTagIds
-        };
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
                 url: "/device/tag/delete",
-                data: request
+                data: {
+                    ids: this.selectedTagIds
+                }
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "태그 삭제에 실패했습니다.");
@@ -12195,26 +12224,6 @@ class Page {
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "태그 삭제 중 오류가 발생했습니다.");
         }
     }
-    buildTree(nodes) {
-        var _a, _b;
-        const map = new Map();
-        for (const node of nodes) {
-            map.set(node.nodeId, {
-                ...node,
-                children: []
-            });
-        }
-        const roots = [];
-        for (const node of map.values()) {
-            if (node.parentNodeId && map.has(node.parentNodeId)) {
-                (_b = (_a = map.get(node.parentNodeId)) === null || _a === void 0 ? void 0 : _a.children) === null || _b === void 0 ? void 0 : _b.push(node);
-            }
-            else {
-                roots.push(node);
-            }
-        }
-        return roots;
-    }
     toggleTagSelection(id) {
         var _a;
         if (id.length === 0) {
@@ -12228,6 +12237,56 @@ class Page {
         }
         (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.redraw(true);
         this.updateTagGridFooter();
+        this.updateTagCheckAllState();
+    }
+    toggleAllTagSelection(checked) {
+        var _a;
+        if (checked) {
+            this.selectedTagIds = this.rows
+                .map(x => { var _a; return String((_a = x.id) !== null && _a !== void 0 ? _a : ""); })
+                .filter(x => x.length > 0);
+        }
+        else {
+            this.selectedTagIds = [];
+        }
+        (_a = this.tagGrid) === null || _a === void 0 ? void 0 : _a.redraw(true);
+        this.updateTagGridFooter();
+        this.updateTagCheckAllState();
+    }
+    updateTagCheckAllState() {
+        const $checkAll = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#gridTag .wf-tag-check-all");
+        if ($checkAll.length === 0) {
+            return;
+        }
+        const totalCount = this.rows.length;
+        const selectedCount = this.selectedTagIds.length;
+        $checkAll.prop("checked", totalCount > 0 && selectedCount === totalCount);
+        $checkAll.prop("indeterminate", selectedCount > 0 && selectedCount < totalCount);
+    }
+    updateTagGridFooter() {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridSummary").text(`총 ${this.rows.length.toLocaleString()}건`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridTagCount").text(`${this.rows.length.toLocaleString()}건`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblSelectedTag").text(this.selectedTagIds.length === 0
+            ? "선택 없음"
+            : `${this.selectedTagIds.length.toLocaleString()}개 선택`);
+    }
+    updatePopupCount(type) {
+        var _a;
+        const rootSelector = this.getRootSelector(type);
+        const tree = this.getTree(type);
+        const variableCount = (_a = tree === null || tree === void 0 ? void 0 : tree.getSelectableItems().length) !== null && _a !== void 0 ? _a : 0;
+        const selectedCount = this.selectedTreeItems.length;
+        const checkedCount = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-row-check]:checked`).length;
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-selected-count]`).text(`${selectedCount}/${variableCount}`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-selected-text]`).text(`${checkedCount}/${selectedCount}개 선택`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-loaded-text]`).text(`총 ${variableCount.toLocaleString()}개 노드 로드됨`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-loaded-count]`)
+            .toggleClass("d-none", variableCount === 0)
+            .text(`${variableCount.toLocaleString()}개 로드됨`);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-save-text]`).text(selectedCount > 0 ? `태그 등록 (${selectedCount})` : "태그 등록");
+        const $checkAll = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-check-all]`);
+        $checkAll.prop("checked", selectedCount > 0 && checkedCount === selectedCount);
+        $checkAll.prop("indeterminate", checkedCount > 0 && checkedCount < selectedCount);
     }
     updateSelectedDeviceInfo() {
         const device = this.getSelectedDevice();
@@ -12297,21 +12356,23 @@ class Page {
         $status.find("span:last").text("연결 실패");
         $status.attr("title", message !== null && message !== void 0 ? message : "OPC 서버 연결에 실패했습니다.");
     }
-    updateTagGridFooter() {
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridSummary").text(`총 ${this.tagRows.length.toLocaleString()}건`);
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblGridTagCount").text(`${this.tagRows.length.toLocaleString()}건`);
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblSelectedTag").text(this.selectedTagIds.length === 0
-            ? "선택 없음"
-            : `${this.selectedTagIds.length.toLocaleString()}개 선택`);
-    }
     getSelectedDevice() {
         var _a;
         return (_a = this.devices.find(x => x.id === this.selectedDeviceId)) !== null && _a !== void 0 ? _a : null;
     }
-    createYn(value) {
-        return value
-            ? `<span class="wf-tag-yn">Y</span>`
-            : `<span class="wf-tag-yn off">N</span>`;
+    getRootSelector(type) {
+        return type === "modal" ? "#tagRegisterModal" : "#tagRegisterDrawer";
+    }
+    getActiveRootSelector() {
+        var _a;
+        return this.getRootSelector((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
+    }
+    getTree(type) {
+        return type === "modal" ? this.modalTree : this.drawerTree;
+    }
+    getActiveTree() {
+        var _a;
+        return this.getTree((_a = this.activePopupType) !== null && _a !== void 0 ? _a : "modal");
     }
     createDataTypeBadge(dataType) {
         const value = String(dataType !== null && dataType !== void 0 ? dataType : "");
@@ -12326,15 +12387,16 @@ class Page {
         else if (lower.includes("int") || lower.includes("float") || lower.includes("double") || lower.includes("decimal")) {
             className = "number";
         }
-        return `<span class="wf-tag-badge ${className}">${this.escapeHtml(value || "-")}</span>`;
+        return `<span class="wf-tag-badge ${className}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(value || "-")}</span>`;
     }
-    escapeHtml(value) {
-        return String(value !== null && value !== void 0 ? value : "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+    refreshIcons() {
+        const lucide = window.lucide;
+        if ((lucide === null || lucide === void 0 ? void 0 : lucide.createIcons) != null) {
+            lucide.createIcons();
+        }
+    }
+    escapeSelector(value) {
+        return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
 }
 

@@ -1,25 +1,44 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebFlex.Shared;
+using WebFlex.Shared.Common;
+using WebFlex.Shared.Exceptions;
 using WebFlex.UI.Data;
 using WebFlex.UI.DTO;
 using WebFlex.UI.Services;
-using Npgsql;
-using NpgsqlTypes;
 
 namespace WebFlex.UI.Controllers.Device;
 
 [Route("device/tag/[action]")]
 public class DeviceTagController : Controller {
     private readonly WebFlexDbContext _db;
+    private readonly TsdReadDbContext _tsdDb;
     private readonly OpcBrowseService _opcBrowseService;
 
     public DeviceTagController(
         WebFlexDbContext db,
+        TsdReadDbContext tsdDb,
         OpcBrowseService opcBrowseService,
         IConfiguration configuration) {
         _db = db;
+        _tsdDb = tsdDb;
         _opcBrowseService = opcBrowseService;
+    }
+
+    private IActionResult Success(string message = "처리되었습니다.", object? data = null) {
+        return Json(new {
+            success = true,
+            message,
+            data
+        });
+    }
+
+    private IActionResult ErrorData(string message, object? data = null) {
+        return Json(new {
+            success = false,
+            message,
+            data
+        });
     }
 
     [HttpGet, ActionName("devices")]
@@ -229,7 +248,7 @@ public class DeviceTagController : Controller {
     }
 
     [HttpPost, ActionName("save")]
-    public async Task<IActionResult> Save([FromBody] TestDeviceTagSaveRequest request) {
+    public async Task<IActionResult> Save([FromBody] DeviceTagSaveRequest request) {
         if (string.IsNullOrWhiteSpace(request.DeviceId)) {
             return Json(new {
                 success = false,
@@ -244,81 +263,200 @@ public class DeviceTagController : Controller {
             });
         }
 
-        var device = await _db.Set<OpcDevice>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ID == request.DeviceId);
+        await using var tran = await _db.Database.BeginTransactionAsync();
 
-        if (device == null) {
+        try {
+            var device = await _db.Set<OpcDevice>()
+                .FirstOrDefaultAsync(x => x.ID == request.DeviceId);
+
+            if (device == null) {
+                return Json(new {
+                    success = false,
+                    message = "디바이스를 찾을 수 없습니다."
+                });
+            }
+
+            var group = await GetOrCreateDeviceGroupAsync(device);
+
+            var variableNodes = request.Nodes
+                .Where(x => string.Equals(x.NodeClass, "Variable", StringComparison.OrdinalIgnoreCase))
+                .ToList();
+
+            if (variableNodes.Count == 0) {
+                return Json(new {
+                    success = false,
+                    message = "Variable 노드만 태그로 저장할 수 있습니다."
+                });
+            }
+
+            var now = DateTime.UtcNow;
+            var insertCount = 0;
+            var skipCount = 0;
+
+            var nextTagNo = await CreateNextTagNoAsync();
+            var nextSortOrder = await CreateNextSortOrderAsync(request.DeviceId);
+
+            var currentValues = new List<CurrentValue>();
+
+            foreach (var node in variableNodes) {
+                var exists = await _db.Set<OpcTag>()
+                    .AnyAsync(x => x.DEVICE_ID == request.DeviceId && x.NODE_ID == node.NodeId);
+
+                if (exists) {
+                    skipCount++;
+                    continue;
+                }
+
+                var tagId = $"TAG{nextTagNo++:0000}";
+
+                var tag = new OpcTag {
+                    ID = tagId,
+                    DEVICE_ID = request.DeviceId,
+                    GROUP_ID = group.ID,
+                    NODE_ID = node.NodeId,
+                    TAG_NAME = string.IsNullOrWhiteSpace(node.TagName)
+                        ? node.NodeId
+                        : node.TagName,
+                    DATA_TYPE = node.DataType,
+                    IS_COLLECTENABLED = node.IsCollectEnabled,
+                    SAVE_TO_DATABASE = node.SaveToDatabase,
+                    SHOW_ON_DASHBOARD = node.ShowOnDashboard,
+                    SAMPLINGINTERVALMS = device.SAMPLINGINTERVALMS ?? 1000,
+                    SORT_ORDER = nextSortOrder++,
+                    DESCRIPTION = node.Description,
+                    IsEnabled = node.IsEnabled,
+                    CreatedAt = now,
+                    UpdatedAt = now
+                };
+
+                _db.Set<OpcTag>().Add(tag);
+
+                currentValues.Add(new CurrentValue {
+                    TAG_ID = tagId,
+                    GROUP_ID = group.ID,
+                    STATUS = VaribaleStatusType.Bad,
+                    VALUE = null,
+                    COOKIE_VALUE = null,
+                    UPDATE_COUNT = 0,
+                    SOURCETIMESTAMP = null,
+                    RECEIVEDAT = now,
+                    UPDATEDAT = now
+                });
+
+                insertCount++;
+            }
+
+            await _db.SaveChangesAsync();
+            await tran.CommitAsync();
+
+            if (currentValues.Count > 0) {
+                await InsertCurrentValuesAsync(currentValues);
+            }
+
+            return Json(new {
+                success = true,
+                message = $"저장 완료: 신규 {insertCount}개, 중복 제외 {skipCount}개",
+                data = new {
+                    insertCount,
+                    skipCount,
+                    groupId = group.ID,
+                    groupName = group.GROUP_NAME
+                }
+            });
+        } catch (Exception ex) {
+            await tran.RollbackAsync();
+
             return Json(new {
                 success = false,
-                message = "디바이스를 찾을 수 없습니다."
+                message = ex.InnerException?.Message ?? ex.Message
             });
         }
+    }
 
-        var variableNodes = request.Nodes
-            .Where(x => x.NodeClass == "Variable")
-            .ToList();
+    private async Task<OpcGroup> GetOrCreateDeviceGroupAsync(OpcDevice device) {
+        var group = await _db.Set<OpcGroup>()
+            .FirstOrDefaultAsync(x => x.GROUP_NAME == device.DEVICE_NAME);
 
-        if (variableNodes.Count == 0) {
-            return Json(new {
-                success = false,
-                message = "Variable 노드만 태그로 저장할 수 있습니다."
-            });
+        if (group != null) {
+            return group;
         }
 
         var now = DateTime.UtcNow;
-        var insertCount = 0;
-        var skipCount = 0;
 
-        foreach (var node in variableNodes) {
-            var exists = await _db.Set<OpcTag>()
-                .AnyAsync(x => x.DEVICE_ID == request.DeviceId && x.NODE_ID == node.NodeId);
+        group = new OpcGroup {
+            ID = await CreateGroupIdAsync(),
+            GROUP_NAME = device.DEVICE_NAME,
+            SORT_ORDER = await CreateGroupSortOrderAsync(),
+            DESCRIPTION = $"{device.DEVICE_NAME} 자동 생성 그룹",
+            IsEnabled = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
 
-            if (exists) {
-                skipCount++;
-                continue;
-            }
+        _db.Set<OpcGroup>().Add(group);
 
-            var tagId = await CreateTagIdAsync();
+        return group;
+    }
 
-            var tag = new OpcTag {
-                ID = tagId,
-                DEVICE_ID = request.DeviceId,
-                GROUP_ID = null,
-                NODE_ID = node.NodeId,
-                TAG_NAME = string.IsNullOrWhiteSpace(node.DisplayName)
-                    ? node.NodeId
-                    : node.DisplayName,
-                DATA_TYPE = node.DataType,
-                IS_COLLECTENABLED = true,
-                SAVE_TO_DATABASE = true,
-                SHOW_ON_DASHBOARD = false,
-                SAMPLINGINTERVALMS = device.SAMPLINGINTERVALMS ?? 1000,
-                SORT_ORDER = await CreateSortOrderAsync(request.DeviceId),
-                DESCRIPTION = node.Description,
-                IsEnabled = true,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+    private async Task<string> CreateGroupIdAsync() {
+        var ids = await _db.Set<OpcGroup>()
+            .AsNoTracking()
+            .Select(x => x.ID)
+            .ToListAsync();
 
-            _db.Set<OpcTag>().Add(tag);
-            insertCount++;
+        var max = ids
+            .Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("GRP"))
+            .Select(x => x.Replace("GRP", ""))
+            .Where(x => int.TryParse(x, out _))
+            .Select(int.Parse)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        return $"GRP{max + 1:0000}";
+    }
+
+    private async Task<int> CreateGroupSortOrderAsync() {
+        var values = await _db.Set<OpcGroup>()
+            .AsNoTracking()
+            .Select(x => x.SORT_ORDER)
+            .ToListAsync();
+
+        return (values.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty(0).Max()) + 1;
+    }
+     
+
+    private async Task<int> CreateNextSortOrderAsync(string deviceId) {
+        var values = await _db.Set<OpcTag>()
+            .AsNoTracking()
+            .Where(x => x.DEVICE_ID == deviceId)
+            .Select(x => x.SORT_ORDER)
+            .ToListAsync();
+
+        return (values.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty(0).Max()) + 1;
+    }
+
+    private async Task InsertCurrentValuesAsync(List<CurrentValue> currentValues) {
+        var tagIds = currentValues.Select(x => x.TAG_ID).ToList();
+
+        var existsTagIds = await _tsdDb.Set<CurrentValue>()
+            .Where(x => tagIds.Contains(x.TAG_ID))
+            .Select(x => x.TAG_ID)
+            .ToListAsync();
+
+        var insertRows = currentValues
+            .Where(x => !existsTagIds.Contains(x.TAG_ID))
+            .ToList();
+
+        if (insertRows.Count() == 0) {
+            return;
         }
 
-        await _db.SaveChangesAsync();
-
-        return Json(new {
-            success = true,
-            message = $"저장 완료: 신규 {insertCount}개, 중복 제외 {skipCount}개",
-            data = new {
-                insertCount,
-                skipCount
-            }
-        });
+        _tsdDb.Set<CurrentValue>().AddRange(insertRows);
+        await _tsdDb.SaveChangesAsync();
     }
 
     [HttpPost, ActionName("delete")]
-    public async Task<IActionResult> Delete([FromBody] TestDeviceTagDeleteRequest request) {
+    public async Task<IActionResult> Delete([FromBody] DeviceTagDeleteRequest request) {
         if (request.Ids == null || request.Ids.Count == 0) {
             return Json(new {
                 success = false,
@@ -346,47 +484,49 @@ public class DeviceTagController : Controller {
         });
     }
 
-    private async Task<string> CreateTagIdAsync() {
+    private async Task<int> CreateNextTagNoAsync() {
         var ids = await _db.Set<OpcTag>()
             .AsNoTracking()
             .Select(x => x.ID)
             .ToListAsync();
 
-        var max = ids
-            .Where(x => x.StartsWith("TAG"))
+        return ids
+            .Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("TAG"))
             .Select(x => x.Replace("TAG", ""))
             .Where(x => int.TryParse(x, out _))
             .Select(int.Parse)
             .DefaultIfEmpty(0)
-            .Max();
-
-        return $"TAG{max + 1:0000}";
+            .Max() + 1;
     }
 
     private async Task<int> CreateSortOrderAsync(string deviceId) {
         var max = await _db.Set<OpcTag>()
+            .AsNoTracking()
             .Where(x => x.DEVICE_ID == deviceId)
-            .Select(x => x.SORT_ORDER ?? 0)
-            .DefaultIfEmpty(0)
-            .MaxAsync();
+            .MaxAsync(x => x.SORT_ORDER);
 
-        return max + 1;
+        return (max ?? 0) + 1;
     }
 }
 
-public class TestDeviceTagSaveRequest {
+public class DeviceTagSaveRequest {
     public string DeviceId { get; set; } = "";
-    public List<TestDeviceTagSaveNode> Nodes { get; set; } = new();
+    public List<DeviceTagSaveNode> Nodes { get; set; } = new();
 }
 
-public class TestDeviceTagSaveNode {
+public class DeviceTagSaveNode {
     public string NodeId { get; set; } = "";
-    public string DisplayName { get; set; } = "";
+    public string TagName { get; set; } = "";
     public string NodeClass { get; set; } = "";
-    public string DataType { get; set; } = "";
+    public string? DataType { get; set; }
     public string? Description { get; set; }
+    public bool IsCollectEnabled { get; set; } = true;
+    public bool SaveToDatabase { get; set; } = true;
+    public bool ShowOnDashboard { get; set; }
+    public bool IsEnabled { get; set; } = true;
 }
 
-public class TestDeviceTagDeleteRequest {
+public class DeviceTagDeleteRequest {
     public List<string> Ids { get; set; } = new();
 }
+ 

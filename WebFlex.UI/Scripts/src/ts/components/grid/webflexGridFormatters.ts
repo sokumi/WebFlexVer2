@@ -1,4 +1,5 @@
 ﻿import type { CellComponent } from "tabulator-tables";
+import { escapeHtml } from "../../framework/common";
 
 export function textFormatter(cell: CellComponent): string {
     const value = cell.getValue();
@@ -7,7 +8,7 @@ export function textFormatter(cell: CellComponent): string {
         return "";
     }
 
-    return escapeHtml(String(value));
+    return escapeHtml(value);
 }
 
 export function numberFormatter(cell: CellComponent): string {
@@ -20,10 +21,17 @@ export function numberFormatter(cell: CellComponent): string {
     const numberValue = Number(value);
 
     if (Number.isNaN(numberValue)) {
-        return escapeHtml(String(value));
+        return escapeHtml(value);
     }
 
     return numberValue.toLocaleString();
+}
+
+export function boolFormatter(cell: CellComponent): string {
+    const value = cell.getValue() === true;
+    return value
+        ? `<span class="wf-bool-dot good">Y</span>`
+        : `<span class="wf-bool-dot muted">N</span>`;
 }
 
 export function statusFormatter(cell: CellComponent): string {
@@ -44,7 +52,7 @@ export function dateTimeFormatter(cell: CellComponent): string {
     const date = new Date(String(value));
 
     if (Number.isNaN(date.getTime())) {
-        return escapeHtml(String(value));
+        return escapeHtml(value);
     }
 
     const yyyy = date.getFullYear();
@@ -57,51 +65,31 @@ export function dateTimeFormatter(cell: CellComponent): string {
     return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
 }
 
-export function formatStatus(status: unknown): string {
+export function formatStatus(status: any): string {
     if (status == null || status === "") {
         return "";
     }
 
-    if (typeof status === "number") {
-        if (status === 0) return "Good";
-        if (status === 1) return "Bad";
-        return String(status);
-    }
-
-    const normalized = String(status).toLowerCase();
-
-    if (normalized === "0" || normalized === "good") {
+    if (status === 0 || status === "0" || String(status).toLowerCase() === "good") {
         return "Good";
     }
 
-    if (normalized === "1" || normalized === "bad") {
+    if (status === 1 || status === "1" || String(status).toLowerCase() === "bad") {
         return "Bad";
     }
 
     return String(status);
 }
 
-export function isGoodStatus(status: unknown): boolean {
+export function isGoodStatus(status: any): boolean {
     if (status == null || status === "") {
         return true;
     }
 
-    if (typeof status === "number") {
-        return status === 0;
-    }
-
     const normalized = String(status).toLowerCase();
 
-    return normalized.includes("good") ||
-        normalized === "0" ||
-        normalized === "0x00000000";
-}
-
-export function escapeHtml(value: string): string {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    return normalized === "0" ||
+        normalized === "good" ||
+        normalized === "0x00000000" ||
+        normalized.includes("good");
 }

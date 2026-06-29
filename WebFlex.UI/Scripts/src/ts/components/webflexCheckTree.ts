@@ -1,57 +1,42 @@
-﻿export type WebFlexCheckTreeOptions<TNode> = {
+﻿export type WebFlexTreeItem = {
+    id: string;
+    parentId?: string | null;
+    text: string;
+    tooltip?: string | null;
+    selectable?: boolean;
+    data?: any;
+    children?: WebFlexTreeItem[];
+};
+
+export type WebFlexCheckTreeOptions<TItem extends WebFlexTreeItem = WebFlexTreeItem> = {
     selector: string | HTMLElement;
-
-    nodes: TNode[];
-    treeNodes: TNode[];
-
-    getId: (node: TNode) => string;
-    getText: (node: TNode) => string;
-    getChildren: (node: TNode) => TNode[] | undefined;
-    isSelectable: (node: TNode) => boolean;
-
-    getTooltip?: (node: TNode) => string;
+    items?: TItem[];
+    treeItems?: TItem[];
     cascadeCheck?: boolean;
     showCount?: boolean;
     defaultExpanded?: boolean;
     classPrefix?: string;
-
-    onSelectionChanged?: (selectedNodes: TNode[]) => void;
+    onSelectionChanged?: (items: TItem[]) => void;
 };
 
-export class WebFlexCheckTree<TNode> {
-    readonly root: HTMLElement;
-    readonly getId: (node: TNode) => string;
-    readonly getText: (node: TNode) => string;
-    readonly getChildren: (node: TNode) => TNode[] | undefined;
-    readonly isSelectable: (node: TNode) => boolean;
-    readonly getTooltip?: (node: TNode) => string;
+export class WebFlexCheckTree<TItem extends WebFlexTreeItem = WebFlexTreeItem> {
+    readonly element: HTMLElement;
     readonly cascadeCheck: boolean;
     readonly showCount: boolean;
     readonly defaultExpanded: boolean;
     readonly classPrefix: string;
-    readonly onSelectionChanged?: (selectedNodes: TNode[]) => void;
 
+    onSelectionChanged?: (items: TItem[]) => void;
+
+    items: TItem[] = [];
+    treeItems: TItem[] = [];
+    selectedIds = new Set<string>();
     collapsedIds = new Set<string>();
 
-    nodes: TNode[];
-    treeNodes: TNode[];
-    selectedIds = new Set<string>();
-
-    keySeq = 0;
-    keyById = new Map<string, string>();
-    nodeByKey = new Map<string, TNode>();
-
-     constructor(options: WebFlexCheckTreeOptions<TNode>) {
-        this.root = this.resolveElement(options.selector);
-        this.nodes = options.nodes;
-        this.treeNodes = options.treeNodes;
-
-        this.getId = options.getId;
-        this.getText = options.getText;
-        this.getChildren = options.getChildren;
-        this.isSelectable = options.isSelectable;
-        this.getTooltip = options.getTooltip;
-
+    constructor(options: WebFlexCheckTreeOptions<TItem>) {
+        this.element = this.resolveElement(options.selector);
+        this.items = options.items ?? [];
+        this.treeItems = options.treeItems ?? this.buildTree(this.items);
         this.cascadeCheck = options.cascadeCheck ?? true;
         this.showCount = options.showCount ?? true;
         this.defaultExpanded = options.defaultExpanded ?? true;
@@ -62,70 +47,59 @@ export class WebFlexCheckTree<TNode> {
         this.render();
     }
 
-     setNodes(nodes: TNode[], treeNodes: TNode[]): void {
-        this.nodes = nodes;
-        this.treeNodes = treeNodes;
+    setItems(items: TItem[], treeItems?: TItem[]): void {
+        this.items = items;
+        this.treeItems = treeItems ?? this.buildTree(items);
         this.selectedIds.clear();
         this.collapsedIds.clear();
-        this.resetKeys();
 
         if (!this.defaultExpanded) {
-            this.collapseAllGroups();
+            this.collapseAll();
         }
 
         this.render();
         this.emitSelectionChanged();
     }
 
-     clear(): void {
-        this.nodes = [];
-        this.treeNodes = [];
-        this.selectedIds.clear();
-        this.collapsedIds.clear();
-        this.resetKeys();
-        this.render();
-        this.emitSelectionChanged();
+    clear(): void {
+        this.setItems([]);
     }
 
-     clearSelection(): void {
-        this.selectedIds.clear();
-        this.render();
-        this.emitSelectionChanged();
+    getSelectedIds(): string[] {
+        return Array.from(this.selectedIds);
     }
 
-     setSelectedIds(ids: string[]): void {
+    getSelectedItems(): TItem[] {
+        return this.items.filter(x => this.selectedIds.has(x.id));
+    }
+
+    getSelectableItems(): TItem[] {
+        return this.items.filter(x => this.isSelectable(x));
+    }
+
+    setSelectedIds(ids: string[]): void {
         this.selectedIds = new Set(ids);
         this.render();
         this.emitSelectionChanged();
     }
 
-     getSelectedIds(): string[] {
-        return Array.from(this.selectedIds);
+    clearSelection(): void {
+        this.selectedIds.clear();
+        this.render();
+        this.emitSelectionChanged();
     }
 
-     getSelectedNodes(): TNode[] {
-        return this.nodes.filter(node => this.selectedIds.has(this.getId(node)));
+    isAllSelected(): boolean {
+        const selectable = this.getSelectableItems();
+        return selectable.length > 0 && selectable.every(x => this.selectedIds.has(x.id));
     }
 
-     getSelectableNodes(): TNode[] {
-        return this.nodes.filter(node => this.isSelectable(node));
-    }
-
-     isAllSelected(): boolean {
-        const selectable = this.getSelectableNodes();
-        return selectable.length > 0 && selectable.every(node => this.selectedIds.has(this.getId(node)));
-    }
-
-     toggleAll(checked: boolean): void {
-        const selectable = this.getSelectableNodes();
-
-        for (const node of selectable) {
-            const id = this.getId(node);
-
+    toggleAll(checked: boolean): void {
+        for (const item of this.getSelectableItems()) {
             if (checked) {
-                this.selectedIds.add(id);
+                this.selectedIds.add(item.id);
             } else {
-                this.selectedIds.delete(id);
+                this.selectedIds.delete(item.id);
             }
         }
 
@@ -133,15 +107,15 @@ export class WebFlexCheckTree<TNode> {
         this.emitSelectionChanged();
     }
 
-     render(): void {
-        this.root.innerHTML = "";
+    render(): void {
+        this.element.innerHTML = "";
 
-        if (this.treeNodes.length === 0) {
-            this.root.innerHTML = `
+        if (this.treeItems.length === 0) {
+            this.element.innerHTML = `
                 <div class="wf-tag-empty">
                     <i data-lucide="git-branch"></i>
-                    <strong>조회된 노드가 없습니다.</strong>
-                    <span>디바이스 연결 상태 또는 OPC 노드 조회 결과를 확인하세요.</span>
+                    <strong>조회된 항목이 없습니다.</strong>
+                    <span>데이터를 조회한 뒤 다시 시도하세요.</span>
                 </div>
             `;
             return;
@@ -149,15 +123,37 @@ export class WebFlexCheckTree<TNode> {
 
         const fragment = document.createDocumentFragment();
 
-        for (const node of this.treeNodes) {
-            fragment.appendChild(this.createNodeElement(node, 0));
+        for (const item of this.treeItems) {
+            fragment.appendChild(this.createItemElement(item, 0));
         }
 
-        this.root.appendChild(fragment);
+        this.element.appendChild(fragment);
     }
 
-    bindEvents(): void {
-        this.root.addEventListener("click", event => {
+    buildTree(items: TItem[]): TItem[] {
+        const map = new Map<string, TItem>();
+        const roots: TItem[] = [];
+
+        for (const item of items) {
+            map.set(item.id, {
+                ...item,
+                children: []
+            });
+        }
+
+        for (const item of map.values()) {
+            if (item.parentId && map.has(item.parentId)) {
+                map.get(item.parentId)?.children?.push(item);
+            } else {
+                roots.push(item);
+            }
+        }
+
+        return roots;
+    }
+
+    private bindEvents(): void {
+        this.element.addEventListener("click", event => {
             const target = event.target as HTMLElement | null;
 
             if (target == null) {
@@ -165,93 +161,68 @@ export class WebFlexCheckTree<TNode> {
             }
 
             const toggle = target.closest<HTMLElement>("[data-wf-tree-toggle]");
-
             if (toggle != null) {
                 event.preventDefault();
                 event.stopPropagation();
 
-                const key = toggle.getAttribute("data-wf-tree-key") ?? "";
-                const node = this.nodeByKey.get(key);
+                const id = toggle.getAttribute("data-wf-tree-id") ?? "";
+                const item = this.findItem(id);
 
-                if (node == null) {
-                    return;
+                if (item != null) {
+                    this.toggleExpanded(item);
                 }
 
-                this.toggleExpanded(node);
                 return;
             }
 
             const check = target.closest<HTMLInputElement>("[data-wf-tree-check]");
+            if (check != null) {
+                event.preventDefault();
+                event.stopPropagation();
 
-            if (check == null) {
-                return;
+                const id = check.getAttribute("data-wf-tree-id") ?? "";
+                const item = this.findItem(id);
+
+                if (item != null) {
+                    this.toggleItem(item, !this.isItemChecked(item));
+                }
             }
-
-            event.preventDefault();
-            event.stopPropagation();
-
-            const key = check.getAttribute("data-wf-tree-key") ?? "";
-            const node = this.nodeByKey.get(key);
-
-            if (node == null) {
-                return;
-            }
-
-            const nextChecked = !this.isNodeChecked(node);
-
-            this.toggleNode(node, nextChecked);
         });
     }
 
-    isNodeChecked(node: TNode): boolean {
-        if (this.isSelectable(node)) {
-            return this.selectedIds.has(this.getId(node));
-        }
-
-        const childNodes = this.getDescendantSelectableNodes(node);
-
-        return childNodes.length > 0
-            && childNodes.every(child => this.selectedIds.has(this.getId(child)));
+    private findItem(id: string): TItem | null {
+        return this.items.find(x => x.id === id) ?? null;
     }
 
-    toggleExpanded(node: TNode): void {
-        const id = this.getId(node);
+    private isSelectable(item: TItem): boolean {
+        return item.selectable !== false;
+    }
 
-        if (this.collapsedIds.has(id)) {
-            this.collapsedIds.delete(id);
+    private isItemChecked(item: TItem): boolean {
+        if (this.isSelectable(item)) {
+            return this.selectedIds.has(item.id);
+        }
+
+        const children = this.getDescendantSelectableItems(item);
+        return children.length > 0 && children.every(x => this.selectedIds.has(x.id));
+    }
+
+    private toggleExpanded(item: TItem): void {
+        if (this.collapsedIds.has(item.id)) {
+            this.collapsedIds.delete(item.id);
         } else {
-            this.collapsedIds.add(id);
+            this.collapsedIds.add(item.id);
         }
 
         this.render();
     }
 
-    collapseAllGroups(): void {
-        const walk = (node: TNode): void => {
-            const children = this.getChildren(node) ?? [];
-
-            if (children.length > 0) {
-                this.collapsedIds.add(this.getId(node));
-            }
-
-            for (const child of children) {
-                walk(child);
-            }
-        };
-
-        for (const root of this.treeNodes) {
-            walk(root);
-        }
-    }
-
-    toggleNode(node: TNode, checked: boolean): void {
-        if (this.isSelectable(node)) {
-            this.toggleSingleNode(node, checked);
+    private toggleItem(item: TItem, checked: boolean): void {
+        if (this.isSelectable(item)) {
+            this.toggleSingleItem(item, checked);
         } else if (this.cascadeCheck) {
-            const childNodes = this.getDescendantSelectableNodes(node);
-
-            for (const child of childNodes) {
-                this.toggleSingleNode(child, checked);
+            for (const child of this.getDescendantSelectableItems(item)) {
+                this.toggleSingleItem(child, checked);
             }
         }
 
@@ -259,29 +230,25 @@ export class WebFlexCheckTree<TNode> {
         this.emitSelectionChanged();
     }
 
-    toggleSingleNode(node: TNode, checked: boolean): void {
-        const id = this.getId(node);
-
+    private toggleSingleItem(item: TItem, checked: boolean): void {
         if (checked) {
-            this.selectedIds.add(id);
+            this.selectedIds.add(item.id);
         } else {
-            this.selectedIds.delete(id);
+            this.selectedIds.delete(item.id);
         }
     }
 
-    createNodeElement(node: TNode, depth: number): HTMLElement {
-        const id = this.getId(node);
-        const key = this.getKey(node);
-        const children = this.getChildren(node) ?? [];
+    private createItemElement(item: TItem, depth: number): HTMLElement {
+        const children = item.children ?? [];
         const hasChildren = children.length > 0;
-        const selectable = this.isSelectable(node);
-        const selected = this.selectedIds.has(id);
-        const isCollapsed = this.collapsedIds.has(id);
+        const selectable = this.isSelectable(item);
+        const selected = this.selectedIds.has(item.id);
+        const isCollapsed = this.collapsedIds.has(item.id);
 
-        const childSelectableNodes = this.getDescendantSelectableNodes(node);
-        const selectedChildCount = childSelectableNodes.filter(x => this.selectedIds.has(this.getId(x))).length;
+        const childSelectableItems = this.getDescendantSelectableItems(item);
+        const selectedChildCount = childSelectableItems.filter(x => this.selectedIds.has(x.id)).length;
         const hasSelectedChild = selectedChildCount > 0;
-        const allChildSelected = childSelectableNodes.length > 0 && selectedChildCount === childSelectableNodes.length;
+        const allChildSelected = childSelectableItems.length > 0 && selectedChildCount === childSelectableItems.length;
 
         const wrapper = document.createElement("div");
         wrapper.className = `${this.classPrefix}-node`;
@@ -296,13 +263,13 @@ export class WebFlexCheckTree<TNode> {
         ].filter(Boolean).join(" ");
 
         row.style.paddingLeft = `${depth * 14 + 7}px`;
-        row.title = this.getTooltip?.(node) ?? id;
+        row.title = item.tooltip ?? item.id;
 
         const toggle = document.createElement("button");
         toggle.type = "button";
         toggle.className = `${this.classPrefix}-toggle ${hasChildren ? "" : "is-placeholder"}`;
         toggle.setAttribute("data-wf-tree-toggle", "true");
-        toggle.setAttribute("data-wf-tree-key", key);
+        toggle.setAttribute("data-wf-tree-id", item.id);
         toggle.setAttribute("aria-label", isCollapsed ? "펼치기" : "접기");
         toggle.setAttribute("aria-expanded", String(!isCollapsed));
         toggle.textContent = hasChildren ? "⌄" : "";
@@ -313,27 +280,27 @@ export class WebFlexCheckTree<TNode> {
         check.type = "checkbox";
         check.className = `form-check-input ${this.classPrefix}-check`;
         check.setAttribute("data-wf-tree-check", "true");
-        check.setAttribute("data-wf-tree-key", key);
+        check.setAttribute("data-wf-tree-id", item.id);
 
         if (selectable) {
             check.checked = selected;
         } else {
             check.checked = allChildSelected;
             check.indeterminate = hasSelectedChild && !allChildSelected;
-            check.disabled = childSelectableNodes.length === 0;
+            check.disabled = childSelectableItems.length === 0;
         }
 
         row.appendChild(check);
 
         const title = document.createElement("span");
         title.className = `${this.classPrefix}-title`;
-        title.textContent = this.getText(node);
+        title.textContent = item.text;
         row.appendChild(title);
 
         if (!selectable && this.showCount) {
             const count = document.createElement("span");
             count.className = `${this.classPrefix}-count`;
-            count.textContent = String(childSelectableNodes.length);
+            count.textContent = String(childSelectableItems.length);
             row.appendChild(count);
         }
 
@@ -341,59 +308,52 @@ export class WebFlexCheckTree<TNode> {
 
         if (!isCollapsed) {
             for (const child of children) {
-                wrapper.appendChild(this.createNodeElement(child, depth + 1));
+                wrapper.appendChild(this.createItemElement(child as TItem, depth + 1));
             }
         }
 
         return wrapper;
     }
 
-    getDescendantSelectableNodes(node: TNode): TNode[] {
-        const result: TNode[] = [];
+    private getDescendantSelectableItems(item: TItem): TItem[] {
+        const result: TItem[] = [];
 
-        const walk = (target: TNode): void => {
+        const walk = (target: TItem): void => {
             if (this.isSelectable(target)) {
                 result.push(target);
             }
 
-            for (const child of this.getChildren(target) ?? []) {
-                walk(child);
+            for (const child of target.children ?? []) {
+                walk(child as TItem);
             }
         };
 
-        walk(node);
+        walk(item);
 
         return result;
     }
 
-    emitSelectionChanged(): void {
-        this.onSelectionChanged?.(this.getSelectedNodes());
-    }
+    private collapseAll(): void {
+        const walk = (item: TItem): void => {
+            if ((item.children ?? []).length > 0) {
+                this.collapsedIds.add(item.id);
+            }
 
-    getKey(node: TNode): string {
-        const id = this.getId(node);
-        const exists = this.keyById.get(id);
+            for (const child of item.children ?? []) {
+                walk(child as TItem);
+            }
+        };
 
-        if (exists != null) {
-            this.nodeByKey.set(exists, node);
-            return exists;
+        for (const item of this.treeItems) {
+            walk(item);
         }
-
-        const key = `node_${++this.keySeq}`;
-
-        this.keyById.set(id, key);
-        this.nodeByKey.set(key, node);
-
-        return key;
     }
 
-    resetKeys(): void {
-        this.keySeq = 0;
-        this.keyById.clear();
-        this.nodeByKey.clear();
+    private emitSelectionChanged(): void {
+        this.onSelectionChanged?.(this.getSelectedItems());
     }
 
-    resolveElement(selector: string | HTMLElement): HTMLElement {
+    private resolveElement(selector: string | HTMLElement): HTMLElement {
         if (typeof selector !== "string") {
             return selector;
         }

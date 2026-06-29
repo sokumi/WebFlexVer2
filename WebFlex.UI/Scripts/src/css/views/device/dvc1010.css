@@ -189,3 +189,7 @@
         width: 100%;
     }
 }
+
+.wf-tag-check-all {
+    cursor: pointer;
+}

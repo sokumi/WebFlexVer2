@@ -1,65 +1,50 @@
-﻿import axios, {
-    AxiosError,
-    AxiosInstance,
-    AxiosRequestConfig,
-    AxiosResponse
-} from "axios";
+﻿export { api, type ApiResponse, type RequestOptions } from "./api";
 
-import type { ApiResponse } from "../dtos/apiResponse";
+export type AnyObject = Record<string, any>;
 
-export type PagedResponse<T = unknown> = {
-    currentPage: number;
-    pageSize: number;
-    totalCount: number;
-    list: T[];
-};
+export function escapeHtml(value: any): string {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
 
-export type RequestOptions<TRequest = unknown> = {
-    url: string;
-    data?: TRequest;
-    config?: AxiosRequestConfig;
-};
+export function toBool(value: any): boolean {
+    return value === true || value === "true" || value === "Y" || value === "1" || value === 1;
+}
 
-const instance: AxiosInstance = axios.create({
-    headers: {
-        "Content-Type": "application/json"
-    }
-});
+export function toNumber(value: any, defaultValue = 0): number {
+    const result = Number(value);
+    return Number.isNaN(result) ? defaultValue : result;
+}
 
-instance.interceptors.response.use(
-    (response: AxiosResponse) => response,
-    (error: AxiosError) => {
-        const message =
-            error.response?.statusText
-            ?? error.message
-            ?? "알 수 없는 오류";
+export function getValue(selector: string): string {
+    return String($(selector).val() ?? "").trim();
+}
 
-        return Promise.reject(new Error(message));
-    }
-);
+export function setValue(selector: string, value: any): void {
+    $(selector).val(value ?? "");
+}
 
-export const api = {
-    async get<TResponse = unknown>(options: RequestOptions): Promise<ApiResponse<TResponse>> {
-        const res = await instance.get<ApiResponse<TResponse>>(options.url, options.config);
-        return res.data;
-    },
+export function getChecked(selector: string): boolean {
+    return $(selector).prop("checked") === true;
+}
 
-    async post<TResponse = unknown, TRequest = unknown>(
-        options: RequestOptions<TRequest>
-    ): Promise<ApiResponse<TResponse>> {
-        const res = await instance.post<ApiResponse<TResponse>>(options.url, options.data, options.config);
-        return res.data;
-    },
+export function setChecked(selector: string, value: any): void {
+    $(selector).prop("checked", toBool(value));
+}
 
-    async put<TResponse = unknown, TRequest = unknown>(
-        options: RequestOptions<TRequest>
-    ): Promise<ApiResponse<TResponse>> {
-        const res = await instance.put<ApiResponse<TResponse>>(options.url, options.data, options.config);
-        return res.data;
-    },
+export function debounce<T extends (...args: any[]) => void>(callback: T, delay = 250): T {
+    let timer: number | undefined;
 
-    async delete<TResponse = unknown>(options: RequestOptions): Promise<ApiResponse<TResponse>> {
-        const res = await instance.delete<ApiResponse<TResponse>>(options.url, options.config);
-        return res.data;
-    }
-};
+    return function (this: any, ...args: any[]) {
+        window.clearTimeout(timer);
+        timer = window.setTimeout(() => callback.apply(this, args), delay);
+    } as T;
+}
+
+export function dispatchLayoutChanged(): void {
+    window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+}
