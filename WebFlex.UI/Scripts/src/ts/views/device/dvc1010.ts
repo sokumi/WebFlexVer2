@@ -92,21 +92,15 @@ export default class Page {
                     }
                 },
                 {
-                    title: "태그코드",
+                    title: "아이디",
                     field: "id",
                     width: 130,
                     formatter: textFormatter
                 },
                 {
-                    title: "태그명",
-                    field: "tagName",
+                    title: "설명",
+                    field: "description",
                     minWidth: 220,
-                    formatter: textFormatter
-                },
-                {
-                    title: "NodeId",
-                    field: "nodeId",
-                    minWidth: 360,
                     formatter: textFormatter
                 },
                 {
@@ -120,12 +114,6 @@ export default class Page {
                     field: "protectType",
                     width: 110,
                     formatter: (cell: any) => this.createProtectTypeBadge(String(cell.getValue() ?? "ReadOnly"))
-                },
-                {
-                    title: "설명",
-                    field: "description",
-                    minWidth: 220,
-                    formatter: textFormatter
                 },
                 {
                     title: "수집",
@@ -147,7 +135,19 @@ export default class Page {
                     width: 110,
                     hozAlign: "right",
                     formatter: numberFormatter
-                }
+                },
+                 {
+                    title: "태그명",
+                    field: "tagName",
+                    minWidth: 220,
+                    formatter: textFormatter
+                },
+                {
+                    title: "NodeId",
+                    field: "nodeId",
+                    minWidth: 360,
+                    formatter: textFormatter
+                },
             ])
             .onRowClick(row => {
                 this.openTagDetail(row);
@@ -249,6 +249,27 @@ export default class Page {
 
         $("#btnSaveTagDetail").on("click", () => {
             void this.saveTagDetail();
+        });
+
+        $("#btnTestTagDetail").on("click", () => {
+            void this.runExpressionTest();
+        });
+
+        $("#txtDetailSetting").on("keydown", event => {
+            if (event.key !== "Tab") {
+                return;
+            }
+
+            event.preventDefault();
+
+            const element = event.currentTarget as HTMLTextAreaElement;
+            const start = element.selectionStart;
+            const end = element.selectionEnd;
+            const value = element.value;
+
+            element.value = `${value.substring(0, start)}    ${value.substring(end)}`;
+            element.selectionStart = start + 4;
+            element.selectionEnd = start + 4;
         });
 
         $("#tagRegisterDrawer").on("click", "[data-select-all]", () => {
@@ -398,7 +419,7 @@ export default class Page {
             }
 
             this.selectedTagIds = [];
-            this.rows = result.data;
+            this.rows = (result.data ?? []).map((x: any) => this.normalizeTagRow(x));
 
             await this.tagGrid?.setData(this.rows);
 
@@ -654,24 +675,32 @@ export default class Page {
 
         this.tagGrid?.refreshLayout();
 
-        $("#tagDetailPanel").removeClass("is-hidden");
-        $("#txtDetailId").val(row.id ?? "");
-        $("#txtDetailIdView").val(row.id ?? "");
-        $("#txtDetailDeviceId").val(row.deviceId ?? this.selectedDeviceId);
-        $("#txtDetailGroupId").val(row.groupId ?? "");
-        $("#txtDetailNodeId").val(row.nodeId ?? "");
-        $("#txtDetailTagName").val(row.tagName ?? "");
-        $("#selDetailDataType").val(row.dataType ?? "");
-        $("#selDetailProtectType").val(row.protectType ?? "ReadOnly");
-        $("#numDetailSamplingIntervalMs").val(row.samplingIntervalMs ?? "");
-        $("#numDetailSortOrder").val(row.sortOrder ?? "");
-        $("#txtDetailDescription").val(row.description ?? "");
-        $("#chkDetailCollect").prop("checked", row.isCollectEnabled === true);
-        $("#chkDetailSaveDb").prop("checked", row.saveToDatabase === true);
-        $("#chkDetailDashboard").prop("checked", row.showOnDashboard === true);
-        $("#chkDetailEnabled").prop("checked", row.isEnabled !== false);
+        const tag = this.normalizeTagRow(row);
 
-        $("#lblDetailSubTitle").text(`${row.id ?? ""} / ${row.tagName ?? ""}`);
+        this.selectedTagRow = tag;
+
+        $("#txtDetailId").val(tag.id ?? "");
+        $("#txtDetailIdView").val(tag.id ?? "");
+        $("#txtDetailDeviceId").val(tag.deviceId ?? this.selectedDeviceId);
+        $("#txtDetailGroupId").val(tag.groupId ?? "");
+        $("#txtDetailNodeId").val(tag.nodeId ?? "");
+        $("#txtDetailTagName").val(tag.tagName ?? "");
+
+        this.setSelectValue("#selDetailDataType", String(tag.dataType ?? ""));
+        this.setSelectValue("#selDetailProtectType", this.normalizeProtectType(tag.protectType));
+
+        $("#numDetailSamplingIntervalMs").val(tag.samplingIntervalMs ?? "");
+        $("#numDetailSortOrder").val(tag.sortOrder ?? "");
+        $("#txtDetailDescription").val(tag.description ?? "");
+        $("#txtDetailSetting").val(tag.expressions ?? "");
+        $("#txtDetailTestValue").val("");
+
+        $("#chkDetailCollect").prop("checked", tag.isCollectEnabled === true);
+        $("#chkDetailSaveDb").prop("checked", tag.saveToDatabase === true);
+        $("#chkDetailDashboard").prop("checked", tag.showOnDashboard === true);
+        $("#chkDetailEnabled").prop("checked", tag.isEnabled !== false);
+
+        $("#lblDetailSubTitle").text(`${tag.id ?? ""} / ${tag.tagName ?? ""}`);
 
         this.refreshIcons();
     }
@@ -710,10 +739,11 @@ export default class Page {
                     nodeId: String($("#txtDetailNodeId").val() ?? "").trim(),
                     tagName,
                     dataType: String($("#selDetailDataType").val() ?? "").trim(),
-                    protectType: String($("#selDetailProtectType").val() ?? "ReadOnly"),
+                    protectType: this.normalizeProtectType($("#selDetailProtectType").val()),
                     samplingIntervalMs: Number($("#numDetailSamplingIntervalMs").val() ?? 0),
                     sortOrder: Number($("#numDetailSortOrder").val() ?? 0),
                     description: String($("#txtDetailDescription").val() ?? "").trim(),
+                    expressions: String($("#txtDetailSetting").val() ?? "").trim(),
                     isCollectEnabled: $("#chkDetailCollect").prop("checked") === true,
                     saveToDatabase: $("#chkDetailSaveDb").prop("checked") === true,
                     showOnDashboard: $("#chkDetailDashboard").prop("checked") === true,
@@ -731,6 +761,46 @@ export default class Page {
             await this.loadTags();
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "태그 수정 중 오류가 발생했습니다.");
+        }
+    }
+
+    async runExpressionTest(): Promise<void> {
+        const raw = String($("#txtDetailTestValue").val() ?? "").trim();
+        const expression = String($("#txtDetailSetting").val() ?? "").trim();
+        const dataType = String($("#selDetailDataType").val() ?? "").trim();
+
+        if (expression.length === 0) {
+            notify.warning("계산식을 입력해 주세요.");
+            return;
+        }
+
+        if (raw.length === 0) {
+            notify.warning("테스트 값을 입력해 주세요.");
+            return;
+        }
+
+        try {
+            const result = await api.post({
+                url: "/device/tag/runtest",
+                data: {
+                    dataType,
+                    raw,
+                    expression
+                }
+            });
+
+            if (!result.success) {
+                notify.error(result.message ?? "계산식 테스트에 실패했습니다.");
+                return;
+            }
+
+            const calculatedValue = result.data == null
+                ? ""
+                : String(result.data);
+
+            notify.success(`계산된 값은 '${calculatedValue}' 입니다.`);
+        } catch (e) {
+            notify.error(e instanceof Error ? e.message : "계산식 테스트 중 오류가 발생했습니다.");
         }
     }
 
@@ -957,7 +1027,9 @@ export default class Page {
     }
 
     createProtectTypeBadge(value: string): string {
-        const item = PROTECT_TYPE_OPTIONS.find(x => x.value === value);
+        const normalizedValue = this.normalizeProtectType(value);
+        const item = PROTECT_TYPE_OPTIONS.find(x => x.value === normalizedValue);
+
         return `<span class="wf-tag-badge default">${escapeHtml(item?.text ?? "읽기 전용")}</span>`;
     }
 
@@ -985,6 +1057,145 @@ export default class Page {
         if (lucide?.createIcons != null) {
             lucide.createIcons();
         }
+    }
+
+    normalizeTagRow(row: any): any {
+        return {
+            ...row,
+
+            id: this.readValue(row, "id", "ID", "tagId", "TAG_ID"),
+            deviceId: this.readValue(row, "deviceId", "DEVICE_ID"),
+            groupId: this.readValue(row, "groupId", "GROUP_ID"),
+            nodeId: this.readValue(row, "nodeId", "NODE_ID"),
+
+            tagName: this.readValue(row, "tagName", "TAG_NAME", "displayName") ?? "",
+            displayName: this.readValue(row, "displayName", "tagName", "TAG_NAME") ?? "",
+
+            dataType: this.readValue(row, "dataType", "DATA_TYPE") ?? "",
+            protectType: this.normalizeProtectType(this.readValue(row, "protectType", "PROTECT_TYPE")),
+
+            description: this.readValue(row, "description", "DESCRIPTION") ?? "",
+            expressions: this.readValue(row, "expressions", "expression", "EXPRESSIONS") ?? "",
+
+            isCollectEnabled: this.readBool(row, true, "isCollectEnabled", "IS_COLLECTENABLED"),
+            saveToDatabase: this.readBool(row, true, "saveToDatabase", "SAVE_TO_DATABASE"),
+            showOnDashboard: this.readBool(row, false, "showOnDashboard", "SHOW_ON_DASHBOARD"),
+            isEnabled: this.readBool(row, true, "isEnabled", "IsEnabled"),
+
+            samplingIntervalMs: this.readNumber(row, "samplingIntervalMs", "SAMPLINGINTERVALMS"),
+            sortOrder: this.readNumber(row, "sortOrder", "SORT_ORDER"),
+            queueSize: this.readNumber(row, "queueSize", "QUEUE_SIZE") ?? 1
+        };
+    }
+
+    readValue(row: any, ...names: string[]): any {
+        if (row == null) {
+            return null;
+        }
+
+        for (const name of names) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) {
+                return row[name];
+            }
+        }
+
+        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+
+        for (const key of Object.keys(row)) {
+            if (normalizedNames.includes(this.normalizeFieldName(key))) {
+                return row[key];
+            }
+        }
+
+        return null;
+    }
+
+    readBool(row: any, defaultValue: boolean, ...names: string[]): boolean {
+        const value = this.readValue(row, ...names);
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        if (typeof value === "boolean") {
+            return value;
+        }
+
+        const text = String(value).trim().toLowerCase();
+
+        if (text === "true" || text === "1" || text === "y" || text === "yes") {
+            return true;
+        }
+
+        if (text === "false" || text === "0" || text === "n" || text === "no") {
+            return false;
+        }
+
+        return defaultValue;
+    }
+
+    readNumber(row: any, ...names: string[]): number | null {
+        const value = this.readValue(row, ...names);
+
+        if (value == null || value === "") {
+            return null;
+        }
+
+        const numberValue = Number(value);
+
+        return Number.isFinite(numberValue) ? numberValue : null;
+    }
+
+    normalizeFieldName(value: string): string {
+        return String(value ?? "")
+            .replace(/_/g, "")
+            .replace(/-/g, "")
+            .toLowerCase();
+    }
+
+    setSelectValue(selector: string, value: string): void {
+        const $select = $(selector);
+        const targetValue = String(value ?? "").trim();
+
+        if (targetValue.length === 0) {
+            $select.val("");
+            return;
+        }
+
+        const exists = $select
+            .find("option")
+            .toArray()
+            .some(x => String($(x).val() ?? "") === targetValue);
+
+        if (!exists) {
+            $select.prepend(
+                `<option value="${escapeHtml(targetValue)}">${escapeHtml(targetValue)}</option>`
+            );
+        }
+
+        $select.val(targetValue);
+    }
+
+    normalizeProtectType(value: unknown): string {
+        const text = String(value ?? "").trim();
+
+        if (
+            text === "ReadWrite" ||
+            text === "READ_WRITE" ||
+            text === "읽고 쓰기"
+        ) {
+            return "ReadWrite";
+        }
+
+        if (
+            text === "WriteOnly" ||
+            text === "WRITE_ONLY" ||
+            text === "쓰기 전용"
+        ) {
+            return "WriteOnly";
+        }
+
+        return "ReadOnly";
     }
 
     escapeSelector(value: string): string {

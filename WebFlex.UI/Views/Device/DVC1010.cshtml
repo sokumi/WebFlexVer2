@@ -90,9 +90,6 @@
                 <input id="txtDetailDeviceId" type="hidden" />
                 <input id="txtDetailGroupId" type="hidden" />
                 <input id="numDetailSamplingIntervalMs" type="hidden" />
-                <input id="chkDetailCollect" type="checkbox" class="d-none" />
-                <input id="chkDetailSaveDb" type="checkbox" class="d-none" />
-                <input id="chkDetailEnabled" type="checkbox" class="d-none" />
 
                 <div class="wf-form-row">
                     <label>설명</label>
@@ -191,12 +188,13 @@
                     </div>
                 </div>
 
-                <div class="wf-form-row">
-                    <label>계산식</label>
-                    <textarea id="txtDetailSetting"
-                              class="form-control"
-                              rows="6"
-                              placeholder="계산식"></textarea>
+                <textarea id="txtDetailSetting"
+                          class="form-control wf-code-editor"
+                          rows="8"
+                          spellcheck="false"
+                          autocomplete="off"
+                          autocapitalize="off"
+                          placeholder='계산식'></textarea>
                 </div>
             </div>
 
