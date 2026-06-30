@@ -84,6 +84,7 @@
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Configuration" Version="1.5.378.145" />
     <PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" Version="1.5.378.145" />
     <PackageReference Include="DynamicExpresso.Core" Version="2.19.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>

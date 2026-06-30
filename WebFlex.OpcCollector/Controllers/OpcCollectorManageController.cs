@@ -1,20 +1,22 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebFlex.OpcCollector.Logging;
 using WebFlex.OpcCollector.Services;
 using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/opc-collector-manage")]
 public class OpcCollectorManageController : ControllerBase {
-    private readonly OpcRuntimeManager _runtimeManager; 
+    private readonly OpcRuntimeManager _runtimeManager;
     private readonly ILogger<OpcCollectorManageController> _logger;
 
     public OpcCollectorManageController(
-        OpcRuntimeManager runtimeManager, 
+        OpcRuntimeManager runtimeManager,
         ILogger<OpcCollectorManageController> logger) {
-        _runtimeManager = runtimeManager; 
+        _runtimeManager = runtimeManager;
         _logger = logger;
     }
 
@@ -58,7 +60,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartDeviceSubscription(string deviceId, CancellationToken cancellationToken) {
         await _runtimeManager.StartDeviceSubscriptionAsync(deviceId, cancellationToken);
         return Ok(new { success = true, message = "선택 디바이스 구독 재시작 요청 완료" });
-    } 
+    }
 
     [HttpPost("subscription/stop")]
     public async Task<IActionResult> StopSubscription(CancellationToken cancellationToken) {
@@ -70,7 +72,7 @@ public class OpcCollectorManageController : ControllerBase {
     public async Task<IActionResult> StartSubscription(CancellationToken cancellationToken) {
         await _runtimeManager.StartSubscriptionAsync(cancellationToken);
         return Ok(new { success = true, message = "전체 디바이스 구독 재시작 요청 완료" });
-    } 
+    }
 
     [HttpGet("device-summary")]
     public async Task<IActionResult> DeviceSummary(CancellationToken cancellationToken) {

@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using WebFlex.OpcCollector.Services;
 using WebFlex.Shared.Dtos.Opc;
 
 namespace WebFlex.OpcCollector.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/opc-history")]
 public class OpcHistoryController : ControllerBase {
