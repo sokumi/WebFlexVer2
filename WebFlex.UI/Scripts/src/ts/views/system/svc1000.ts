@@ -1,4 +1,7 @@
-﻿import { notify } from "../../framework/notify";
+﻿import $ from "jquery";
+
+import { api } from "../../framework/common";
+import { notify } from "../../framework/notify";
 
 type ServiceStatusRow = {
     serviceName: string;
@@ -6,6 +9,7 @@ type ServiceStatusRow = {
     status: string;
     exists: boolean;
     exePath: string;
+    error?: string | null;
 };
 
 type ServiceCommandResult = {
@@ -18,11 +22,12 @@ type ServiceCommandResult = {
 type ServiceVisualStatus = "running" | "stopped" | "not-installed" | "error" | "unknown";
 
 export default class Page {
-     isAutoRefresh = true;
-     isLogCollapsed = true;
-     logCount = 0;
+    isAutoRefresh = true;
+    isLogCollapsed = true;
+    logCount = 0;
+    refreshTimerId: number | null = null;
 
-    public init(): void {
+    init(): void {
         $("#btnRefresh").on("click", () => {
             void this.loadStatus(true);
         });
@@ -47,10 +52,6 @@ export default class Page {
             void this.uninstallService();
         });
 
-        $("#btnDeployZip").on("click", () => {
-            void this.deployZip();
-        });
-
         $("#btnToggleLog").on("click", () => {
             this.toggleLog();
         });
@@ -58,27 +59,34 @@ export default class Page {
         this.setLogCollapsed(true);
         void this.loadStatus();
 
-        window.setInterval(() => {
+        this.refreshTimerId = window.setInterval(() => {
             if (this.isAutoRefresh) {
                 void this.loadStatus();
             }
         }, 3000);
+
+        window.addEventListener("beforeunload", () => {
+            if (this.refreshTimerId != null) {
+                window.clearInterval(this.refreshTimerId);
+            }
+        });
     }
 
-     async loadStatus(showToast: boolean = false): Promise<void> {
+    async loadStatus(showToast: boolean = false): Promise<void> {
         try {
-            const response = await fetch("/system/service/status");
-            const text = await response.text();
+            const result = await api.get({
+                url: "/system/service/status"
+            });
 
-            if (!response.ok) {
-                throw new Error(text);
+            if (!result.success || result.data == null) {
+                throw new Error(result.message ?? "서비스 상태 조회에 실패했습니다.");
             }
 
-            const data = JSON.parse(text) as ServiceStatusRow & { error?: string };
+            const data = result.data as ServiceStatusRow;
 
             this.renderStatus(data);
             this.setButtonState(data);
-            this.writeResult(data);
+            this.writeResult(result);
 
             if (showToast) {
                 notify.success("서비스 상태를 조회했습니다.");
@@ -98,7 +106,7 @@ export default class Page {
         }
     }
 
-     renderStatus(data: ServiceStatusRow): void {
+    renderStatus(data: ServiceStatusRow): void {
         const displayName = data.displayName || "WebFlex Collector Service";
         const serviceName = data.serviceName || "WebFlexCollector";
         const exePath = data.exePath || "-";
@@ -108,12 +116,12 @@ export default class Page {
         this.setTextWithFlash("#serviceName", serviceName);
         this.setTextWithFlash("#exePath", exePath);
 
-        // PID/메모리는 이후 기능 추가 예정이라 우선 비워둔다.
         this.setTextWithFlash("#servicePid", "-");
         this.setTextWithFlash("#serviceMemory", "-");
         this.setTextWithFlash("#serviceStartType", "자동");
 
         $("#serviceStatus").text(this.getStatusText(data));
+
         $("#serviceHeroCard")
             .removeClass("is-running is-stopped is-not-installed is-error is-unknown")
             .addClass(`is-${visualStatus}`);
@@ -123,7 +131,7 @@ export default class Page {
             .addClass(`is-${visualStatus}`);
     }
 
-     renderErrorStatus(): void {
+    renderErrorStatus(): void {
         $("#serviceStatus").text("조회 실패");
 
         $("#serviceHeroCard")
@@ -135,26 +143,19 @@ export default class Page {
             .addClass("is-error");
     }
 
-     async post(url: string, successMessage?: string): Promise<void> {
+    async post(url: string, successMessage?: string): Promise<void> {
         try {
-            const response = await fetch(url, {
-                method: "POST"
+            const result = await api.post({
+                url,
+                data: {}
             });
 
-            const text = await response.text();
+            this.writeResult(result);
 
-            if (!response.ok) {
-                throw new Error(text);
-            }
-
-            const data = JSON.parse(text) as ServiceCommandResult;
-
-            this.writeResult(data);
-
-            if (!data.success) {
-                notify.error(data.message ?? "요청 처리에 실패했습니다.");
+            if (!result.success) {
+                notify.error(result.message ?? "요청 처리에 실패했습니다.");
             } else {
-                notify.success(data.message ?? successMessage ?? "요청 처리 완료");
+                notify.success(result.message ?? successMessage ?? "요청 처리 완료");
             }
 
             await this.loadStatus();
@@ -165,95 +166,31 @@ export default class Page {
         }
     }
 
-     async installService(): Promise<void> {
-        const ok = confirm("WebFlex OPC Collector 서비스를 등록할까요?");
-
-        if (!ok) {
+    async installService(): Promise<void> {
+        if (!confirm("WebFlex OPC Collector 서비스를 등록할까요?")) {
             return;
         }
 
         await this.post("/system/service/install", "서비스 등록이 완료되었습니다.");
     }
 
-     async restartService(): Promise<void> {
-        const ok = confirm("WebFlex OPC Collector 서비스를 재시작할까요?");
-
-        if (!ok) {
+    async restartService(): Promise<void> {
+        if (!confirm("WebFlex OPC Collector 서비스를 재시작할까요?")) {
             return;
         }
 
         await this.post("/system/service/restart", "서비스 재시작 요청이 완료되었습니다.");
     }
 
-     async uninstallService(): Promise<void> {
-        const ok = confirm("WebFlex OPC Collector 서비스를 삭제할까요?");
-
-        if (!ok) {
+    async uninstallService(): Promise<void> {
+        if (!confirm("WebFlex OPC Collector 서비스를 삭제할까요?")) {
             return;
         }
 
         await this.post("/system/service/uninstall", "서비스 삭제가 완료되었습니다.");
     }
 
-     async deployZip(): Promise<void> {
-        const input = document.getElementById("collectorZipFile") as HTMLInputElement | null;
-
-        if (!input || !input.files || input.files.length === 0) {
-            notify.warning("업로드할 ZIP 파일을 선택하세요.");
-            return;
-        }
-
-        const file = input.files[0];
-
-        if (!file.name.toLowerCase().endsWith(".zip")) {
-            notify.warning("ZIP 파일만 업로드할 수 있습니다.");
-            return;
-        }
-
-        const ok = confirm("서비스를 중지하고 ZIP 파일을 배포한 뒤 다시 시작할까요?");
-
-        if (!ok) {
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append("file", file);
-
-        try {
-            this.setUploading(true);
-
-            const response = await fetch("/system/service/deploy-zip", {
-                method: "POST",
-                body: formData
-            });
-
-            const text = await response.text();
-
-            if (!response.ok) {
-                throw new Error(text);
-            }
-
-            const data = JSON.parse(text) as ServiceCommandResult;
-
-            this.writeResult(data);
-
-            if (!data.success) {
-                notify.error(data.message ?? "배포에 실패했습니다.");
-            } else {
-                notify.success(data.message ?? "ZIP 배포가 완료되었습니다.");
-            }
-
-            await this.loadStatus();
-        } catch (e) {
-            console.error(e);
-            notify.error("ZIP 배포 중 오류가 발생했습니다.");
-            this.writeError(e);
-        } finally {
-            this.setUploading(false);
-        }
-    }
-
-     setButtonState(data: ServiceStatusRow): void {
+    setButtonState(data: ServiceStatusRow): void {
         const exists = data.exists === true;
         const status = data.status ?? "";
 
@@ -268,21 +205,11 @@ export default class Page {
         $("#btnUninstall").prop("disabled", !exists || isRunning);
     }
 
-     setUploading(isUploading: boolean): void {
-        $("#btnDeployZip").prop("disabled", isUploading);
-
-        if (isUploading) {
-            $("#btnDeployZip").text("배포 중...");
-        } else {
-            $("#btnDeployZip").text("ZIP 업로드 후 배포/재시작");
-        }
-    }
-
-     toggleLog(): void {
+    toggleLog(): void {
         this.setLogCollapsed(!this.isLogCollapsed);
     }
 
-     setLogCollapsed(isCollapsed: boolean): void {
+    setLogCollapsed(isCollapsed: boolean): void {
         this.isLogCollapsed = isCollapsed;
 
         $("#serviceLogCard").toggleClass("is-collapsed", isCollapsed);
@@ -292,13 +219,13 @@ export default class Page {
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     }
 
-     writeResult(data: unknown): void {
+    writeResult(data: unknown): void {
         const text = JSON.stringify(data, null, 2);
         $("#resultBox").text(text);
         this.updateLogCount(text);
     }
 
-     writeError(error: unknown): void {
+    writeError(error: unknown): void {
         const text = error instanceof Error
             ? error.message
             : String(error);
@@ -307,17 +234,15 @@ export default class Page {
         this.updateLogCount(text);
     }
 
-     updateLogCount(text: string): void {
-        if (text.trim().length === 0) {
-            this.logCount = 0;
-        } else {
-            this.logCount = text.split(/\r?\n/).filter(x => x.trim().length > 0).length;
-        }
+    updateLogCount(text: string): void {
+        this.logCount = text.trim().length === 0
+            ? 0
+            : text.split(/\r?\n/).filter(x => x.trim().length > 0).length;
 
         $("#serviceLogCount").text(`${this.logCount.toLocaleString()}개 항목`);
     }
 
-     getVisualStatus(data: ServiceStatusRow): ServiceVisualStatus {
+    getVisualStatus(data: ServiceStatusRow): ServiceVisualStatus {
         if (data.status === "Running") {
             return "running";
         }
@@ -337,7 +262,7 @@ export default class Page {
         return "unknown";
     }
 
-     getStatusText(data: ServiceStatusRow): string {
+    getStatusText(data: ServiceStatusRow): string {
         if (!data.exists || data.status === "NotInstalled") {
             return "미등록";
         }
@@ -357,7 +282,7 @@ export default class Page {
         return data.status || "알 수 없음";
     }
 
-     setTextWithFlash(selector: string, value: unknown): void {
+    setTextWithFlash(selector: string, value: unknown): void {
         const $el = $(selector);
         const newText = value == null || value === "" ? "-" : String(value);
         const oldText = $el.text();
