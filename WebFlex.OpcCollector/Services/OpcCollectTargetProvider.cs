@@ -54,6 +54,8 @@ public class OpcCollectTargetProvider {
                         TagCode = "",
                         NodeId = tag.NODE_ID ?? "",
                         DisplayName = tag.TAG_NAME ?? "",
+                        DataType = tag.DATA_TYPE,
+                        Expressions = tag.EXPRESSIONS,
                         SamplingIntervalMs = tag.SAMPLINGINTERVALMS ?? device.SAMPLINGINTERVALMS ?? 1000,
                         SaveToDatabase = tag.SAVE_TO_DATABASE
                     })

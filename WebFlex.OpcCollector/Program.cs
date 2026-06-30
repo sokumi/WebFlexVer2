@@ -26,6 +26,7 @@ builder.Services.AddDbContextFactory<WebFlexConfigDbContext>(options =>
 builder.Services.AddSingleton<OpcCollectTargetProvider>();
 builder.Services.AddSingleton<OpcClientOptionState>();
 builder.Services.AddSingleton<TimescaleDbWriter>();
+builder.Services.AddSingleton<OpcExpressionEvaluator>();
 builder.Services.AddSingleton<OpcUaSessionFactory>();
 builder.Services.AddSingleton<OpcUaRuntimeService>();
 builder.Services.AddSingleton<OpcRuntimeStatusService>();

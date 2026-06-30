@@ -45,6 +45,10 @@ public class OpcCollectTargetTagDto {
 
     public string DisplayName { get; set; } = "";
 
+    public string? DataType { get; set; }
+
+    public string? Expressions { get; set; }
+
     public int SamplingIntervalMs { get; set; } = 1000;
 
     public int QueueSize { get; set; } = 10;

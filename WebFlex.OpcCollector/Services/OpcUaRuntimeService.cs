@@ -15,6 +15,7 @@ public class OpcUaRuntimeService {
     private readonly OpcUaSessionFactory _sessionFactory;
     private readonly ILogger<OpcUaRuntimeService> _logger;
     private readonly OpcRuntimeStatusService _runtimeStatusService;
+    private readonly OpcExpressionEvaluator _expressionEvaluator;
 
     private readonly OpcClientOptionState _optionState;
 
@@ -27,10 +28,12 @@ public class OpcUaRuntimeService {
     public OpcUaRuntimeService(
         OpcUaSessionFactory sessionFactory,
         OpcRuntimeStatusService runtimeStatusService,
+        OpcExpressionEvaluator expressionEvaluator,
         OpcClientOptionState optionState,
         ILogger<OpcUaRuntimeService> logger) {
         _sessionFactory = sessionFactory;
         _runtimeStatusService = runtimeStatusService;
+        _expressionEvaluator = expressionEvaluator;
         _optionState = optionState;
         _logger = logger;
     }
@@ -384,12 +387,24 @@ public class OpcUaRuntimeService {
     ? VaribaleStatusType.Good
     : VaribaleStatusType.Bad;
 
+            var rawValue = value.Value;
+            var originalValue = rawValue?.ToString();
+
+            var cookieValue = tag == null
+                ? null
+                : _expressionEvaluator.Evaluate(
+                    tag.TagId,
+                    tag.DataType,
+                    tag.Expressions,
+                    rawValue
+                );
+
             var currentValue = new OpcCurrentRuntimeValue {
                 TagId = tag?.TagId ?? "",
                 GroupId = tag?.GroupId,
-                Value = value.Value?.ToString(),
+                Value = originalValue,
                 Status = (VaribaleStatusType)statusType,
-                CookieValue = null,
+                CookieValue = cookieValue,
                 SourceTimestamp = value.SourceTimestamp == DateTime.MinValue
                     ? null
                     : DateTime.SpecifyKind(value.SourceTimestamp, DateTimeKind.Utc),
