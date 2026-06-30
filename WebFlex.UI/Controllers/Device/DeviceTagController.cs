@@ -1,6 +1,7 @@
 using DynamicExpresso;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json.Linq;
 using System.Globalization;
 using System.Text.Json;
 using WebFlex.Shared;
@@ -318,9 +319,9 @@ public class DeviceTagController : WebFlexController {
 
     [HttpPost, ActionName("update")]
     public async Task<IActionResult> Update([FromBody] JsonElement request) {
-        var id = WebFlexModelMapper.GetString(request, "id", "ID");
+        var model = WebFlexModelMapper.PopulateDTOModel<OpcTag>(request);
 
-        if (string.IsNullOrWhiteSpace(id)) {
+        if (string.IsNullOrWhiteSpace(model.ID)) {
             return ErrorData("태그 아이디가 없습니다.");
         }
 
@@ -328,7 +329,7 @@ public class DeviceTagController : WebFlexController {
 
         try {
             var tag = await _db.Set<OpcTag>()
-                .FirstOrDefaultAsync(x => x.ID == id);
+                .FirstOrDefaultAsync(x => x.ID == model.ID);
 
             if (tag == null) {
                 throw new WebFlexMessageException("태그를 찾을 수 없습니다.");
@@ -383,9 +384,11 @@ public class DeviceTagController : WebFlexController {
     [HttpPost, ActionName("runtest")]
     public IActionResult RunTest([FromBody] JsonElement request) {
         try {
-            var expression = WebFlexModelMapper.GetString(request, "expression", "expressions", "EXPRESSIONS");
-            var dataType = WebFlexModelMapper.GetString(request, "dataType", "DATA_TYPE");
-            var raw = WebFlexModelMapper.GetString(request, "raw", "value", "VALUE");
+            var model = WebFlexModelMapper.PopulateDTOModel<DeviceTagRunTestModel>(request);
+
+            var expression = model.EXPRESSIONS;
+            var dataType = model.DATA_TYPE;
+            var raw = model.RAW ?? model.VALUE;
 
             if (string.IsNullOrWhiteSpace(expression)) {
                 return ErrorData("상세설정을 입력해 주세요.");
@@ -413,7 +416,17 @@ public class DeviceTagController : WebFlexController {
     [HttpPost, ActionName("delete")]
     public async Task<IActionResult> Delete([FromBody] JsonElement request) {
         try {
-            var ids = WebFlexModelMapper.GetStringList(request, "ids", "Ids", "ID", "id");
+            var models = WebFlexModelMapper.PopulateDTOModel<List<OpcTag>>(request);
+
+            if (models.Count == 0) {
+                return ErrorData("삭제할 태그를 선택해 주세요.");
+            }
+
+            var ids = models
+                .Select(x => x.ID)
+                .Where(x => !string.IsNullOrWhiteSpace(x))
+                .Distinct()
+                .ToList();
 
             if (ids.Count == 0) {
                 return ErrorData("삭제할 태그를 선택해 주세요.");
@@ -440,6 +453,11 @@ public class DeviceTagController : WebFlexController {
         } catch (Exception ex) {
             return ErrorData(GetErrorMessage(ex));
         }
+    }
+
+    private class DeviceTagRunTestModel : OpcTag {
+        public string? RAW { get; set; }
+        public string? VALUE { get; set; }
     }
 
     private static void NormalizeOpcTag(OpcTag tag) {

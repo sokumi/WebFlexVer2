@@ -815,9 +815,7 @@ export default class Page {
         try {
             const result = await api.post({
                 url: "/device/tag/delete",
-                data: {
-                    ids: this.selectedTagIds
-                }
+                data: this.selectedTagIds.map(id => ({ id }))
             });
 
             if (!result.success) {

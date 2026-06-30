@@ -12404,9 +12404,7 @@ class Page {
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
                 url: "/device/tag/delete",
-                data: {
-                    ids: this.selectedTagIds
-                }
+                data: this.selectedTagIds.map(id => ({ id }))
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "태그 삭제에 실패했습니다.");
