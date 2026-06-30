@@ -79,4 +79,5 @@ public class OpcTag : BaseEntity {
     [Column(Order = 35), Comment("설명")]
     [DisplayName("entity.OpcTag.DESCRIPTION")]
     public string? DESCRIPTION { get; set; }
+
 }

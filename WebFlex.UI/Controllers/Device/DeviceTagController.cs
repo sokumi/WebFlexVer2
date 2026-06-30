@@ -5,13 +5,14 @@ using System.Globalization;
 using System.Text.Json;
 using WebFlex.Shared;
 using WebFlex.Shared.Exceptions;
+using WebFlex.UI.Common;
 using WebFlex.UI.Data;
 using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers.Device;
 
 [Route("device/tag/[action]")]
-public class DeviceTagController : Controller {
+public class DeviceTagController : WebFlexController {
     private readonly WebFlexDbContext _db;
     private readonly TsdReadDbContext _tsdDb;
     private readonly OpcBrowseService _opcBrowseService;
@@ -21,105 +22,100 @@ public class DeviceTagController : Controller {
         WebFlexDbContext db,
         TsdReadDbContext tsdDb,
         OpcBrowseService opcBrowseService,
-        INewNoService newNo,
-        IConfiguration configuration) {
+        INewNoService newNo) {
         _db = db;
         _tsdDb = tsdDb;
         _opcBrowseService = opcBrowseService;
         _newNo = newNo;
     }
 
-    private IActionResult Success(string message = "처리되었습니다.", object? data = null) {
-        return Json(new {
-            success = true,
-            message,
-            data
-        });
-    }
-
-    private IActionResult ErrorData(string message, object? data = null) {
-        return Json(new {
-            success = false,
-            message,
-            data
-        });
-    }
-
     [HttpGet, ActionName("devices")]
     public async Task<IActionResult> DevicesList() {
-        var rows = await _db.Set<OpcDevice>()
-            .AsNoTracking()
-            .OrderBy(x => x.DEVICE_NAME)
-            .Select(x => new {
-                id = x.ID,
-                deviceName = x.DEVICE_NAME,
-                deviceType = x.DEVICE_TYPE,
-                endpointUrl = x.ENDPOINT_URL,
-                isCollectEnabled = x.IS_COLLECTENABLED,
-                tagCount = _db.Set<OpcTag>().Count(t => t.DEVICE_ID == x.ID)
-            })
-            .ToListAsync();
+        try {
+            var rows = await _db.Set<OpcDevice>()
+                .AsNoTracking()
+                .OrderBy(x => x.DEVICE_NAME)
+                .Select(x => new {
+                    id = x.ID,
+                    deviceName = x.DEVICE_NAME,
+                    deviceType = x.DEVICE_TYPE,
+                    endpointUrl = x.ENDPOINT_URL,
+                    isCollectEnabled = x.IS_COLLECTENABLED,
+                    tagCount = _db.Set<OpcTag>().Count(t => t.DEVICE_ID == x.ID)
+                })
+                .ToListAsync();
 
-        return Success("조회되었습니다.", rows);
+            return Success("조회되었습니다.", rows);
+        } catch (Exception ex) {
+            return ErrorData(GetErrorMessage(ex));
+        }
     }
 
     [HttpGet, ActionName("summary")]
     public async Task<IActionResult> Summary(string? deviceId = null) {
-        var deviceQuery = _db.Set<OpcDevice>().AsNoTracking();
-        var tagQuery = _db.Set<OpcTag>().AsNoTracking();
+        try {
+            var deviceQuery = _db.Set<OpcDevice>().AsNoTracking();
+            var tagQuery = _db.Set<OpcTag>().AsNoTracking();
 
-        if (!string.IsNullOrWhiteSpace(deviceId)) {
-            tagQuery = tagQuery.Where(x => x.DEVICE_ID == deviceId);
+            if (!string.IsNullOrWhiteSpace(deviceId)) {
+                tagQuery = tagQuery.Where(x => x.DEVICE_ID == deviceId);
+            }
+
+            var deviceCount = await deviceQuery.CountAsync();
+            var tagCount = await tagQuery.CountAsync();
+            var collectTagCount = await tagQuery.CountAsync(x => x.IS_COLLECTENABLED);
+
+            return Success("조회되었습니다.", new {
+                deviceCount,
+                nodeCount = 0,
+                variableNodeCount = 0,
+                tagCount,
+                collectTagCount
+            });
+        } catch (Exception ex) {
+            return ErrorData(GetErrorMessage(ex));
         }
-
-        var deviceCount = await deviceQuery.CountAsync();
-        var tagCount = await tagQuery.CountAsync();
-        var collectTagCount = await tagQuery.CountAsync(x => x.IS_COLLECTENABLED);
-
-        return Success("조회되었습니다.", new {
-            deviceCount,
-            nodeCount = 0,
-            variableNodeCount = 0,
-            tagCount,
-            collectTagCount
-        });
     }
 
     [HttpGet, ActionName("check-connection")]
     public async Task<IActionResult> CheckConnection(
         string deviceId,
         CancellationToken cancellationToken = default) {
-        if (string.IsNullOrWhiteSpace(deviceId)) {
-            return ErrorData("디바이스를 선택해 주세요.");
-        }
-
-        var device = await _db.Set<OpcDevice>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
-
-        if (device == null) {
-            return ErrorData("디바이스를 찾을 수 없습니다.");
-        }
-
-        if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
-            return Success("Endpoint URL이 없습니다.", new {
-                connected = false,
-                errorMessage = "Endpoint URL이 없습니다."
-            });
-        }
-
         try {
-            await _opcBrowseService.CheckConnectionAsync(device, cancellationToken);
+            if (string.IsNullOrWhiteSpace(deviceId)) {
+                return ErrorData("디바이스를 선택해 주세요.");
+            }
 
-            return Success("연결되었습니다.", new {
-                connected = true,
-                errorMessage = ""
-            });
+            var device = await _db.Set<OpcDevice>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
+
+            if (device == null) {
+                return ErrorData("디바이스를 찾을 수 없습니다.");
+            }
+
+            if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
+                return Success("Endpoint URL이 없습니다.", new {
+                    connected = false,
+                    errorMessage = "Endpoint URL이 없습니다."
+                });
+            }
+
+            try {
+                await _opcBrowseService.CheckConnectionAsync(device, cancellationToken);
+
+                return Success("연결되었습니다.", new {
+                    connected = true,
+                    errorMessage = ""
+                });
+            } catch (Exception ex) {
+                return Success("연결 실패", new {
+                    connected = false,
+                    errorMessage = ex.Message
+                });
+            }
         } catch (Exception ex) {
-            return Success("연결 실패", new {
-                connected = false,
-                errorMessage = ex.Message
-            });
+            return ErrorData(GetErrorMessage(ex));
         }
     }
 
@@ -128,23 +124,23 @@ public class DeviceTagController : Controller {
         string deviceId,
         bool onlyCollectable = true,
         CancellationToken cancellationToken = default) {
-        if (string.IsNullOrWhiteSpace(deviceId)) {
-            return ErrorData("디바이스를 선택해 주세요.");
-        }
-
-        var device = await _db.Set<OpcDevice>()
-            .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
-
-        if (device == null) {
-            return ErrorData("디바이스를 찾을 수 없습니다.");
-        }
-
-        if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
-            return ErrorData("Endpoint URL이 없습니다.");
-        }
-
         try {
+            if (string.IsNullOrWhiteSpace(deviceId)) {
+                return ErrorData("디바이스를 선택해 주세요.");
+            }
+
+            var device = await _db.Set<OpcDevice>()
+                .AsNoTracking()
+                .FirstOrDefaultAsync(x => x.ID == deviceId, cancellationToken);
+
+            if (device == null) {
+                return ErrorData("디바이스를 찾을 수 없습니다.");
+            }
+
+            if (string.IsNullOrWhiteSpace(device.ENDPOINT_URL)) {
+                return ErrorData("Endpoint URL이 없습니다.");
+            }
+
             var nodes = await _opcBrowseService.BrowseAsync(
                 device,
                 onlyCollectable,
@@ -153,53 +149,87 @@ public class DeviceTagController : Controller {
 
             return Success("OPC 노드를 조회했습니다.", nodes);
         } catch (Exception ex) {
-            return ErrorData($"OPC 노드 조회 중 오류가 발생했습니다. {ex.Message}");
+            return ErrorData($"OPC 노드 조회 중 오류가 발생했습니다. {GetErrorMessage(ex)}");
         }
     }
 
     [HttpGet, ActionName("list")]
     public async Task<IActionResult> List(string deviceId, string? keyword = null, bool onlyCollect = false) {
-        if (string.IsNullOrWhiteSpace(deviceId)) {
-            return ErrorData("디바이스를 선택해 주세요.");
+        try {
+            if (string.IsNullOrWhiteSpace(deviceId)) {
+                return ErrorData("디바이스를 선택해 주세요.");
+            }
+
+            var query = _db.Set<OpcTag>()
+                .AsNoTracking()
+                .Where(x => x.DEVICE_ID == deviceId);
+
+            if (!string.IsNullOrWhiteSpace(keyword)) {
+                query = query.Where(x =>
+                    x.ID.Contains(keyword) ||
+                    x.NODE_ID.Contains(keyword) ||
+                    (x.TAG_NAME != null && x.TAG_NAME.Contains(keyword)) ||
+                    (x.DESCRIPTION != null && x.DESCRIPTION.Contains(keyword)) ||
+                    (x.EXPRESSIONS != null && x.EXPRESSIONS.Contains(keyword))
+                );
+            }
+
+            if (onlyCollect) {
+                query = query.Where(x => x.IS_COLLECTENABLED);
+            }
+
+            var rows = await query
+                .OrderBy(x => x.SORT_ORDER)
+                .ThenBy(x => x.TAG_NAME)
+                .Select(x => new {
+                    id = x.ID,
+                    deviceId = x.DEVICE_ID,
+                    nodeId = x.NODE_ID,
+                    groupId = x.GROUP_ID,
+                    tagName = x.TAG_NAME,
+                    dataType = x.DATA_TYPE,
+                    protectType = x.PROTECT_TYPE,
+                    isCollectEnabled = x.IS_COLLECTENABLED,
+                    saveToDatabase = x.SAVE_TO_DATABASE,
+                    showOnDashboard = x.SHOW_ON_DASHBOARD,
+                    samplingIntervalMs = x.SAMPLINGINTERVALMS,
+                    sortOrder = x.SORT_ORDER,
+                    description = x.DESCRIPTION,
+                    expressions = x.EXPRESSIONS,
+                    isEnabled = x.IsEnabled
+                })
+                .ToListAsync();
+
+            return Success("조회되었습니다.", rows);
+        } catch (Exception ex) {
+            return ErrorData(GetErrorMessage(ex));
         }
-
-        var query = _db.Set<OpcTag>()
-            .AsNoTracking()
-            .Where(x => x.DEVICE_ID == deviceId);
-
-        if (!string.IsNullOrWhiteSpace(keyword)) {
-            query = query.Where(x =>
-                x.ID.Contains(keyword) ||
-                x.NODE_ID.Contains(keyword) ||
-                (x.TAG_NAME != null && x.TAG_NAME.Contains(keyword)) ||
-                (x.DESCRIPTION != null && x.DESCRIPTION.Contains(keyword))
-            );
-        }
-
-        if (onlyCollect) {
-            query = query.Where(x => x.IS_COLLECTENABLED);
-        }
-
-        var rows = await query
-            .OrderBy(x => x.SORT_ORDER)
-            .ThenBy(x => x.TAG_NAME)
-            .ToListAsync();
-
-        return Success("조회되었습니다.", rows);
     }
 
     [HttpPost, ActionName("save")]
-    public async Task<IActionResult> Save([FromBody] JsonElement request) {
-        var deviceId = GetString(request, "deviceId", "DEVICE_ID");
+    public async Task<IActionResult> Save([FromBody] JsonElement values) {
+        // 배열(JsonElement) -> List<OpcTag> 바로 맵핑
+        var models = WebFlexModelMapper.PopulateDTOModel<List<OpcTag>>(values);
+
+        if (models.Count == 0) {
+            return ErrorData("저장할 노드를 선택해 주세요.");
+        }
+
+        var nodeItems = models
+            .Where(x => !string.IsNullOrWhiteSpace(x.NODE_ID))
+            .ToList();
+
+        if (nodeItems.Count == 0) {
+            return ErrorData("저장할 수 있는 노드가 없습니다.");
+        }
+
+        // nodes 배열의 각 항목에 deviceId가 포함되어 있어야 함 (모든 항목 동일한 디바이스 기준)
+        var deviceId = nodeItems
+            .Select(x => x.DEVICE_ID)
+            .FirstOrDefault(x => !string.IsNullOrWhiteSpace(x));
 
         if (string.IsNullOrWhiteSpace(deviceId)) {
             return ErrorData("디바이스를 선택해 주세요.");
-        }
-
-        if (!TryGetProperty(request, out var nodesElement, "nodes", "Nodes") ||
-            nodesElement.ValueKind != JsonValueKind.Array ||
-            nodesElement.GetArrayLength() == 0) {
-            return ErrorData("저장할 노드를 선택해 주세요.");
         }
 
         await using var tran = await _db.Database.BeginTransactionAsync();
@@ -209,19 +239,10 @@ public class DeviceTagController : Controller {
                 .FirstOrDefaultAsync(x => x.ID == deviceId);
 
             if (device == null) {
-                return ErrorData("디바이스를 찾을 수 없습니다.");
+                throw new WebFlexMessageException("디바이스를 찾을 수 없습니다.");
             }
 
             var group = await GetOrCreateDeviceGroupAsync(device);
-
-            var nodeItems = nodesElement
-                .EnumerateArray()
-                .Where(x => string.Equals(GetString(x, "nodeClass", "NODE_CLASS"), "Variable", StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (nodeItems.Count == 0) {
-                return ErrorData("Variable 노드만 태그로 저장할 수 있습니다.");
-            }
 
             var now = DateTime.UtcNow;
             var insertCount = 0;
@@ -233,32 +254,26 @@ public class DeviceTagController : Controller {
 
             var currentValues = new List<CurrentValue>();
 
-            foreach (var nodeItem in nodeItems) {
-                var nodeId = GetString(nodeItem, "nodeId", "NODE_ID");
-
-                if (string.IsNullOrWhiteSpace(nodeId)) {
-                    skipCount++;
-                    continue;
-                }
-
+            foreach (var tag in nodeItems) {
                 var exists = await _db.Set<OpcTag>()
-                    .AnyAsync(x => x.DEVICE_ID == deviceId && x.NODE_ID == nodeId);
+                    .AnyAsync(x => x.DEVICE_ID == deviceId && x.NODE_ID == tag.NODE_ID);
 
                 if (exists) {
                     skipCount++;
                     continue;
                 }
 
-                var tag = CreateOpcTagFromJson(nodeItem);
-
                 tag.ID = tagIds[tagIdIndex++];
                 tag.DEVICE_ID = deviceId;
                 tag.GROUP_ID = group.ID;
-                tag.NODE_ID = nodeId;
-                tag.TAG_NAME = string.IsNullOrWhiteSpace(tag.TAG_NAME) ? nodeId : tag.TAG_NAME;
+                tag.TAG_NAME = string.IsNullOrWhiteSpace(tag.TAG_NAME) ? tag.NODE_ID : tag.TAG_NAME;
                 tag.PROTECT_TYPE = NormalizeProtectType(tag.PROTECT_TYPE);
+                tag.IS_COLLECTENABLED = true;
+                tag.SAVE_TO_DATABASE = true;
+                tag.SHOW_ON_DASHBOARD = false;
                 tag.SAMPLINGINTERVALMS = device.SAMPLINGINTERVALMS ?? 1000;
                 tag.SORT_ORDER = nextSortOrder++;
+                tag.IsEnabled = true;
                 tag.CreatedAt = now;
                 tag.UpdatedAt = now;
 
@@ -292,15 +307,18 @@ public class DeviceTagController : Controller {
                 groupId = group.ID,
                 groupName = group.GROUP_NAME
             });
+        } catch (WebFlexMessageException ex) {
+            await tran.RollbackAsync();
+            return ErrorData(ex.Message);
         } catch (Exception ex) {
             await tran.RollbackAsync();
-            return ErrorData(ex.InnerException?.Message ?? ex.Message);
+            return ErrorData(GetErrorMessage(ex));
         }
     }
 
     [HttpPost, ActionName("update")]
     public async Task<IActionResult> Update([FromBody] JsonElement request) {
-        var id = GetString(request, "id", "ID");
+        var id = WebFlexModelMapper.GetString(request, "id", "ID");
 
         if (string.IsNullOrWhiteSpace(id)) {
             return ErrorData("태그 아이디가 없습니다.");
@@ -316,21 +334,25 @@ public class DeviceTagController : Controller {
                 throw new WebFlexMessageException("태그를 찾을 수 없습니다.");
             }
 
-            ApplyOpcTagFromJson(tag, request);
+            var originalId = tag.ID;
+            var originalDeviceId = tag.DEVICE_ID;
+
+            WebFlexModelMapper.ApplyModel(tag, request, NormalizeOpcTag);
+
+            tag.ID = originalId;
+
+            if (string.IsNullOrWhiteSpace(tag.DEVICE_ID)) {
+                tag.DEVICE_ID = originalDeviceId;
+            }
 
             if (string.IsNullOrWhiteSpace(tag.TAG_NAME)) {
                 throw new WebFlexMessageException("태그명을 입력해 주세요.");
-            }
-
-            if (string.IsNullOrWhiteSpace(tag.DEVICE_ID)) {
-                tag.DEVICE_ID = GetString(request, "deviceId", "DEVICE_ID");
             }
 
             if (string.IsNullOrWhiteSpace(tag.NODE_ID)) {
                 throw new WebFlexMessageException("NodeId를 입력해 주세요.");
             }
 
-            tag.PROTECT_TYPE = NormalizeProtectType(tag.PROTECT_TYPE);
             tag.SAMPLINGINTERVALMS = tag.SAMPLINGINTERVALMS <= 0 ? null : tag.SAMPLINGINTERVALMS;
             tag.SORT_ORDER = tag.SORT_ORDER <= 0 ? null : tag.SORT_ORDER;
             tag.UpdatedAt = DateTime.UtcNow;
@@ -338,11 +360,13 @@ public class DeviceTagController : Controller {
             await _db.SaveChangesAsync();
             await tran.CommitAsync();
 
+            var updatedAt = DateTime.UtcNow;
+
             await _tsdDb.Set<CurrentValue>()
                 .Where(x => x.TAG_ID == tag.ID)
                 .ExecuteUpdateAsync(x => x
                     .SetProperty(v => v.GROUP_ID, tag.GROUP_ID)
-                    .SetProperty(v => v.UPDATEDAT, DateTime.UtcNow)
+                    .SetProperty(v => v.UPDATEDAT, updatedAt)
                 );
 
             return Success("태그 정보가 수정되었습니다.");
@@ -351,25 +375,24 @@ public class DeviceTagController : Controller {
             return ErrorData(ex.Message);
         } catch (Exception ex) {
             await tran.RollbackAsync();
-            return ErrorData(ex.InnerException?.Message ?? ex.Message);
+            return ErrorData(GetErrorMessage(ex));
         }
     }
 
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost, ActionName("runtest")]
     public IActionResult RunTest([FromBody] JsonElement request) {
-        var expression = GetString(request, "expression", "expressions", "EXPRESSIONS");
-        var dataType = GetString(request, "dataType", "DATA_TYPE");
-        var raw = GetString(request, "raw", "value", "VALUE");
-
-        if (string.IsNullOrWhiteSpace(expression)) {
-            return ErrorData("계산식을 입력해 주세요.");
-        }
-
         try {
-            var interpreter = new Interpreter();
+            var expression = WebFlexModelMapper.GetString(request, "expression", "expressions", "EXPRESSIONS");
+            var dataType = WebFlexModelMapper.GetString(request, "dataType", "DATA_TYPE");
+            var raw = WebFlexModelMapper.GetString(request, "raw", "value", "VALUE");
 
-            object rawValue = ConvertTestValue(dataType, raw);
+            if (string.IsNullOrWhiteSpace(expression)) {
+                return ErrorData("상세설정을 입력해 주세요.");
+            }
+
+            var interpreter = new Interpreter();
+            var rawValue = ConvertTestValue(dataType, raw);
             var rawType = GetRawType(dataType);
 
             var parseExpression = interpreter.Parse(
@@ -379,231 +402,49 @@ public class DeviceTagController : Controller {
 
             var result = parseExpression.Invoke(rawValue);
 
-            return Success("계산식 테스트가 완료되었습니다.", result);
+            return Success("테스트가 완료되었습니다.", result);
         } catch (WebFlexMessageException ex) {
             return ErrorData(ex.Message);
         } catch (Exception ex) {
-            return ErrorData(ex.InnerException?.Message ?? ex.Message);
+            return ErrorData(GetErrorMessage(ex));
         }
     }
 
     [HttpPost, ActionName("delete")]
     public async Task<IActionResult> Delete([FromBody] JsonElement request) {
-        var ids = GetStringList(request, "ids", "Ids", "ID", "id");
+        try {
+            var ids = WebFlexModelMapper.GetStringList(request, "ids", "Ids", "ID", "id");
 
-        if (ids.Count == 0) {
-            return ErrorData("삭제할 태그를 선택해 주세요.");
-        }
-
-        var tags = await _db.Set<OpcTag>()
-            .Where(x => ids.Contains(x.ID))
-            .ToListAsync();
-
-        if (tags.Count == 0) {
-            return ErrorData("삭제할 태그를 찾을 수 없습니다.");
-        }
-
-        var tagIds = tags.Select(x => x.ID).ToList();
-
-        await _tsdDb.Set<CurrentValue>()
-            .Where(x => tagIds.Contains(x.TAG_ID))
-            .ExecuteDeleteAsync();
-
-        _db.Set<OpcTag>().RemoveRange(tags);
-        await _db.SaveChangesAsync();
-
-        return Success($"{tags.Count}개의 태그가 삭제되었습니다.");
-    }
-
-    private static OpcTag CreateOpcTagFromJson(JsonElement element) {
-        var tag = new OpcTag {
-            IS_COLLECTENABLED = true,
-            SAVE_TO_DATABASE = true,
-            SHOW_ON_DASHBOARD = false,
-            IsEnabled = true
-        };
-
-        ApplyOpcTagFromJson(tag, element);
-
-        return tag;
-    }
-
-    private static void ApplyOpcTagFromJson(OpcTag tag, JsonElement element) {
-        SetString(element, value => tag.ID = value, "id", "ID", "tagId", "TAG_ID");
-        SetString(element, value => tag.DEVICE_ID = value, "deviceId", "DEVICE_ID");
-        SetString(element, value => tag.GROUP_ID = NullIfEmpty(value), "groupId", "GROUP_ID");
-        SetString(element, value => tag.NODE_ID = value, "nodeId", "NODE_ID");
-        SetString(element, value => tag.TAG_NAME = value, "tagName", "TAG_NAME", "displayName");
-        SetString(element, value => tag.DATA_TYPE = value, "dataType", "DATA_TYPE");
-        SetString(element, value => tag.PROTECT_TYPE = value, "protectType", "PROTECT_TYPE");
-        SetString(element, value => tag.EXPRESSIONS = value, "expressions", "expression", "EXPRESSIONS");
-        SetString(element, value => tag.DESCRIPTION = value, "description", "DESCRIPTION");
-
-        SetBool(element, value => tag.IS_COLLECTENABLED = value, "isCollectEnabled", "IS_COLLECTENABLED");
-        SetBool(element, value => tag.SAVE_TO_DATABASE = value, "saveToDatabase", "SAVE_TO_DATABASE");
-        SetBool(element, value => tag.SHOW_ON_DASHBOARD = value, "showOnDashboard", "SHOW_ON_DASHBOARD");
-        SetBool(element, value => tag.IsEnabled = value, "isEnabled", "IsEnabled");
-
-        SetInt(element, value => tag.SAMPLINGINTERVALMS = value, "samplingIntervalMs", "SAMPLINGINTERVALMS");
-        SetInt(element, value => tag.SORT_ORDER = value, "sortOrder", "SORT_ORDER");
-    }
-
-    private static void SetString(JsonElement element, Action<string?> setter, params string[] names) {
-        if (!TryGetProperty(element, out var property, names)) {
-            return;
-        }
-
-        setter(GetStringValue(property));
-    }
-
-    private static void SetBool(JsonElement element, Action<bool> setter, params string[] names) {
-        if (!TryGetProperty(element, out var property, names)) {
-            return;
-        }
-
-        if (property.ValueKind == JsonValueKind.True) {
-            setter(true);
-            return;
-        }
-
-        if (property.ValueKind == JsonValueKind.False) {
-            setter(false);
-            return;
-        }
-
-        var value = GetStringValue(property);
-
-        if (string.IsNullOrWhiteSpace(value)) {
-            return;
-        }
-
-        if (bool.TryParse(value, out var boolValue)) {
-            setter(boolValue);
-            return;
-        }
-
-        if (value == "1") {
-            setter(true);
-            return;
-        }
-
-        if (value == "0") {
-            setter(false);
-        }
-    }
-
-    private static void SetInt(JsonElement element, Action<int?> setter, params string[] names) {
-        if (!TryGetProperty(element, out var property, names)) {
-            return;
-        }
-
-        if (property.ValueKind == JsonValueKind.Null) {
-            setter(null);
-            return;
-        }
-
-        if (property.ValueKind == JsonValueKind.Number &&
-            property.TryGetInt32(out var numberValue)) {
-            setter(numberValue);
-            return;
-        }
-
-        var value = GetStringValue(property);
-
-        if (string.IsNullOrWhiteSpace(value)) {
-            setter(null);
-            return;
-        }
-
-        if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var intValue)) {
-            setter(intValue);
-        }
-    }
-
-    private static string? GetString(JsonElement element, params string[] names) {
-        return TryGetProperty(element, out var property, names)
-            ? GetStringValue(property)
-            : null;
-    }
-
-    private static string? GetStringValue(JsonElement property) {
-        return property.ValueKind switch {
-            JsonValueKind.String => property.GetString(),
-            JsonValueKind.Number => property.GetRawText(),
-            JsonValueKind.True => "true",
-            JsonValueKind.False => "false",
-            JsonValueKind.Null => null,
-            JsonValueKind.Undefined => null,
-            _ => property.GetRawText()
-        };
-    }
-
-    private static List<string> GetStringList(JsonElement element, params string[] names) {
-        foreach (var name in names) {
-            if (!TryGetProperty(element, out var property, name)) {
-                continue;
+            if (ids.Count == 0) {
+                return ErrorData("삭제할 태그를 선택해 주세요.");
             }
 
-            if (property.ValueKind == JsonValueKind.Array) {
-                return property
-                    .EnumerateArray()
-                    .Select(GetStringValue)
-                    .Where(x => !string.IsNullOrWhiteSpace(x))
-                    .Select(x => x!)
-                    .Distinct()
-                    .ToList();
+            var tags = await _db.Set<OpcTag>()
+                .Where(x => ids.Contains(x.ID))
+                .ToListAsync();
+
+            if (tags.Count == 0) {
+                return ErrorData("삭제할 태그를 찾을 수 없습니다.");
             }
 
-            var value = GetStringValue(property);
+            var tagIds = tags.Select(x => x.ID).ToList();
 
-            if (!string.IsNullOrWhiteSpace(value)) {
-                return new List<string> { value };
-            }
+            await _tsdDb.Set<CurrentValue>()
+                .Where(x => tagIds.Contains(x.TAG_ID))
+                .ExecuteDeleteAsync();
+
+            _db.Set<OpcTag>().RemoveRange(tags);
+            await _db.SaveChangesAsync();
+
+            return Success($"{tags.Count}개의 태그가 삭제되었습니다.");
+        } catch (Exception ex) {
+            return ErrorData(GetErrorMessage(ex));
         }
-
-        if (element.ValueKind == JsonValueKind.Array) {
-            return element
-                .EnumerateArray()
-                .Select(GetStringValue)
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x!)
-                .Distinct()
-                .ToList();
-        }
-
-        return new List<string>();
     }
 
-    private static bool TryGetProperty(JsonElement element, out JsonElement property, params string[] names) {
-        property = default;
-
-        if (element.ValueKind != JsonValueKind.Object) {
-            return false;
-        }
-
-        var normalizedNames = names
-            .Select(NormalizeName)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var item in element.EnumerateObject()) {
-            if (normalizedNames.Contains(NormalizeName(item.Name))) {
-                property = item.Value;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static string NormalizeName(string value) {
-        return value
-            .Replace("_", "")
-            .Replace("-", "")
-            .ToLowerInvariant();
-    }
-
-    private static string? NullIfEmpty(string? value) {
-        return string.IsNullOrWhiteSpace(value) ? null : value;
+    private static void NormalizeOpcTag(OpcTag tag) {
+        tag.GROUP_ID = string.IsNullOrWhiteSpace(tag.GROUP_ID) ? null : tag.GROUP_ID;
+        tag.PROTECT_TYPE = NormalizeProtectType(tag.PROTECT_TYPE);
     }
 
     private static string NormalizeProtectType(string? value) {
@@ -727,32 +568,24 @@ public class DeviceTagController : Controller {
             return type switch {
                 "bit" => ConvertToBoolean(value),
                 "bool" => ConvertToBoolean(value),
-
                 "uint8" => byte.Parse(value, CultureInfo.InvariantCulture),
                 "int8" => sbyte.Parse(value, CultureInfo.InvariantCulture),
-
                 "uint16" => ushort.Parse(value, CultureInfo.InvariantCulture),
                 "int16" => short.Parse(value, CultureInfo.InvariantCulture),
                 "bcd16" => int.Parse(value, CultureInfo.InvariantCulture),
-
                 "uint32" => uint.Parse(value, CultureInfo.InvariantCulture),
                 "int32" => int.Parse(value, CultureInfo.InvariantCulture),
                 "bcd32" => long.Parse(value, CultureInfo.InvariantCulture),
-
                 "uint64" => ulong.Parse(value, CultureInfo.InvariantCulture),
                 "int64" => long.Parse(value, CultureInfo.InvariantCulture),
-
                 "float" => float.Parse(value, CultureInfo.InvariantCulture),
                 "double" => double.Parse(value, CultureInfo.InvariantCulture),
-
                 "datetime" => DateTime.Parse(value, CultureInfo.InvariantCulture),
                 "timestamp(ms)" => long.Parse(value, CultureInfo.InvariantCulture),
                 "timestamp(s)" => long.Parse(value, CultureInfo.InvariantCulture),
-
                 "ascii" => value,
                 "utf8" => value,
                 "string" => value,
-
                 _ => double.Parse(value, CultureInfo.InvariantCulture)
             };
         } catch {
@@ -766,32 +599,24 @@ public class DeviceTagController : Controller {
         return type switch {
             "bit" => typeof(bool),
             "bool" => typeof(bool),
-
             "uint8" => typeof(byte),
             "int8" => typeof(sbyte),
-
             "uint16" => typeof(ushort),
             "int16" => typeof(short),
             "bcd16" => typeof(int),
-
             "uint32" => typeof(uint),
             "int32" => typeof(int),
             "bcd32" => typeof(long),
-
             "uint64" => typeof(ulong),
             "int64" => typeof(long),
-
             "float" => typeof(float),
             "double" => typeof(double),
-
             "datetime" => typeof(DateTime),
             "timestamp(ms)" => typeof(long),
             "timestamp(s)" => typeof(long),
-
             "ascii" => typeof(string),
             "utf8" => typeof(string),
             "string" => typeof(string),
-
             _ => typeof(double)
         };
     }

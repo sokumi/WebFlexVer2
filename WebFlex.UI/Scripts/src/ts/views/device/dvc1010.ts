@@ -619,6 +619,7 @@ export default class Page {
             const selectorId = this.escapeSelector(item.id);
 
             return {
+                deviceId: this.selectedDeviceId,
                 nodeId: item.id,
                 tagName: String($(`${rootSelector} [data-tag-name][data-id="${selectorId}"]`).val() ?? "").trim(),
                 nodeClass: row.nodeClass,
@@ -642,10 +643,7 @@ export default class Page {
         try {
             const result = await api.post({
                 url: "/device/tag/save",
-                data: {
-                    deviceId: this.selectedDeviceId,
-                    nodes
-                }
+                data: nodes
             });
 
             if (!result.success) {

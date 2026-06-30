@@ -12239,6 +12239,7 @@ class Page {
             const row = (_a = item.data) !== null && _a !== void 0 ? _a : {};
             const selectorId = this.escapeSelector(item.id);
             return {
+                deviceId: this.selectedDeviceId,
                 nodeId: item.id,
                 tagName: String((_b = jquery__WEBPACK_IMPORTED_MODULE_0___default()(`${rootSelector} [data-tag-name][data-id="${selectorId}"]`).val()) !== null && _b !== void 0 ? _b : "").trim(),
                 nodeClass: row.nodeClass,
@@ -12259,10 +12260,7 @@ class Page {
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
                 url: "/device/tag/save",
-                data: {
-                    deviceId: this.selectedDeviceId,
-                    nodes
-                }
+                data: nodes
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error((_a = result.message) !== null && _a !== void 0 ? _a : "태그 저장에 실패했습니다.");
