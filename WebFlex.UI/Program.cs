@@ -1,6 +1,8 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
-using WebFlex.UI.Services;
 using WebFlex.UI.Data;
+using WebFlex.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +15,7 @@ builder.Services.AddDbContext<WebFlexDbContext>(options =>
     .UseSnakeCaseNamingConvention());
 
 builder.Services.AddScoped<INewNoService, NewNoService>();
+
 builder.Services.AddDbContext<TsdReadDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("WebFlexTsd")));
 
@@ -25,8 +28,20 @@ builder.Services.AddHostedService(sp => sp.GetRequiredService<CurrentValueNotify
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<TimescaleOptionService>();
 
+builder.Services
+    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options => {
+        options.Cookie.Name = "WebFlex.Auth";
+        options.LoginPath = "/auth/login";
+        options.LogoutPath = "/auth/logout";
+        options.AccessDeniedPath = "/auth/login";
+        options.SlidingExpiration = true;
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
+    });
 
-var mvcBuilder = builder.Services.AddControllersWithViews();
+var mvcBuilder = builder.Services.AddControllersWithViews(options => {
+    options.Filters.Add(new AuthorizeFilter());
+});
 
 if (builder.Environment.IsDevelopment()) {
     mvcBuilder.AddRazorRuntimeCompilation();
@@ -34,10 +49,8 @@ if (builder.Environment.IsDevelopment()) {
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment()) {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -46,6 +59,7 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(

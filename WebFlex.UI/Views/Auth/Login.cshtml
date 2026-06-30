@@ -1,6 +1,19 @@
 ﻿@{
     Layout = "_LayoutLogin";
     ViewData["Title"] = "로그인";
+
+    var returnUrl = ViewData["ReturnUrl"]?.ToString();
+    if (string.IsNullOrWhiteSpace(returnUrl))
+    {
+        returnUrl = Context.Request.Query["returnUrl"].ToString();
+    }
+
+    if (string.IsNullOrWhiteSpace(returnUrl))
+    {
+        returnUrl = "/";
+    }
+
+    var loginError = ViewData["LoginError"]?.ToString();
 }
 
 <div class="wf-login-page">
@@ -27,12 +40,27 @@
             <p>REAL-TIME OPC DATA PLATFORM</p>
 
             <form id="frmLogin" class="wf-login-card" method="post" action="/auth/login" autocomplete="off">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" id="hidReturnUrl" name="returnUrl" value="@returnUrl" />
+
                 <div class="wf-login-card-header">
                     <div>
                         <h2>시스템 로그인</h2>
                         <p>계정 정보를 입력해 주세요.</p>
                     </div>
                 </div>
+
+                @if (!string.IsNullOrWhiteSpace(loginError))
+                {
+                    <div id="loginErrorBox" class="alert alert-danger py-2 mb-3" role="alert">
+                        @loginError
+                    </div>
+                }
+                else
+                {
+                    <div id="loginErrorBox" class="alert alert-danger py-2 mb-3 d-none" role="alert"></div>
+                }
 
                 <div class="wf-login-field">
                     <label for="txtUserId">사용자 ID</label>
