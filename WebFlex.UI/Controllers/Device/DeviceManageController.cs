@@ -193,6 +193,10 @@ public class DeviceManageController : WebFlexController {
 
             var deviceIds = devices.Select(x => x.ID).ToList();
 
+            await _db.Set<OpcCollectRuntimeStatus>()
+                .Where(x => deviceIds.Contains(x.DEVICE_ID))
+                .ExecuteDeleteAsync();
+
             var tags = await _db.Set<OpcTag>()
                 .Where(x => deviceIds.Contains(x.DEVICE_ID))
                 .ToListAsync();

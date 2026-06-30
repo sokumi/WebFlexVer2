@@ -1,15 +1,27 @@
-﻿import { notify } from "../../framework/notify";
-import type { ApiResponse } from "../../dtos/apiResponse";
-import type { DeviceDto, DeviceSummaryDto } from "../../dtos/deviceDto";
+﻿import $ from "jquery";
 
-type DeviceRow = DeviceDto & {
+import { api, escapeHtml } from "../../framework/common";
+import { notify } from "../../framework/notify";
+
+type DeviceRow = {
+    id: string;
+    deviceCode?: string | null;
+    deviceName?: string | null;
+    deviceType?: string | null;
     endpointUrl?: string | null;
     deviceAddress?: string | null;
     port?: number | string | null;
     tagCount?: number | null;
+    isCollectEnabled?: boolean | null;
+    isEnabled?: boolean | null;
 };
 
-type DeviceSummaryRow = DeviceSummaryDto;
+type DeviceSummaryRow = {
+    deviceId: string;
+    deviceName?: string | null;
+    subscriptionStatus?: string | null;
+    todayInsertedCount?: number | null;
+};
 
 type CollectorStatusDto = {
     deviceCount?: number;
@@ -55,14 +67,20 @@ export default class Page {
     private deviceStatuses = new Map<string, DeviceStatusDto>();
     private isLogAutoRefresh = false;
     private isLogCollapsed = true;
+    private refreshTimerId: number | null = null;
+    private isRefreshing = false;
 
-    public init(): void {
+    init(): void {
         $("#deviceCardHost").on("click", "[data-subscription-action]", event => {
             const $button = $(event.currentTarget);
             const deviceId = String($button.attr("data-device-id") ?? "");
             const action = String($button.attr("data-subscription-action") ?? "") as "start" | "stop";
 
             void this.postDeviceSubscription(deviceId, action);
+        });
+
+        $("#btnRefreshStatus").on("click", () => {
+            void this.refresh();
         });
 
         $("#btnClearLogs").on("click", () => this.clearLogs());
@@ -76,26 +94,51 @@ export default class Page {
         this.setLogCollapsed(true);
         void this.refresh();
 
-        window.setInterval(() => {
+        this.refreshTimerId = window.setInterval(() => {
             void this.refresh();
         }, 3000);
+
+        window.addEventListener("beforeunload", () => {
+            if (this.refreshTimerId != null) {
+                window.clearInterval(this.refreshTimerId);
+            }
+        });
     }
 
     private async refresh(): Promise<void> {
-        await this.loadDevices();
-        await this.loadStatus();
-        await this.loadDeviceSummary();
-        await this.loadDeviceCards();
+        if (this.isRefreshing) {
+            return;
+        }
 
-        if (this.isLogAutoRefresh) {
-            await this.loadLogs();
+        this.isRefreshing = true;
+
+        try {
+            await this.loadDevices();
+            await this.loadStatus();
+            await this.loadDeviceSummary();
+            await this.loadDeviceCards();
+
+            if (this.isLogAutoRefresh) {
+                await this.loadLogs();
+            }
+        } finally {
+            this.isRefreshing = false;
         }
     }
 
     private async loadDevices(): Promise<void> {
         try {
-            const res = await this.get<ApiResponse<DeviceRow[]>>("/device/manage/list");
-            this.devices = (res.data ?? []).slice(0, 2);
+            const result = await api.get({
+                url: "/device/manage/list"
+            });
+
+            if (!result.success) {
+                this.devices = [];
+                this.renderDeviceError(result.message ?? "디바이스 조회 실패");
+                return;
+            }
+
+            this.devices = (result.data ?? []).map((x: any) => this.normalizeDeviceRow(x));
         } catch (e) {
             console.error(e);
             this.devices = [];
@@ -105,14 +148,9 @@ export default class Page {
 
     private async loadStatus(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector/status");
+            const data = await this.getJson<CollectorStatusDto>("/api/opc-collector/status");
 
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const data = await response.json() as CollectorStatusDto;
-            const version = data.collectorVersion ?? data.version ?? "v2.4.1.20260618";
+            const version = data.collectorVersion ?? data.version ?? "-";
             const totalDeviceCount = this.devices.length > 0
                 ? this.devices.length
                 : data.deviceCount ?? 0;
@@ -124,16 +162,18 @@ export default class Page {
             this.setTextWithFlash("#lblCollectorVersion", version);
 
             $("#lblSnapshotTime").text(`마지막 ${this.getCurrentTimeText()}`);
-            $("#lblCollectorDbStatus").text(data.dbStatus ?? "DB 정상");
+            $("#lblCollectorDbStatus").text(data.dbStatus ?? "DB 상태 -");
 
             this.updateStoppedDeviceCount();
         } catch (e) {
             console.error(e);
-            this.setTextWithFlash("#lblDeviceCount", "조회 실패");
+
+            this.setTextWithFlash("#lblDeviceCount", this.devices.length > 0 ? `${this.devices.length}/${this.devices.length}` : "조회 실패");
             this.setTextWithFlash("#lblSubscribedCount", "-");
             this.setTextWithFlash("#lblTotalSnapshotRows", "-");
             this.setTextWithFlash("#lblTotalInserted", "-");
             this.setTextWithFlash("#lblCollectorVersion", "-");
+
             $("#lblStoppedCount").text("상태 조회 실패");
             $("#lblCollectorDbStatus").text("DB 상태 -");
         }
@@ -141,13 +181,7 @@ export default class Page {
 
     private async loadDeviceSummary(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector/device-summary");
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            this.deviceSummaries = await response.json() as DeviceSummaryRow[];
+            this.deviceSummaries = await this.getJson<DeviceSummaryRow[]>("/api/opc-collector/device-summary");
         } catch (e) {
             console.error(e);
             this.deviceSummaries = [];
@@ -169,20 +203,21 @@ export default class Page {
                 }
 
                 try {
-                    const response = await fetch(`/api/opc-collector/device/${encodeURIComponent(deviceId)}/status`);
+                    const status = await this.getJson<DeviceStatusDto>(
+                        `/api/opc-collector/device/${encodeURIComponent(deviceId)}/status`
+                    );
 
-                    if (!response.ok) {
-                        throw new Error(await response.text());
-                    }
-
-                    const status = await response.json() as DeviceStatusDto;
                     this.deviceStatuses.set(deviceId, status);
                 } catch (e) {
                     console.error(e);
+
                     this.deviceStatuses.set(deviceId, {
                         deviceId,
                         deviceName: device.deviceName ?? "-",
+                        tagCount: device.tagCount ?? 0,
                         runtimeStatus: {
+                            subscribedCount: 0,
+                            currentValueCount: 0,
                             subscriptionStopped: true
                         }
                     });
@@ -231,12 +266,17 @@ export default class Page {
         const subscribedCount = runtime.subscribedCount ?? 0;
         const currentValueCount = runtime.currentValueCount ?? 0;
         const totalInserted = status?.totalInserted ?? 0;
-        const subscriptionStopped = runtime.subscriptionStopped === true
-            || row.summary?.subscriptionStatus === "Stopped"
-            || row.summary?.subscriptionStatus === "SubscriptionStopped"
-            || row.summary?.subscriptionStatus === "중지";
+
+        const subscriptionStopped = this.isSubscriptionStopped(row);
         const isRunning = !subscriptionStopped && subscribedCount > 0;
-        const statusText = isRunning ? "연결됨" : "구독중지";
+        const isEnabled = device.isEnabled !== false && device.isCollectEnabled !== false;
+
+        const statusText = !isEnabled
+            ? "수집비활성"
+            : isRunning
+                ? "연결됨"
+                : "구독중지";
+
         const cardStateClass = isRunning ? "is-running" : "is-stopped";
         const percent = tagCount > 0
             ? Math.min(100, Math.round((subscribedCount / tagCount) * 100))
@@ -250,22 +290,22 @@ export default class Page {
                             <i data-lucide="cpu"></i>
                         </span>
                         <div>
-                            <h4>${this.escapeHtml(deviceName)}</h4>
-                            <small>${this.escapeHtml(deviceCode)}</small>
+                            <h4>${escapeHtml(deviceName)}</h4>
+                            <small>${escapeHtml(deviceCode)}</small>
                         </div>
                     </div>
 
                     <span class="wf-opc-device-status ${cardStateClass}">
                         <span class="wf-status-dot"></span>
-                        ${this.escapeHtml(statusText)}
+                        ${escapeHtml(statusText)}
                     </span>
                 </div>
 
-                <div class="wf-opc-device-type">${this.escapeHtml(deviceType)}</div>
+                <div class="wf-opc-device-type">${escapeHtml(deviceType)}</div>
 
                 <div class="wf-opc-endpoint">
                     <i data-lucide="link"></i>
-                    <span>${this.escapeHtml(endpoint)}</span>
+                    <span>${escapeHtml(endpoint)}</span>
                 </div>
 
                 <div class="wf-opc-device-metrics">
@@ -278,12 +318,12 @@ export default class Page {
                         <strong>${this.formatNumber(currentValueCount)} <small>rows</small></strong>
                     </div>
                     <div>
-                        <span>CPU</span>
-                        <strong>-</strong>
+                        <span>Snapshot</span>
+                        <strong>${this.formatNumber(status?.totalSnapshotRows)}</strong>
                     </div>
                     <div>
-                        <span>메모리</span>
-                        <strong>-</strong>
+                        <span>DB Insert</span>
+                        <strong>${this.formatNumber(totalInserted)}</strong>
                     </div>
                 </div>
 
@@ -295,7 +335,7 @@ export default class Page {
                     <div class="wf-opc-device-time">
                         <span>
                             <i data-lucide="timer"></i>
-                            -
+                            ${percent}%
                         </span>
                         <span>
                             <i data-lucide="clock"></i>
@@ -306,8 +346,9 @@ export default class Page {
                     <div class="wf-opc-device-actions">
                         <button type="button"
                                 class="btn btn-outline-primary btn-sm"
-                                data-device-id="${this.escapeHtml(deviceId)}"
-                                data-subscription-action="${isRunning ? "stop" : "start"}">
+                                data-device-id="${escapeHtml(deviceId)}"
+                                data-subscription-action="${isRunning ? "stop" : "start"}"
+                                ${!isEnabled ? "disabled" : ""}>
                             <i data-lucide="${isRunning ? "pause-circle" : "play-circle"}"></i>
                             ${isRunning ? "구독중지" : "구독시작"}
                         </button>
@@ -322,6 +363,16 @@ export default class Page {
         `;
     }
 
+    private isSubscriptionStopped(row: DeviceCardViewModel): boolean {
+        const runtime = row.status?.runtimeStatus ?? {};
+        const summaryStatus = row.summary?.subscriptionStatus ?? "";
+
+        return runtime.subscriptionStopped === true
+            || summaryStatus === "Stopped"
+            || summaryStatus === "SubscriptionStopped"
+            || summaryStatus === "중지";
+    }
+
     private updateStoppedDeviceCount(): void {
         const totalCount = this.devices.length;
 
@@ -334,18 +385,13 @@ export default class Page {
             const deviceId = device.id ?? "";
             const summary = this.deviceSummaries.find(x => x.deviceId === deviceId) ?? null;
             const status = this.deviceStatuses.get(deviceId) ?? null;
-            const runtime = status?.runtimeStatus ?? {};
 
-            return runtime.subscriptionStopped === true
-                || summary?.subscriptionStatus === "Stopped"
-                || summary?.subscriptionStatus === "SubscriptionStopped"
-                || summary?.subscriptionStatus === "중지";
+            return this.isSubscriptionStopped({
+                device,
+                summary,
+                status
+            });
         }).length;
-
-        if (stoppedCount <= 0) {
-            $("#lblStoppedCount").text("0개 구독중지");
-            return;
-        }
 
         $("#lblStoppedCount").text(`${stoppedCount.toLocaleString()}개 구독중지`);
     }
@@ -368,7 +414,7 @@ export default class Page {
         return `
             <article class="wf-opc-empty-card">
                 <i data-lucide="server-off"></i>
-                <strong>${this.escapeHtml(message)}</strong>
+                <strong>${escapeHtml(message)}</strong>
                 <span>Collector 상태 또는 디바이스 설정을 확인해 주세요.</span>
             </article>
         `;
@@ -389,14 +435,14 @@ export default class Page {
                 throw new Error(await response.text());
             }
 
-            notify.success(action === "start" ? "디바이스 구독 재시작 요청 완료" : "디바이스 구독 중지 요청 완료");
+            notify.success(action === "start" ? "디바이스 구독 시작 요청 완료" : "디바이스 구독 중지 요청 완료");
 
             await this.loadStatus();
             await this.loadDeviceSummary();
             await this.loadDeviceCards();
         } catch (e) {
             console.error(e);
-            notify.error("요청 처리 중 오류가 발생했습니다.");
+            notify.error(e instanceof Error ? e.message : "요청 처리 중 오류가 발생했습니다.");
         }
     }
 
@@ -413,19 +459,13 @@ export default class Page {
 
     private async loadLogs(): Promise<void> {
         try {
-            const response = await fetch("/api/opc-collector/logs");
-
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const logs = await response.json() as LogRow[];
+            const logs = await this.getJson<LogRow[]>("/api/opc-collector/logs?count=100");
 
             const html = logs
                 .map(x => {
-                    const time = this.escapeHtml(x.time ?? "");
-                    const level = this.escapeHtml(x.level ?? "");
-                    const message = this.escapeHtml(x.message ?? "");
+                    const time = escapeHtml(x.time ?? "");
+                    const level = escapeHtml(x.level ?? "");
+                    const message = escapeHtml(x.message ?? "");
 
                     return `<div class="wf-opc-log-row">
                         <span class="wf-opc-log-time">${time}</span>
@@ -497,12 +537,14 @@ export default class Page {
         return numberValue.toLocaleString();
     }
 
-    private async get<T>(url: string): Promise<T> {
-        return await $.ajax({
-            url,
-            method: "GET",
-            dataType: "json"
-        }) as T;
+    private async getJson<T>(url: string): Promise<T> {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        return await response.json() as T;
     }
 
     private refreshIcons(): void {
@@ -513,15 +555,6 @@ export default class Page {
                 lucide.createIcons();
             }
         }, 0);
-    }
-
-    private escapeHtml(value: string | number | null | undefined): string {
-        return String(value ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     private setTextWithFlash(selector: string, value: unknown): void {
@@ -540,5 +573,86 @@ export default class Page {
         if (element != null) {
             void element.offsetWidth;
         }
+    }
+
+    private normalizeDeviceRow(row: any): DeviceRow {
+        return {
+            ...row,
+            id: this.readValue(row, "id", "ID", "deviceId", "DEVICE_ID") ?? "",
+            deviceCode: this.readValue(row, "deviceCode", "id", "ID") ?? "",
+            deviceName: this.readValue(row, "deviceName", "DEVICE_NAME") ?? "",
+            deviceType: this.readValue(row, "deviceType", "DEVICE_TYPE") ?? "",
+            endpointUrl: this.readValue(row, "endpointUrl", "ENDPOINT_URL") ?? "",
+            deviceAddress: this.readValue(row, "deviceAddress", "DEVICE_ADDRESS") ?? "",
+            port: this.readValue(row, "port", "PORT"),
+            tagCount: this.readNumber(row, "tagCount", "TAG_COUNT") ?? 0,
+            isCollectEnabled: this.readBool(row, true, "isCollectEnabled", "IS_COLLECTENABLED"),
+            isEnabled: this.readBool(row, true, "isEnabled", "IsEnabled")
+        };
+    }
+
+    private readValue(row: any, ...names: string[]): any {
+        if (row == null) {
+            return null;
+        }
+
+        for (const name of names) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) {
+                return row[name];
+            }
+        }
+
+        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+
+        for (const key of Object.keys(row)) {
+            if (normalizedNames.includes(this.normalizeFieldName(key))) {
+                return row[key];
+            }
+        }
+
+        return null;
+    }
+
+    private readBool(row: any, defaultValue: boolean, ...names: string[]): boolean {
+        const value = this.readValue(row, ...names);
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        if (typeof value === "boolean") {
+            return value;
+        }
+
+        const text = String(value).trim().toLowerCase();
+
+        if (text === "true" || text === "1" || text === "y" || text === "yes") {
+            return true;
+        }
+
+        if (text === "false" || text === "0" || text === "n" || text === "no") {
+            return false;
+        }
+
+        return defaultValue;
+    }
+
+    private readNumber(row: any, ...names: string[]): number | null {
+        const value = this.readValue(row, ...names);
+
+        if (value == null || value === "") {
+            return null;
+        }
+
+        const numberValue = Number(value);
+
+        return Number.isFinite(numberValue) ? numberValue : null;
+    }
+
+    private normalizeFieldName(value: string): string {
+        return String(value ?? "")
+            .replace(/_/g, "")
+            .replace(/-/g, "")
+            .toLowerCase();
     }
 }

@@ -51,8 +51,17 @@
     </section>
 
     <section class="wf-opc-section-title">
-        <h3>디바이스 수집 상태</h3>
-        <span id="lblDeviceSummaryText">0개 디바이스</span>
+        <div>
+            <h3>디바이스 수집 상태</h3>
+            <span id="lblDeviceSummaryText">0개 디바이스</span>
+        </div>
+
+        <div class="wf-opc-section-actions">
+            <button type="button" id="btnRefreshStatus" class="btn btn-outline-secondary btn-sm">
+                <i data-lucide="refresh-cw"></i>
+                새로고침
+            </button>
+        </div>
     </section>
 
     <section id="deviceCardHost" class="wf-opc-device-grid">
