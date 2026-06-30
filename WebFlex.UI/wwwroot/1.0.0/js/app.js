@@ -81772,20 +81772,113 @@ function bindThemeToggle() {
         initWebFlexIcons();
     });
 }
+async function loadLayoutMenu() {
+    var _a, _b;
+    const host = document.getElementById("wfLayoutMenu");
+    if (host == null) {
+        return;
+    }
+    try {
+        const response = await fetch("/layout/menu", {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        const result = await response.json();
+        if (result.success === false) {
+            throw new Error((_a = result.message) !== null && _a !== void 0 ? _a : "�޴� ��ȸ�� �����߽��ϴ�.");
+        }
+        const menus = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+        host.innerHTML = createLayoutMenuHtml(menus);
+        bindActiveMenu();
+        bindMobileMenuLinkClose();
+        initWebFlexIcons();
+    }
+    catch (error) {
+        console.error(error);
+        host.innerHTML = `
+            <div class="wf-nav-section">
+                <div class="wf-nav-title">MENU</div>
+                <div class="wf-nav-link">
+                    <i data-lucide="circle-alert"></i>
+                    <span>�޴� ��ȸ ����</span>
+                </div>
+            </div>
+        `;
+        initWebFlexIcons();
+    }
+}
+function createLayoutMenuHtml(menus) {
+    if (menus.length === 0) {
+        return `
+            <div class="wf-nav-section">
+                <div class="wf-nav-title">MENU</div>
+                <div class="wf-nav-link">
+                    <i data-lucide="circle-alert"></i>
+                    <span>ǥ���� �޴��� �����ϴ�.</span>
+                </div>
+            </div>
+        `;
+    }
+    return menus
+        .map(parent => createLayoutMenuSectionHtml(parent))
+        .join("");
+}
+function createLayoutMenuSectionHtml(parent) {
+    var _a;
+    const children = (_a = parent.children) !== null && _a !== void 0 ? _a : [];
+    if (children.length === 0 && normalizeUrl(parent.url) === "#") {
+        return "";
+    }
+    const hasActive = children.some(child => isActiveMenu(child.url)) || isActiveMenu(parent.url);
+    const activeClass = hasActive ? "active" : "";
+    const linkHtml = children.length > 0
+        ? children.map(child => createLayoutMenuLinkHtml(child)).join("")
+        : createLayoutMenuLinkHtml(parent);
+    return `
+        <div class="wf-nav-section ${activeClass}">
+            <div class="wf-nav-title">${escapeHtml(parent.menuName)}</div>
+            ${linkHtml}
+        </div>
+    `;
+}
+function createLayoutMenuLinkHtml(menu) {
+    var _a;
+    const url = normalizeUrl(menu.url);
+    const icon = ((_a = menu.icon) === null || _a === void 0 ? void 0 : _a.trim().length) > 0 ? menu.icon.trim() : "circle";
+    const activeClass = isActiveMenu(url) ? "active" : "";
+    return `
+        <a class="wf-nav-link ${activeClass}"
+           href="${escapeAttribute(url)}"
+           data-menu-path="${escapeAttribute(url)}">
+            <i data-lucide="${escapeAttribute(icon)}"></i>
+            <span>${escapeHtml(menu.menuName)}</span>
+        </a>
+    `;
+}
 function bindActiveMenu() {
-    const currentPath = window.location.pathname.toLowerCase();
+    const currentPath = normalizeCurrentPath();
     document.querySelectorAll("[data-menu-path]").forEach(menu => {
         var _a;
-        const menuPath = ((_a = menu.getAttribute("data-menu-path")) !== null && _a !== void 0 ? _a : "").toLowerCase();
+        const menuPath = normalizeUrl((_a = menu.getAttribute("data-menu-path")) !== null && _a !== void 0 ? _a : "");
+        menu.classList.remove("active");
         if (menuPath === "/") {
             if (currentPath === "/" || currentPath === "/home" || currentPath === "/home/index") {
                 menu.classList.add("active");
             }
             return;
         }
-        if (currentPath.startsWith(menuPath)) {
+        if (menuPath !== "#" && currentPath === menuPath.toLowerCase()) {
             menu.classList.add("active");
         }
+    });
+    document.querySelectorAll(".wf-nav-section").forEach(section => {
+        const hasActiveLink = section.querySelector(".wf-nav-link.active") != null;
+        section.classList.toggle("active", hasActiveLink);
     });
 }
 function bindSidebarToggle() {
@@ -81817,13 +81910,6 @@ function bindSidebarToggle() {
     backdrop === null || backdrop === void 0 ? void 0 : backdrop.addEventListener("click", () => {
         setMobileSidebarOpen(false);
     });
-    document.querySelectorAll(".wf-nav-link").forEach(link => {
-        link.addEventListener("click", () => {
-            if (isMobile()) {
-                setMobileSidebarOpen(false);
-            }
-        });
-    });
     window.addEventListener("resize", () => {
         if (!isMobile()) {
             setMobileSidebarOpen(false);
@@ -81833,6 +81919,30 @@ function bindSidebarToggle() {
         if (event.key === "Escape" && isMobile()) {
             setMobileSidebarOpen(false);
         }
+    });
+    bindMobileMenuLinkClose();
+}
+function bindMobileMenuLinkClose() {
+    const sidebar = document.querySelector(".wf-sidebar");
+    const mobileButton = document.getElementById("btnMobileMenuToggle");
+    if (sidebar == null) {
+        return;
+    }
+    const isMobile = () => window.innerWidth <= 991;
+    document.querySelectorAll(".wf-nav-link").forEach(link => {
+        if (link.dataset.mobileCloseBound === "true") {
+            return;
+        }
+        link.dataset.mobileCloseBound = "true";
+        link.addEventListener("click", () => {
+            if (!isMobile()) {
+                return;
+            }
+            sidebar.classList.remove("is-open");
+            document.body.classList.remove("wf-sidebar-open");
+            mobileButton === null || mobileButton === void 0 ? void 0 : mobileButton.setAttribute("aria-expanded", "false");
+            window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+        });
     });
 }
 function initHeaderClock() {
@@ -81867,15 +81977,57 @@ function bindSearchPanelToggle() {
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     });
 }
+function normalizeCurrentPath() {
+    let path = window.location.pathname.toLowerCase();
+    if (path.length === 0) {
+        path = "/";
+    }
+    if (path !== "/" && path.endsWith("/")) {
+        path = path.substring(0, path.length - 1);
+    }
+    return path;
+}
+function normalizeUrl(url) {
+    if (url == null || url.trim().length === 0) {
+        return "#";
+    }
+    let value = url.trim();
+    if (value !== "/" && value.endsWith("/")) {
+        value = value.substring(0, value.length - 1);
+    }
+    return value.toLowerCase();
+}
+function isActiveMenu(url) {
+    const currentPath = normalizeCurrentPath();
+    const menuUrl = normalizeUrl(url);
+    if (menuUrl === "#") {
+        return false;
+    }
+    if (menuUrl === "/") {
+        return currentPath === "/" || currentPath === "/home" || currentPath === "/home/index";
+    }
+    return currentPath === menuUrl;
+}
+function escapeHtml(value) {
+    return String(value !== null && value !== void 0 ? value : "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+function escapeAttribute(value) {
+    return escapeHtml(value);
+}
 document.addEventListener("DOMContentLoaded", () => {
     exposeWebFlexIcons();
     initWebFlexTheme();
-    bindActiveMenu();
     bindSidebarToggle();
     bindThemeToggle();
     bindSearchPanelToggle();
     initHeaderClock();
     initWebFlexIcons();
+    void loadLayoutMenu();
 });
 console.log("WebFlex app loaded.");
 

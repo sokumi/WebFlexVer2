@@ -22,6 +22,23 @@ import { notify } from "./framework/notify";
 (window as any).jQuery = $;
 (window as any).notify = notify;
 
+type ApiResponse<T> = {
+    success?: boolean;
+    message?: string;
+    data?: T;
+};
+
+type LayoutMenuItem = {
+    id: string;
+    parentId?: string | null;
+    menuCode: string;
+    menuName: string;
+    url: string;
+    icon: string;
+    sortOrder: number;
+    children: LayoutMenuItem[];
+};
+
 function initWebFlexIcons(): void {
     createIcons({
         icons
@@ -68,11 +85,117 @@ function bindThemeToggle(): void {
     });
 }
 
+async function loadLayoutMenu(): Promise<void> {
+    const host = document.getElementById("wfLayoutMenu");
+
+    if (host == null) {
+        return;
+    }
+
+    try {
+        const response = await fetch("/layout/menu", {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        const result = await response.json() as ApiResponse<LayoutMenuItem[]>;
+
+        if (result.success === false) {
+            throw new Error(result.message ?? "메뉴 조회에 실패했습니다.");
+        }
+
+        const menus = result.data ?? [];
+
+        host.innerHTML = createLayoutMenuHtml(menus);
+
+        bindActiveMenu();
+        bindMobileMenuLinkClose();
+        initWebFlexIcons();
+    } catch (error) {
+        console.error(error);
+
+        host.innerHTML = `
+            <div class="wf-nav-section">
+                <div class="wf-nav-title">MENU</div>
+                <div class="wf-nav-link">
+                    <i data-lucide="circle-alert"></i>
+                    <span>메뉴 조회 실패</span>
+                </div>
+            </div>
+        `;
+
+        initWebFlexIcons();
+    }
+}
+
+function createLayoutMenuHtml(menus: LayoutMenuItem[]): string {
+    if (menus.length === 0) {
+        return `
+            <div class="wf-nav-section">
+                <div class="wf-nav-title">MENU</div>
+                <div class="wf-nav-link">
+                    <i data-lucide="circle-alert"></i>
+                    <span>표시할 메뉴가 없습니다.</span>
+                </div>
+            </div>
+        `;
+    }
+
+    return menus
+        .map(parent => createLayoutMenuSectionHtml(parent))
+        .join("");
+}
+
+function createLayoutMenuSectionHtml(parent: LayoutMenuItem): string {
+    const children = parent.children ?? [];
+
+    if (children.length === 0 && normalizeUrl(parent.url) === "#") {
+        return "";
+    }
+
+    const hasActive = children.some(child => isActiveMenu(child.url)) || isActiveMenu(parent.url);
+    const activeClass = hasActive ? "active" : "";
+
+    const linkHtml = children.length > 0
+        ? children.map(child => createLayoutMenuLinkHtml(child)).join("")
+        : createLayoutMenuLinkHtml(parent);
+
+    return `
+        <div class="wf-nav-section ${activeClass}">
+            <div class="wf-nav-title">${escapeHtml(parent.menuName)}</div>
+            ${linkHtml}
+        </div>
+    `;
+}
+
+function createLayoutMenuLinkHtml(menu: LayoutMenuItem): string {
+    const url = normalizeUrl(menu.url);
+    const icon = menu.icon?.trim().length > 0 ? menu.icon.trim() : "circle";
+    const activeClass = isActiveMenu(url) ? "active" : "";
+
+    return `
+        <a class="wf-nav-link ${activeClass}"
+           href="${escapeAttribute(url)}"
+           data-menu-path="${escapeAttribute(url)}">
+            <i data-lucide="${escapeAttribute(icon)}"></i>
+            <span>${escapeHtml(menu.menuName)}</span>
+        </a>
+    `;
+}
+
 function bindActiveMenu(): void {
-    const currentPath = window.location.pathname.toLowerCase();
+    const currentPath = normalizeCurrentPath();
 
     document.querySelectorAll<HTMLElement>("[data-menu-path]").forEach(menu => {
-        const menuPath = (menu.getAttribute("data-menu-path") ?? "").toLowerCase();
+        const menuPath = normalizeUrl(menu.getAttribute("data-menu-path") ?? "");
+
+        menu.classList.remove("active");
 
         if (menuPath === "/") {
             if (currentPath === "/" || currentPath === "/home" || currentPath === "/home/index") {
@@ -82,9 +205,14 @@ function bindActiveMenu(): void {
             return;
         }
 
-        if (currentPath.startsWith(menuPath)) {
+        if (menuPath !== "#" && currentPath === menuPath.toLowerCase()) {
             menu.classList.add("active");
         }
+    });
+
+    document.querySelectorAll<HTMLElement>(".wf-nav-section").forEach(section => {
+        const hasActiveLink = section.querySelector(".wf-nav-link.active") != null;
+        section.classList.toggle("active", hasActiveLink);
     });
 }
 
@@ -126,14 +254,6 @@ function bindSidebarToggle(): void {
         setMobileSidebarOpen(false);
     });
 
-    document.querySelectorAll<HTMLElement>(".wf-nav-link").forEach(link => {
-        link.addEventListener("click", () => {
-            if (isMobile()) {
-                setMobileSidebarOpen(false);
-            }
-        });
-    });
-
     window.addEventListener("resize", () => {
         if (!isMobile()) {
             setMobileSidebarOpen(false);
@@ -144,6 +264,39 @@ function bindSidebarToggle(): void {
         if (event.key === "Escape" && isMobile()) {
             setMobileSidebarOpen(false);
         }
+    });
+
+    bindMobileMenuLinkClose();
+}
+
+function bindMobileMenuLinkClose(): void {
+    const sidebar = document.querySelector<HTMLElement>(".wf-sidebar");
+    const mobileButton = document.getElementById("btnMobileMenuToggle");
+
+    if (sidebar == null) {
+        return;
+    }
+
+    const isMobile = (): boolean => window.innerWidth <= 991;
+
+    document.querySelectorAll<HTMLElement>(".wf-nav-link").forEach(link => {
+        if (link.dataset.mobileCloseBound === "true") {
+            return;
+        }
+
+        link.dataset.mobileCloseBound = "true";
+
+        link.addEventListener("click", () => {
+            if (!isMobile()) {
+                return;
+            }
+
+            sidebar.classList.remove("is-open");
+            document.body.classList.remove("wf-sidebar-open");
+            mobileButton?.setAttribute("aria-expanded", "false");
+
+            window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+        });
     });
 }
 
@@ -191,15 +344,72 @@ function bindSearchPanelToggle(): void {
     });
 }
 
+function normalizeCurrentPath(): string {
+    let path = window.location.pathname.toLowerCase();
+
+    if (path.length === 0) {
+        path = "/";
+    }
+
+    if (path !== "/" && path.endsWith("/")) {
+        path = path.substring(0, path.length - 1);
+    }
+
+    return path;
+}
+
+function normalizeUrl(url: string | null | undefined): string {
+    if (url == null || url.trim().length === 0) {
+        return "#";
+    }
+
+    let value = url.trim();
+
+    if (value !== "/" && value.endsWith("/")) {
+        value = value.substring(0, value.length - 1);
+    }
+
+    return value.toLowerCase();
+}
+
+function isActiveMenu(url: string | null | undefined): boolean {
+    const currentPath = normalizeCurrentPath();
+    const menuUrl = normalizeUrl(url);
+
+    if (menuUrl === "#") {
+        return false;
+    }
+
+    if (menuUrl === "/") {
+        return currentPath === "/" || currentPath === "/home" || currentPath === "/home/index";
+    }
+
+    return currentPath === menuUrl;
+}
+
+function escapeHtml(value: string | number | null | undefined): string {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function escapeAttribute(value: string | number | null | undefined): string {
+    return escapeHtml(value);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     exposeWebFlexIcons();
     initWebFlexTheme();
-    bindActiveMenu();
     bindSidebarToggle();
     bindThemeToggle();
     bindSearchPanelToggle();
     initHeaderClock();
     initWebFlexIcons();
+
+    void loadLayoutMenu();
 });
 
 console.log("WebFlex app loaded.");

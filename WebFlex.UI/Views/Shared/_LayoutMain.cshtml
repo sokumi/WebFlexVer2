@@ -1,4 +1,5 @@
-﻿@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
+﻿@using System.Security.Claims
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment WebHostEnvironment
 
 @{
     var title = ViewData["Title"]?.ToString() ?? "Dashboard";
@@ -17,6 +18,12 @@
     );
 
     var hasPageCss = System.IO.File.Exists(pageCssPath);
+
+    var userName = User.FindFirstValue("UserName");
+    if (string.IsNullOrWhiteSpace(userName))
+    {
+        userName = User.FindFirstValue("UserId") ?? User.Identity?.Name ?? "User";
+    }
 }
 
 <!DOCTYPE html>
@@ -25,7 +32,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@title - WebFlexV2</title>
-     <link rel="stylesheet" href="~/1.0.0/css/views/main/index.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/1.0.0/css/views/main/index.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/1.0.0/css/app.css" asp-append-version="true" />
 
     @if (hasPageCss)
@@ -46,91 +54,14 @@
                 </span>
             </div>
 
-            <nav class="wf-nav">
+            <nav id="wfLayoutMenu" class="wf-nav">
                 <div class="wf-nav-section">
-                    <div class="wf-nav-title">Dashboard</div>
-
-                    <a class="wf-nav-link" href="/" data-menu-path="/">
-                        <i data-lucide="layout-dashboard"></i>
-                        <span>메인</span>
-                    </a>
+                    <div class="wf-nav-title">MENU</div>
+                    <div class="wf-nav-link">
+                        <i data-lucide="loader-circle"></i>
+                        <span>메뉴 불러오는 중...</span>
+                    </div>
                 </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">Device</div>
-
-                    <a class="wf-nav-link" href="/device/dvc1000" data-menu-path="/device/dvc1000">
-                        <i data-lucide="server"></i>
-                        <span>디바이스 관리</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/device/dvc1010" data-menu-path="/device/dvc1010">
-                        <i data-lucide="git-branch"></i>
-                        <span>디바이스 태그 관리</span>
-                    </a>
-                </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">OPC</div>
-
-                    <a class="wf-nav-link" href="/opc/opc1000" data-menu-path="/opc/opc1000">
-                        <i data-lucide="radio-receiver"></i>
-                        <span>OPC 수집 관리</span>
-                    </a>
-                </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">System</div>
-
-                    <a class="wf-nav-link" href="/system/svc1000" data-menu-path="/system/svc1000">
-                        <i data-lucide="monitor-cog"></i>
-                        <span>Windows Service</span>
-                    </a>
-                </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">Options</div>
-
-                    <a class="wf-nav-link" href="/opc/opc1020" data-menu-path="/opc/opc1020">
-                        <i data-lucide="sliders-horizontal"></i>
-                        <span>Collector 옵션</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/opc/opc1030" data-menu-path="/opc/opc1030">
-                        <i data-lucide="settings-2"></i>
-                        <span>Client 옵션</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/opc/opc3000" data-menu-path="/opc/opc3000">
-                        <i data-lucide="history"></i>
-                        <span>History 조회</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/opc/opc4000" data-menu-path="/opc/opc4000">
-                        <i data-lucide="database-zap"></i>
-                        <span>Timescale 설정</span>
-                    </a>
-                </div>
-
-                <div class="wf-nav-section">
-                    <div class="wf-nav-title">Test</div>
-
-                    <a class="wf-nav-link" href="/test/tst1000" data-menu-path="/test/tst1000">
-                        <i data-lucide="flask-conical"></i>
-                        <span>UI 테스트</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/test/tst2000" data-menu-path="/test/tst2000">
-                        <i data-lucide="server-cog"></i>
-                        <span>디바이스 등록 테스트</span>
-                    </a>
-
-                    <a class="wf-nav-link" href="/test/tst2010" data-menu-path="/test/tst2010">
-                        <i data-lucide="tags"></i>
-                        <span>디바이스 태그 테스트</span>
-                    </a>
-                </div>
-
             </nav>
 
             <div class="wf-sidebar-bottom">
@@ -168,7 +99,7 @@
 
                     <div class="wf-topbar-title-block">
                         <div class="wf-breadcrumb">
-                            <span>위젯 대시보드</span>
+                            <span>WebFlex</span>
                             <span>/</span>
                             <span>@title</span>
                         </div>
@@ -193,8 +124,7 @@
                     </button>
 
                     <div class="wf-user-chip">
-                        @* <span class="wf-user-avatar">A</span> *@
-                        <span>Admin</span>
+                        <span>@userName</span>
                     </div>
 
                     <a class="wf-btn-icon wf-header-icon" href="/auth/logout" aria-label="로그아웃">
