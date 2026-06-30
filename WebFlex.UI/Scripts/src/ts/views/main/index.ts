@@ -1,6 +1,8 @@
 ﻿import type { CurrentValueDto } from "../../dtos/currentValueDto";
 
 type CurrentValueRow = CurrentValueDto & {
+    collectionSetting?: string | null;
+    cookieValue?: string | null;
     updateCount?: number | null;
 };
 
@@ -107,7 +109,7 @@ export default class Page {
 
         $("#currentValueBody").html(`
             <tr>
-                <td colspan="7" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
+                <td colspan="10" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
             </tr>
         `);
 
@@ -253,7 +255,7 @@ export default class Page {
             }
 
             const page = result.data;
-            const pageRows = page.rows ?? [];
+            const pageRows = (page.rows ?? []).map(x => this.normalizeCurrentRow(x));
 
             this.totalCount = page.totalCount;
 
@@ -278,7 +280,7 @@ export default class Page {
             if (this.rows.length === 0) {
                 $("#currentValueBody").html(`
                     <tr>
-                        <td colspan="7" class="wf-current-empty-cell">데이터 조회에 실패했습니다.</td>
+                        <td colspan="10" class="wf-current-empty-cell">데이터 조회에 실패했습니다.</td>
                     </tr>
                 `);
             }
@@ -315,7 +317,7 @@ export default class Page {
 
         source.addEventListener("currentvalue", (event: MessageEvent) => {
             try {
-                const row = JSON.parse(event.data) as CurrentValueRow;
+                const row = this.normalizeCurrentRow(JSON.parse(event.data));
                 this.applyUpdate(row);
             } catch (e) {
                 console.error("currentvalue parse error", e, event.data);
@@ -346,13 +348,16 @@ export default class Page {
             return;
         }
 
-        changed =
-            existing.value !== row.value ||
-            existing.status !== row.status ||
-            existing.updatedAt !== row.updatedAt;
+         changed =
+             existing.value !== row.value ||
+             existing.cookieValue !== row.cookieValue ||
+             existing.status !== row.status ||
+             existing.updatedAt !== row.updatedAt;
 
-        existing.value = row.value;
-        existing.status = row.status;
+         existing.collectionSetting = row.collectionSetting ?? existing.collectionSetting;
+         existing.value = row.value;
+         existing.cookieValue = row.cookieValue;
+         existing.status = row.status;
         existing.sourceTimestamp = row.sourceTimestamp;
         existing.receivedAt = row.receivedAt;
         existing.updatedAt = row.updatedAt;
@@ -385,12 +390,14 @@ export default class Page {
 
         const q = this.keyword.toLowerCase();
 
-        return String(row.groupId ?? "").toLowerCase().includes(q) ||
-            String(row.tagId ?? "").toLowerCase().includes(q) ||
-            String(row.value ?? "").toLowerCase().includes(q);
+         return String(row.collectionSetting ?? "").toLowerCase().includes(q) ||
+             String(row.groupId ?? "").toLowerCase().includes(q) ||
+             String(row.tagId ?? "").toLowerCase().includes(q) ||
+             String(row.value ?? "").toLowerCase().includes(q) ||
+             String(row.cookieValue ?? "").toLowerCase().includes(q);
     }
 
-     requestRender(): void {
+    requestRender(): void {
         if (this.renderTimer != null) {
             return;
         }
@@ -401,7 +408,7 @@ export default class Page {
         }, 80);
     }
 
-     renderRows(): void {
+    renderRows(): void {
         const tbody = document.getElementById("currentValueBody") as HTMLTableSectionElement | null;
 
         if (tbody == null) {
@@ -410,10 +417,10 @@ export default class Page {
 
         if (this.rows.length === 0) {
             tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
-                </tr>
-            `;
+            <tr>
+                <td colspan="10" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
+            </tr>
+        `;
             $("#lblVisibleRange").text("0 ~ 0");
             return;
         }
@@ -426,38 +433,60 @@ export default class Page {
         this.refreshIcons();
     }
 
-     renderRow(row: CurrentValueRow, index: number): string {
+    renderRow(row: CurrentValueRow, index: number): string {
         const groupId = row.groupId ?? "";
         const key = this.makeKey(groupId, row.tagId);
         const isGood = this.isGoodStatus(row.status);
         const statusText = this.formatStatus(row.status);
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
+        const collectionSetting = row.collectionSetting ?? "";
 
         return `
-            <tr class="${flashClass}">
-                <td>
-                    <span class="wf-current-row-index">${index + 1}</span>
-                    <span class="wf-current-group-text" title="${this.escapeHtml(groupId)}">${this.escapeHtml(groupId || "-")}</span>
-                </td>
-                <td>
-                    <strong class="wf-current-tag" title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</strong>
-                </td>
-                <td>
-                    <span class="wf-current-value" title="${this.escapeHtml(row.value ?? "")}">
-                        ${this.escapeHtml(row.value ?? "-")}
-                    </span>
-                </td>
-                <td>
-                    <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
-                        <span class="wf-status-dot"></span>
-                        ${this.escapeHtml(statusText)}
-                    </span>
-                </td>
-                <td class="text-end">${this.formatNumber(row.updateCount)}</td>
-                <td>${this.formatDate(row.sourceTimestamp)}</td>
-                <td>${this.formatDate(row.updatedAt)}</td>
-            </tr>
-        `;
+        <tr class="${flashClass}">
+            <td>
+                <span class="wf-current-row-index">${index + 1}</span>
+            </td>
+            <td>
+                <span class="wf-current-setting-text"
+                      title="${this.escapeHtml(collectionSetting)}">
+                    ${this.escapeHtml(collectionSetting || "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-group-text"
+                      title="${this.escapeHtml(groupId)}">
+                    ${this.escapeHtml(groupId || "-")}
+                </span>
+            </td>
+            <td>
+                <strong class="wf-current-tag"
+                        title="${this.escapeHtml(row.tagId)}">
+                    ${this.escapeHtml(row.tagId)}
+                </strong>
+            </td>
+            <td>
+                <span class="wf-current-value"
+                      title="${this.escapeHtml(row.value ?? "")}">
+                    ${this.escapeHtml(row.value ?? "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-cookie-value"
+                      title="${this.escapeHtml(row.cookieValue ?? "")}">
+                    ${this.escapeHtml(row.cookieValue ?? "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
+                    <span class="wf-status-dot"></span>
+                    ${this.escapeHtml(statusText)}
+                </span>
+            </td>
+            <td class="text-end">${this.formatNumber(row.updateCount)}</td>
+            <td>${this.formatDate(row.sourceTimestamp)}</td>
+            <td>${this.formatDate(row.updatedAt)}</td>
+        </tr>
+    `;
     }
 
      updateHeaderCount(): void {
@@ -511,6 +540,65 @@ export default class Page {
         return normalized.includes("good") ||
             normalized === "0" ||
             normalized === "0x00000000";
+    }
+
+    normalizeCurrentRow(row: any): CurrentValueRow {
+        return {
+            ...row,
+            groupId: this.readValue(row, "groupId", "GROUP_ID", "group_id"),
+            tagId: String(this.readValue(row, "tagId", "TAG_ID", "tag_id") ?? ""),
+            collectionSetting: this.readValue(row, "collectionSetting", "DESCRIPTION", "description"),
+            value: this.readValue(row, "value", "VALUE"),
+            cookieValue: this.readValue(row, "cookieValue", "COOKIE_VALUE", "cookie_value"),
+            status: this.readValue(row, "status", "STATUS"),
+            updateCount: this.readNumber(row, "updateCount", "UPDATE_COUNT", "update_count"),
+            sourceTimestamp: this.readValue(row, "sourceTimestamp", "SOURCETIMESTAMP", "source_timestamp"),
+            receivedAt: this.readValue(row, "receivedAt", "RECEIVEDAT", "received_at"),
+            updatedAt: this.readValue(row, "updatedAt", "UPDATEDAT", "updated_at")
+        };
+    }
+
+    readValue(row: any, ...names: string[]): any {
+        if (row == null) {
+            return null;
+        }
+
+        for (const name of names) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) {
+                return row[name];
+            }
+        }
+
+        const targets = names.map(x => this.normalizeFieldName(x));
+
+        for (const key of Object.keys(row)) {
+            if (targets.includes(this.normalizeFieldName(key))) {
+                return row[key];
+            }
+        }
+
+        return null;
+    }
+
+    readNumber(row: any, ...names: string[]): number | null {
+        const value = this.readValue(row, ...names);
+
+        if (value == null || value === "") {
+            return null;
+        }
+
+        const numberValue = Number(value);
+
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
+    }
+
+    normalizeFieldName(value: string): string {
+        return String(value ?? "")
+            .replace(/_/g, "")
+            .replace(/-/g, "")
+            .toLowerCase();
     }
 
      makeKey(groupId: string | null | undefined, tagId: string): string {

@@ -100,7 +100,7 @@ class Page {
         this.flashKeys.clear();
         $("#currentValueBody").html(`
             <tr>
-                <td colspan="7" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
+                <td colspan="10" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
             </tr>
         `);
         await this.loadNextPage();
@@ -215,7 +215,7 @@ class Page {
                 throw new Error("CurrentValue 조회 실패");
             }
             const page = result.data;
-            const pageRows = (_a = page.rows) !== null && _a !== void 0 ? _a : [];
+            const pageRows = ((_a = page.rows) !== null && _a !== void 0 ? _a : []).map(x => this.normalizeCurrentRow(x));
             this.totalCount = page.totalCount;
             for (const row of pageRows) {
                 const key = this.makeKey(row.groupId, row.tagId);
@@ -234,7 +234,7 @@ class Page {
             if (this.rows.length === 0) {
                 $("#currentValueBody").html(`
                     <tr>
-                        <td colspan="7" class="wf-current-empty-cell">데이터 조회에 실패했습니다.</td>
+                        <td colspan="10" class="wf-current-empty-cell">데이터 조회에 실패했습니다.</td>
                     </tr>
                 `);
             }
@@ -265,7 +265,7 @@ class Page {
         });
         source.addEventListener("currentvalue", (event) => {
             try {
-                const row = JSON.parse(event.data);
+                const row = this.normalizeCurrentRow(JSON.parse(event.data));
                 this.applyUpdate(row);
             }
             catch (e) {
@@ -278,6 +278,7 @@ class Page {
         };
     }
     applyUpdate(row) {
+        var _a;
         if (!this.isMatchedCurrentFilter(row)) {
             return;
         }
@@ -293,9 +294,12 @@ class Page {
         }
         changed =
             existing.value !== row.value ||
+                existing.cookieValue !== row.cookieValue ||
                 existing.status !== row.status ||
                 existing.updatedAt !== row.updatedAt;
+        existing.collectionSetting = (_a = row.collectionSetting) !== null && _a !== void 0 ? _a : existing.collectionSetting;
         existing.value = row.value;
+        existing.cookieValue = row.cookieValue;
         existing.status = row.status;
         existing.sourceTimestamp = row.sourceTimestamp;
         existing.receivedAt = row.receivedAt;
@@ -313,7 +317,7 @@ class Page {
         this.requestRender();
     }
     isMatchedCurrentFilter(row) {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e, _f;
         const groupId = (_a = row.groupId) !== null && _a !== void 0 ? _a : "";
         if (this.selectedGroupId.length > 0 && groupId !== this.selectedGroupId) {
             return false;
@@ -322,9 +326,11 @@ class Page {
             return true;
         }
         const q = this.keyword.toLowerCase();
-        return String((_b = row.groupId) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(q) ||
-            String((_c = row.tagId) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(q) ||
-            String((_d = row.value) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(q);
+        return String((_b = row.collectionSetting) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(q) ||
+            String((_c = row.groupId) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(q) ||
+            String((_d = row.tagId) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(q) ||
+            String((_e = row.value) !== null && _e !== void 0 ? _e : "").toLowerCase().includes(q) ||
+            String((_f = row.cookieValue) !== null && _f !== void 0 ? _f : "").toLowerCase().includes(q);
     }
     requestRender() {
         if (this.renderTimer != null) {
@@ -342,10 +348,10 @@ class Page {
         }
         if (this.rows.length === 0) {
             tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
-                </tr>
-            `;
+            <tr>
+                <td colspan="10" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
+            </tr>
+        `;
             $("#lblVisibleRange").text("0 ~ 0");
             return;
         }
@@ -356,37 +362,59 @@ class Page {
         this.refreshIcons();
     }
     renderRow(row, index) {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f;
         const groupId = (_a = row.groupId) !== null && _a !== void 0 ? _a : "";
         const key = this.makeKey(groupId, row.tagId);
         const isGood = this.isGoodStatus(row.status);
         const statusText = this.formatStatus(row.status);
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
+        const collectionSetting = (_b = row.collectionSetting) !== null && _b !== void 0 ? _b : "";
         return `
-            <tr class="${flashClass}">
-                <td>
-                    <span class="wf-current-row-index">${index + 1}</span>
-                    <span class="wf-current-group-text" title="${this.escapeHtml(groupId)}">${this.escapeHtml(groupId || "-")}</span>
-                </td>
-                <td>
-                    <strong class="wf-current-tag" title="${this.escapeHtml(row.tagId)}">${this.escapeHtml(row.tagId)}</strong>
-                </td>
-                <td>
-                    <span class="wf-current-value" title="${this.escapeHtml((_b = row.value) !== null && _b !== void 0 ? _b : "")}">
-                        ${this.escapeHtml((_c = row.value) !== null && _c !== void 0 ? _c : "-")}
-                    </span>
-                </td>
-                <td>
-                    <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
-                        <span class="wf-status-dot"></span>
-                        ${this.escapeHtml(statusText)}
-                    </span>
-                </td>
-                <td class="text-end">${this.formatNumber(row.updateCount)}</td>
-                <td>${this.formatDate(row.sourceTimestamp)}</td>
-                <td>${this.formatDate(row.updatedAt)}</td>
-            </tr>
-        `;
+        <tr class="${flashClass}">
+            <td>
+                <span class="wf-current-row-index">${index + 1}</span>
+            </td>
+            <td>
+                <span class="wf-current-setting-text"
+                      title="${this.escapeHtml(collectionSetting)}">
+                    ${this.escapeHtml(collectionSetting || "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-group-text"
+                      title="${this.escapeHtml(groupId)}">
+                    ${this.escapeHtml(groupId || "-")}
+                </span>
+            </td>
+            <td>
+                <strong class="wf-current-tag"
+                        title="${this.escapeHtml(row.tagId)}">
+                    ${this.escapeHtml(row.tagId)}
+                </strong>
+            </td>
+            <td>
+                <span class="wf-current-value"
+                      title="${this.escapeHtml((_c = row.value) !== null && _c !== void 0 ? _c : "")}">
+                    ${this.escapeHtml((_d = row.value) !== null && _d !== void 0 ? _d : "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-cookie-value"
+                      title="${this.escapeHtml((_e = row.cookieValue) !== null && _e !== void 0 ? _e : "")}">
+                    ${this.escapeHtml((_f = row.cookieValue) !== null && _f !== void 0 ? _f : "-")}
+                </span>
+            </td>
+            <td>
+                <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
+                    <span class="wf-status-dot"></span>
+                    ${this.escapeHtml(statusText)}
+                </span>
+            </td>
+            <td class="text-end">${this.formatNumber(row.updateCount)}</td>
+            <td>${this.formatDate(row.sourceTimestamp)}</td>
+            <td>${this.formatDate(row.updatedAt)}</td>
+        </tr>
+    `;
     }
     updateHeaderCount() {
         $("#lblTotalCount").text(this.totalCount.toLocaleString());
@@ -430,6 +458,55 @@ class Page {
         return normalized.includes("good") ||
             normalized === "0" ||
             normalized === "0x00000000";
+    }
+    normalizeCurrentRow(row) {
+        var _a;
+        return {
+            ...row,
+            groupId: this.readValue(row, "groupId", "GROUP_ID", "group_id"),
+            tagId: String((_a = this.readValue(row, "tagId", "TAG_ID", "tag_id")) !== null && _a !== void 0 ? _a : ""),
+            collectionSetting: this.readValue(row, "collectionSetting", "DESCRIPTION", "description"),
+            value: this.readValue(row, "value", "VALUE"),
+            cookieValue: this.readValue(row, "cookieValue", "COOKIE_VALUE", "cookie_value"),
+            status: this.readValue(row, "status", "STATUS"),
+            updateCount: this.readNumber(row, "updateCount", "UPDATE_COUNT", "update_count"),
+            sourceTimestamp: this.readValue(row, "sourceTimestamp", "SOURCETIMESTAMP", "source_timestamp"),
+            receivedAt: this.readValue(row, "receivedAt", "RECEIVEDAT", "received_at"),
+            updatedAt: this.readValue(row, "updatedAt", "UPDATEDAT", "updated_at")
+        };
+    }
+    readValue(row, ...names) {
+        if (row == null) {
+            return null;
+        }
+        for (const name of names) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) {
+                return row[name];
+            }
+        }
+        const targets = names.map(x => this.normalizeFieldName(x));
+        for (const key of Object.keys(row)) {
+            if (targets.includes(this.normalizeFieldName(key))) {
+                return row[key];
+            }
+        }
+        return null;
+    }
+    readNumber(row, ...names) {
+        const value = this.readValue(row, ...names);
+        if (value == null || value === "") {
+            return null;
+        }
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
+    }
+    normalizeFieldName(value) {
+        return String(value !== null && value !== void 0 ? value : "")
+            .replace(/_/g, "")
+            .replace(/-/g, "")
+            .toLowerCase();
     }
     makeKey(groupId, tagId) {
         return `${groupId !== null && groupId !== void 0 ? groupId : ""}||${tagId}`;

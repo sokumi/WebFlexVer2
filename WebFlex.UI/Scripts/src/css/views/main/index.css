@@ -268,7 +268,7 @@
 
 .wf-current-table {
     width: 100%;
-    min-width: 1100px;
+    min-width: 1550px;
     border-collapse: separate;
     border-spacing: 0;
     color: var(--wf-text);
@@ -317,9 +317,11 @@
     font-weight: 900;
 }
 
+.wf-current-setting-text,
 .wf-current-group-text,
 .wf-current-tag,
-.wf-current-value {
+.wf-current-value,
+.wf-current-cookie-value {
     display: inline-block;
     max-width: 100%;
     overflow: hidden;
@@ -338,6 +340,19 @@
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     color: var(--wf-text);
     font-weight: 900;
+}
+
+.wf-current-cookie-value {
+    max-width: 520px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--wf-primary);
+    font-weight: 950;
+}
+
+.wf-current-setting-text {
+    max-width: 100%;
+    color: var(--wf-text);
+    font-weight: 850;
 }
 
 .wf-current-status {
@@ -369,7 +384,8 @@
     }
 
 .value-flash td,
-.value-flash .wf-current-value {
+.value-flash .wf-current-value,
+.value-flash .wf-current-cookie-value {
     animation: wf-current-flash 1.6s ease;
 }
 
