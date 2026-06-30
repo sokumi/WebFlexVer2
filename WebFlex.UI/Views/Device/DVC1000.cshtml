@@ -23,7 +23,7 @@
                             <input id="txtGridKeyword"
                                    type="text"
                                    class="form-control"
-                                   placeholder="코드/이름 검색" />
+                                   placeholder="코드/이름/주소/Endpoint 검색" />
                         </div>
 
                         <button id="btnSearch" type="button" class="btn btn-outline-secondary btn-sm">
@@ -91,7 +91,9 @@
                         </div>
 
                         <div class="wf-form-field">
-                            <label for="txtDeviceName" class="form-label">디바이스명 <span class="text-danger">*</span></label>
+                            <label for="txtDeviceName" class="form-label">
+                                디바이스명 <span class="text-danger">*</span>
+                            </label>
                             <input id="txtDeviceName"
                                    type="text"
                                    class="form-control"
@@ -99,12 +101,16 @@
                         </div>
 
                         <div class="wf-form-field">
-                            <label for="selDeviceType" class="form-label">디바이스 타입</label>
+                            <label for="selDeviceType" class="form-label">
+                                디바이스 타입 <span class="text-danger">*</span>
+                            </label>
                             <select id="selDeviceType" class="form-select"></select>
                         </div>
 
                         <div class="wf-form-field">
-                            <label for="txtDeviceAddress" class="form-label">주소</label>
+                            <label for="txtDeviceAddress" class="form-label">
+                                주소 <span class="text-danger">*</span>
+                            </label>
                             <input id="txtDeviceAddress"
                                    type="text"
                                    class="form-control"
@@ -112,7 +118,9 @@
                         </div>
 
                         <div class="wf-form-field">
-                            <label for="txtPort" class="form-label">포트</label>
+                            <label for="txtPort" class="form-label">
+                                포트 <span class="text-danger">*</span>
+                            </label>
                             <input id="txtPort"
                                    type="number"
                                    class="form-control"
@@ -173,6 +181,29 @@
                     </h4>
 
                     <div class="wf-form-grid-2">
+                        <div class="wf-form-field">
+                            <label for="selSecurityMode" class="form-label">Security Mode</label>
+                            <select id="selSecurityMode" class="form-select">
+                                <option value="">선택 안 함</option>
+                                <option value="None">None</option>
+                                <option value="Sign">Sign</option>
+                                <option value="SignAndEncrypt">SignAndEncrypt</option>
+                            </select>
+                        </div>
+
+                        <div class="wf-form-field">
+                            <label for="selSecurityPolicy" class="form-label">Security Policy</label>
+                            <select id="selSecurityPolicy" class="form-select">
+                                <option value="">선택 안 함</option>
+                                <option value="None">None</option>
+                                <option value="Basic128Rsa15">Basic128Rsa15</option>
+                                <option value="Basic256">Basic256</option>
+                                <option value="Basic256Sha256">Basic256Sha256</option>
+                                <option value="Aes128_Sha256_RsaOaep">Aes128_Sha256_RsaOaep</option>
+                                <option value="Aes256_Sha256_RsaPss">Aes256_Sha256_RsaPss</option>
+                            </select>
+                        </div>
+
                         <div class="wf-form-field">
                             <label for="txtUserName" class="form-label">사용자명</label>
                             <input id="txtUserName"

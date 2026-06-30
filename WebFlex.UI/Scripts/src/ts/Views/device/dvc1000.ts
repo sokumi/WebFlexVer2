@@ -1,4 +1,6 @@
-﻿import { api } from "../../framework/common";
+﻿import $ from "jquery";
+
+import { api, escapeHtml } from "../../framework/common";
 import { notify } from "../../framework/notify";
 import { WebFlexGrid } from "../../components/grid/webflexGrid";
 import {
@@ -7,12 +9,38 @@ import {
     textFormatter
 } from "../../components/grid/webflexGridFormatters";
 
+const DEFAULT_DEVICE_TYPE = "OPCUA";
+const DEFAULT_PORT = 4840;
+const DEFAULT_INTERVAL = 1000;
+
+type DeviceRow = {
+    id: string;
+    deviceCode: string;
+    deviceName: string;
+    deviceType: string;
+    deviceAddress: string;
+    port: number | null;
+    endpointUrl: string;
+    isCollectEnabled: boolean;
+    isEnabled: boolean;
+    useSecurity: boolean;
+    securityMode: string;
+    securityPolicy: string;
+    useAnonymous: boolean;
+    userName: string;
+    password: string;
+    publishingIntervalMs: number | null;
+    samplingIntervalMs: number | null;
+    description: string;
+    tagCount: number;
+};
+
 export default class Page {
-    grid: WebFlexGrid<any> | null = null;
-    rows: any[] = [];
+    grid: WebFlexGrid<DeviceRow> | null = null;
+    rows: DeviceRow[] = [];
     selectedId = "";
 
-    public init(): void {
+    init(): void {
         this.initGrid();
         this.bindEvents();
         this.clearForm();
@@ -45,28 +73,37 @@ export default class Page {
             void this.previewEndpoint();
         });
 
-        $("#selDeviceType, #txtDeviceAddress, #txtPort").on("change", () => {
+        $("#selDeviceType, #txtDeviceAddress, #txtPort").on("change input", () => {
             this.applyEndpointPlaceholder();
+        });
+
+        $("#chkUseSecurity").on("change", () => {
+            this.syncSecurityFields();
+        });
+
+        $("#chkUseAnonymous").on("change", () => {
+            this.syncAccountFields();
         });
     }
 
     initGrid(): void {
         this.grid = WebFlexGrid
-            .create<any>("#gridDevice")
+            .create<DeviceRow>("#gridDevice")
             .height("100%")
             .pagination(12)
             .selectableRows(1)
+            .placeholder("등록된 디바이스가 없습니다.")
             .columns([
                 {
                     title: "코드",
                     field: "deviceCode",
-                    width: 120,
+                    width: 130,
                     formatter: textFormatter
                 },
                 {
                     title: "디바이스명",
                     field: "deviceName",
-                    minWidth: 190,
+                    minWidth: 200,
                     formatter: textFormatter
                 },
                 {
@@ -76,7 +113,7 @@ export default class Page {
                     formatter: (cell: any) => {
                         const value = String(cell.getValue() ?? "");
                         const className = value === "OPCUA" ? "good" : "warning";
-                        return `<span class="wf-status ${className}">${value}</span>`;
+                        return `<span class="wf-status ${className}">${escapeHtml(value || "-")}</span>`;
                     }
                 },
                 {
@@ -88,7 +125,7 @@ export default class Page {
                 {
                     title: "포트",
                     field: "port",
-                    width: 100,
+                    width: 90,
                     hozAlign: "right",
                     formatter: numberFormatter
                 },
@@ -102,14 +139,14 @@ export default class Page {
                 {
                     title: "수집",
                     field: "isCollectEnabled",
-                    width: 90,
+                    width: 80,
                     hozAlign: "center",
                     formatter: boolFormatter
                 },
                 {
                     title: "사용",
                     field: "isEnabled",
-                    width: 90,
+                    width: 80,
                     hozAlign: "center",
                     formatter: boolFormatter
                 }
@@ -139,10 +176,13 @@ export default class Page {
             $formType.empty();
 
             for (const item of result.data) {
-                $formType.append(`<option value="${item.value}">${item.text}</option>`);
+                $formType.append(
+                    `<option value="${escapeHtml(item.value)}">${escapeHtml(item.text)}</option>`
+                );
             }
 
-            $formType.val("OPCUA");
+            $formType.val(DEFAULT_DEVICE_TYPE);
+            this.applyEndpointPlaceholder();
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "디바이스 타입 조회 중 오류가 발생했습니다.");
         }
@@ -161,10 +201,8 @@ export default class Page {
                 return;
             }
 
-            this.rows = result.data ?? [];
+            this.rows = (result.data ?? []).map((x: any) => this.normalizeRow(x));
             await this.applyClientFilter();
-
-            notify.success("디바이스 목록을 조회했습니다.");
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "디바이스 목록 조회 중 오류가 발생했습니다.");
         } finally {
@@ -180,12 +218,14 @@ export default class Page {
             : this.rows.filter(x =>
                 String(x.deviceCode ?? "").toLowerCase().includes(keyword) ||
                 String(x.deviceName ?? "").toLowerCase().includes(keyword) ||
+                String(x.deviceType ?? "").toLowerCase().includes(keyword) ||
                 String(x.deviceAddress ?? "").toLowerCase().includes(keyword) ||
                 String(x.endpointUrl ?? "").toLowerCase().includes(keyword)
             );
 
         await this.grid?.setData(filteredRows);
         this.updateGridSummary(filteredRows.length, this.rows.length);
+        this.updateSelectedAfterReload();
     }
 
     updateGridSummary(visibleCount: number, totalCount: number): void {
@@ -193,28 +233,49 @@ export default class Page {
         $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
     }
 
-    selectRow(row: any): void {
-        this.selectedId = row.id;
+    updateSelectedAfterReload(): void {
+        if (this.selectedId.length === 0) {
+            return;
+        }
 
-        $("#hidId").val(row.id);
-        $("#txtDeviceCode").val(row.deviceCode);
-        $("#txtDeviceName").val(row.deviceName);
-        $("#selDeviceType").val(row.deviceType);
-        $("#txtDeviceAddress").val(row.deviceAddress);
-        $("#txtPort").val(row.port);
-        $("#txtEndpointUrl").val(row.endpointUrl);
-        $("#chkCollect").prop("checked", row.isCollectEnabled);
-        $("#chkEnabled").prop("checked", row.isEnabled);
-        $("#chkUseSecurity").prop("checked", row.useSecurity);
-        $("#chkUseAnonymous").prop("checked", row.useAnonymous);
-        $("#txtUserName").val(row.userName ?? "");
-        $("#txtPassword").val(row.password ?? "");
-        $("#txtPublishingIntervalMs").val(row.publishingIntervalMs ?? 1000);
-        $("#txtSamplingIntervalMs").val(row.samplingIntervalMs ?? 1000);
-        $("#txtDescription").val(row.description ?? "");
+        const selected = this.rows.find(x => x.id === this.selectedId);
 
-        this.setEditMode(row.deviceName);
+        if (selected == null) {
+            this.clearForm();
+            return;
+        }
+
+        $("#lblSelectedDevice").text(`${selected.deviceName} 선택됨`);
+    }
+
+    selectRow(row: DeviceRow): void {
+        const device = this.normalizeRow(row);
+
+        this.selectedId = device.id;
+
+        $("#hidId").val(device.id);
+        $("#txtDeviceCode").val(device.deviceCode);
+        $("#txtDeviceName").val(device.deviceName);
+        $("#selDeviceType").val(device.deviceType || DEFAULT_DEVICE_TYPE);
+        $("#txtDeviceAddress").val(device.deviceAddress);
+        $("#txtPort").val(device.port ?? DEFAULT_PORT);
+        $("#txtEndpointUrl").val(device.endpointUrl);
+        $("#chkCollect").prop("checked", device.isCollectEnabled);
+        $("#chkEnabled").prop("checked", device.isEnabled);
+        $("#chkUseSecurity").prop("checked", device.useSecurity);
+        $("#selSecurityMode").val(device.securityMode ?? "");
+        $("#selSecurityPolicy").val(device.securityPolicy ?? "");
+        $("#chkUseAnonymous").prop("checked", device.useAnonymous);
+        $("#txtUserName").val(device.userName ?? "");
+        $("#txtPassword").val(device.password ?? "");
+        $("#txtPublishingIntervalMs").val(device.publishingIntervalMs ?? DEFAULT_INTERVAL);
+        $("#txtSamplingIntervalMs").val(device.samplingIntervalMs ?? DEFAULT_INTERVAL);
+        $("#txtDescription").val(device.description ?? "");
+
+        this.setEditMode(device.deviceName);
         this.applyEndpointPlaceholder();
+        this.syncSecurityFields();
+        this.syncAccountFields();
     }
 
     clearForm(): void {
@@ -223,22 +284,26 @@ export default class Page {
         $("#hidId").val("");
         $("#txtDeviceCode").val("");
         $("#txtDeviceName").val("");
-        $("#selDeviceType").val("OPCUA");
+        $("#selDeviceType").val(DEFAULT_DEVICE_TYPE);
         $("#txtDeviceAddress").val("");
-        $("#txtPort").val(4840);
+        $("#txtPort").val(DEFAULT_PORT);
         $("#txtEndpointUrl").val("");
         $("#chkCollect").prop("checked", true);
         $("#chkEnabled").prop("checked", true);
         $("#chkUseSecurity").prop("checked", false);
+        $("#selSecurityMode").val("");
+        $("#selSecurityPolicy").val("");
         $("#chkUseAnonymous").prop("checked", true);
         $("#txtUserName").val("");
         $("#txtPassword").val("");
-        $("#txtPublishingIntervalMs").val(1000);
-        $("#txtSamplingIntervalMs").val(1000);
+        $("#txtPublishingIntervalMs").val(DEFAULT_INTERVAL);
+        $("#txtSamplingIntervalMs").val(DEFAULT_INTERVAL);
         $("#txtDescription").val("");
 
         this.setCreateMode();
         this.applyEndpointPlaceholder();
+        this.syncSecurityFields();
+        this.syncAccountFields();
     }
 
     setCreateMode(): void {
@@ -263,18 +328,20 @@ export default class Page {
         return {
             id: this.selectedId || null,
             deviceName: String($("#txtDeviceName").val() ?? "").trim(),
-            deviceType: String($("#selDeviceType").val() ?? "OPCUA"),
+            deviceType: String($("#selDeviceType").val() ?? DEFAULT_DEVICE_TYPE).trim(),
             deviceAddress: String($("#txtDeviceAddress").val() ?? "").trim(),
             port: Number($("#txtPort").val() ?? 0),
             endpointUrl: String($("#txtEndpointUrl").val() ?? "").trim(),
             isCollectEnabled: $("#chkCollect").prop("checked") === true,
             isEnabled: $("#chkEnabled").prop("checked") === true,
             useSecurity: $("#chkUseSecurity").prop("checked") === true,
+            securityMode: String($("#selSecurityMode").val() ?? "").trim(),
+            securityPolicy: String($("#selSecurityPolicy").val() ?? "").trim(),
             useAnonymous: $("#chkUseAnonymous").prop("checked") === true,
             userName: String($("#txtUserName").val() ?? "").trim(),
             password: String($("#txtPassword").val() ?? ""),
-            publishingIntervalMs: Number($("#txtPublishingIntervalMs").val() ?? 1000),
-            samplingIntervalMs: Number($("#txtSamplingIntervalMs").val() ?? 1000),
+            publishingIntervalMs: Number($("#txtPublishingIntervalMs").val() ?? DEFAULT_INTERVAL),
+            samplingIntervalMs: Number($("#txtSamplingIntervalMs").val() ?? DEFAULT_INTERVAL),
             description: String($("#txtDescription").val() ?? "").trim()
         };
     }
@@ -304,6 +371,18 @@ export default class Page {
             return "Sampling Interval을 입력해 주세요.";
         }
 
+        if (request.useSecurity && request.securityMode.length === 0) {
+            return "Security Mode를 선택해 주세요.";
+        }
+
+        if (request.useSecurity && request.securityPolicy.length === 0) {
+            return "Security Policy를 선택해 주세요.";
+        }
+
+        if (!request.useAnonymous && request.userName.length === 0) {
+            return "익명 접속을 사용하지 않으면 사용자명을 입력해야 합니다.";
+        }
+
         return null;
     }
 
@@ -330,6 +409,16 @@ export default class Page {
             notify.success(result.message ?? "저장되었습니다.");
 
             await this.loadList();
+
+            const savedId = String(result.data?.id ?? "");
+            if (savedId.length > 0) {
+                const savedRow = this.rows.find(x => x.id === savedId);
+                if (savedRow != null) {
+                    this.selectRow(savedRow);
+                    return;
+                }
+            }
+
             this.clearForm();
         } catch (e) {
             notify.error(e instanceof Error ? e.message : "저장 중 오류가 발생했습니다.");
@@ -342,16 +431,18 @@ export default class Page {
             return;
         }
 
-        if (!confirm("선택한 디바이스를 삭제하시겠습니까?")) {
+        if (!confirm("선택한 디바이스를 삭제하시겠습니까? 등록된 태그도 함께 삭제됩니다.")) {
             return;
         }
 
         try {
             const result = await api.post({
                 url: "/device/manage/delete",
-                data: {
-                    id: this.selectedId
-                }
+                data: [
+                    {
+                        id: this.selectedId
+                    }
+                ]
             });
 
             if (!result.success) {
@@ -401,5 +492,119 @@ export default class Page {
         }
 
         $("#txtEndpointUrl").attr("placeholder", "비워두면 자동 생성");
+    }
+
+    syncSecurityFields(): void {
+        const useSecurity = $("#chkUseSecurity").prop("checked") === true;
+
+        $("#selSecurityMode").prop("disabled", !useSecurity);
+        $("#selSecurityPolicy").prop("disabled", !useSecurity);
+
+        if (!useSecurity) {
+            $("#selSecurityMode").val("");
+            $("#selSecurityPolicy").val("");
+        }
+    }
+
+    syncAccountFields(): void {
+        const useAnonymous = $("#chkUseAnonymous").prop("checked") === true;
+
+        $("#txtUserName").prop("disabled", useAnonymous);
+        $("#txtPassword").prop("disabled", useAnonymous);
+
+        if (useAnonymous) {
+            $("#txtUserName").val("");
+            $("#txtPassword").val("");
+        }
+    }
+
+    normalizeRow(row: any): DeviceRow {
+        return {
+            ...row,
+            id: this.readValue(row, "id", "ID", "deviceId", "DEVICE_ID") ?? "",
+            deviceCode: this.readValue(row, "deviceCode", "deviceId", "id", "ID") ?? "",
+            deviceName: this.readValue(row, "deviceName", "DEVICE_NAME") ?? "",
+            deviceType: this.readValue(row, "deviceType", "DEVICE_TYPE") ?? "",
+            deviceAddress: this.readValue(row, "deviceAddress", "DEVICE_ADDRESS") ?? "",
+            port: this.readNumber(row, "port", "PORT"),
+            endpointUrl: this.readValue(row, "endpointUrl", "ENDPOINT_URL") ?? "",
+            isCollectEnabled: this.readBool(row, true, "isCollectEnabled", "IS_COLLECTENABLED"),
+            isEnabled: this.readBool(row, true, "isEnabled", "IsEnabled"),
+            useSecurity: this.readBool(row, false, "useSecurity", "USESECURITY"),
+            securityMode: this.readValue(row, "securityMode", "SECURITYMODE") ?? "",
+            securityPolicy: this.readValue(row, "securityPolicy", "SECURITYPOLICY") ?? "",
+            useAnonymous: this.readBool(row, true, "useAnonymous", "USE_ANONYMOUS"),
+            userName: this.readValue(row, "userName", "USER_NAME") ?? "",
+            password: this.readValue(row, "password", "PASSWORD") ?? "",
+            publishingIntervalMs: this.readNumber(row, "publishingIntervalMs", "PUBLISHINGINTERVALMS"),
+            samplingIntervalMs: this.readNumber(row, "samplingIntervalMs", "SAMPLINGINTERVALMS"),
+            description: this.readValue(row, "description", "DESCRIPTION") ?? "",
+            tagCount: this.readNumber(row, "tagCount", "TAG_COUNT") ?? 0
+        };
+    }
+
+    readValue(row: any, ...names: string[]): any {
+        if (row == null) {
+            return null;
+        }
+
+        for (const name of names) {
+            if (Object.prototype.hasOwnProperty.call(row, name)) {
+                return row[name];
+            }
+        }
+
+        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+
+        for (const key of Object.keys(row)) {
+            if (normalizedNames.includes(this.normalizeFieldName(key))) {
+                return row[key];
+            }
+        }
+
+        return null;
+    }
+
+    readBool(row: any, defaultValue: boolean, ...names: string[]): boolean {
+        const value = this.readValue(row, ...names);
+
+        if (value == null) {
+            return defaultValue;
+        }
+
+        if (typeof value === "boolean") {
+            return value;
+        }
+
+        const text = String(value).trim().toLowerCase();
+
+        if (text === "true" || text === "1" || text === "y" || text === "yes") {
+            return true;
+        }
+
+        if (text === "false" || text === "0" || text === "n" || text === "no") {
+            return false;
+        }
+
+        return defaultValue;
+    }
+
+    readNumber(row: any, ...names: string[]): number | null {
+        const value = this.readValue(row, ...names);
+
+        if (value == null || value === "") {
+            return null;
+        }
+
+        const numberValue = Number(value);
+
+        return Number.isFinite(numberValue) ? numberValue : null;
+    }
+
+    normalizeFieldName(value: string): string {
+        return String(value ?? "")
+            .replace(/_/g, "")
+            .replace(/-/g, "")
+            .toLowerCase();
     }
 }
