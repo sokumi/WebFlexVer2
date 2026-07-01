@@ -1,3 +1,12 @@
+** 작업 시 필수로 기억해야 하는 부분
+CSS 클래스명: dvc1020-*를 대량 생성하지 말고, 기존처럼 wf-* 공통 클래스 중심 + 정말 필요한 페이지 전용 클래스만 최소화
+CSHTML 구조: 기존 레이아웃, 카드, 툴바, 검색 패널, 드로어/팝업 구조와 동일한 작성 방식
+TS 구조: Page 클래스, init(), 이벤트 바인딩, API 호출, notify, 렌더링 함수 분리 방식은 기존과 동일하게
+Controller 구조: WebFlexController 상속, Success/ErrorData, WebFlexModelMapper.PopulateDTOModel, ApplyModel, 트랜잭션/예외처리 패턴 동일하게
+모델 매핑: request 필드를 하나씩 꺼내서 변수로 쓰는 방식이 아니라, 요청 전체를 모델에 먼저 담고 검증/보정/저장
+기능 구현: 새 페이지 기능에 맞게 새로 작성
+결론 => 기존의 코드 스타일은 유지하고, 공통으로 사용하는 코드를 사용한다.
+
 # WebFlexVer2 AI 작업 컨텍스트
 
 이 문서는 새 대화창에서 WebFlexVer2 작업을 이어가기 위한 요약 문서입니다.
