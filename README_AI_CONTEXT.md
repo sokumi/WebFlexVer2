@@ -15,6 +15,83 @@
 
 새 대화에서는 먼저 이 파일을 읽고, 저장소 최신 코드를 확인한 뒤 작업합니다.
 
+
+OPC 기반 설비/태그를 등록하고, OPC UA 데이터를 수집해서 PostgreSQL/TimescaleDB에 저장하고, 웹에서 실시간 상태와 수집 데이터를 관리/조회하는 산업용 IoT 모니터링/수집 관리 시스템이에요.
+
+프로젝트 역할
+
+WebFlex.Shared
+공통 엔티티/DTO/Enum 프로젝트입니다.
+OpcDevice, OpcTag, OpcGroup, OpcCollectOption, CurrentValue, TimescaleValue 같은 DB 모델이 여기 있습니다. BaseEntity를 기준으로 ID, IsEnabled, CreatedAt, UpdatedAt를 공통으로 쓰고, KeyFieldColumn, ColumnStringLength, ColumnRequired, Column(Order) 같은 커스텀 속성으로 DB 매핑 스타일을 맞춥니다.
+WebFlex.UI
+ASP.NET Core MVC 웹 화면입니다.
+Razor View + Controller + TypeScript + CSS 구조이고, 디바이스 관리, 태그 관리, OPC 수집 관리, 옵션 관리, Timescale 조회/설정, Windows Service 제어 화면을 담당합니다.
+일반 설정 DB는 WebFlexDbContext, 시계열 조회 DB는 TsdReadDbContext로 분리되어 있습니다. 인증은 Cookie Auth이고, 기본적으로 모든 MVC에 AuthorizeFilter가 걸려 있습니다.
+WebFlex.OpcCollector
+실제 OPC 수집 Windows Service입니다.
+OPC UA 세션/구독을 만들고, 태그 값을 메모리 딕셔너리에 최신값으로 유지한 뒤 1초 단위 스냅샷을 만들어 TimescaleDB에 저장합니다. API 서버 역할도 같이 해서 UI에서 JWT로 상태 조회/제어를 호출하는 구조입니다.
+
+사이트 구조
+
+Device
+DVC1000: 디바이스 등록/관리
+DVC1010: 디바이스 태그 관리
+현재 메뉴 시드에는 DVC2000 그룹 관리가 잡혀 있음
+Opc
+OPC1000: OPC 수집 상태/디바이스별 구독 관리
+OPC1020: Collector 수집 옵션
+OPC1030: OPC Client/Subscription/MonitoredItem 옵션
+OPC3000: OPC History 조회
+OPC4000: TimescaleDB 설정
+System
+SVC1000: Windows Service 설치/시작/중지/재시작/삭제
+Main/Index
+실시간 currentvalue 리스트형 대시보드
+
+코드 스타일
+
+Controller는 보통 [Route(".../[action]")] + [HttpGet/HttpPost, ActionName("...")] 패턴입니다.
+View 라우팅 Controller는 return View(MVCPath.Device.DVC1010)처럼 MVCPath 상수를 사용합니다.
+API 응답은 { success, message, data } 형태로 통일하려는 방향입니다.
+저장/수정 Controller는 WebFlexModelMapper.PopulateDTOModel<T>()로 request를 모델에 먼저 담고, 그 뒤 검증/보정/저장하는 스타일입니다.
+저장성 로직은 BeginTransactionAsync() + try/catch + WebFlexMessageException 업무 예외 처리 패턴을 씁니다.
+EF는 명시적 DbSet보다 _db.Set<OpcTag>(), _db.Set<OpcDevice>()를 많이 사용합니다.
+
+프론트 스타일
+
+Razor는 화면 뼈대만 만들고, 실제 데이터 조회/이벤트/렌더링은 페이지별 TS에서 처리합니다.
+TS는 export default class Page { init(): void { ... } } 형태입니다.
+jQuery + axios 계열 api.get/post, notify.success/error/warning/info, 공통 WebFlexGrid, WebFlexPopup, WebFlexCheckTree를 사용합니다.
+CSS 클래스는 wf-* 공통 클래스 중심입니다. 페이지 전용 클래스도 wf-tag-*, wf-opc-*처럼 의미 기반으로 쓰고, dvc1020-* 같은 페이지번호 클래스 남발은 피하는 방향입니다.
+UI는 Tabler/Bootstrap 기반, Grid는 Tabulator, Chart는 ECharts, Icon은 Lucide입니다.
+CSS는 webflex-theme.css, webflex-layout.css, webflex-components.css 같은 공통 변수/컴포넌트 기반이고, 현재 테마는 에메랄드/그린 톤입니다.
+
+수집 구조
+현재 최신 코드 기준 수집 흐름은 이렇습니다.
+
+OpcCollectTargetProvider
+→ DB의 OpcDevice / OpcTag 수집 대상 조회
+→ OpcUaRuntimeService
+→ OPC UA Session / Subscription / MonitoredItem 생성
+→ 값 변경 이벤트 수신
+→ runtime.CurrentValues 딕셔너리에 최신값 유지
+→ OpcRuntimeManager가 1초 경계마다 Snapshot 생성
+→ TimescaleDbWriter.SaveSnapshotAsync()
+→ COPY BINARY로 public.timescale 저장
+→ 옵션이 켜져 있으면 public.currentvalue upsert
+
+중요한 점은 최신 TimescaleDbWriter는 예전처럼 일반 큐를 계속 쌓는 구조가 아니라, DirectSnapshot 방식입니다. 다만 내부 저장은 _saveLock으로 한 번에 하나씩 처리하고, InsertHistoryAsync()에서 기본 chunk를 최대 500개로 잘라 COPY하고 있습니다.
+
+DB 구조
+
+일반 설정 DB: WebFlexDb
+디바이스, 태그, 그룹, 옵션, 메뉴, 사용자/권한 등.
+시계열 DB: WebFlexTsd
+timescale, timescale_minute, currentvalue, currentvalue_minute.
+현재 시계열 모델은 tag_id, group_id, value, status, cookie_value, source_timestamp, received_at 중심입니다. 예전 endpoint_url/node_id 중심에서 tag_id/group_id 중심으로 바뀐 상태입니다.
+
+한 줄로 정리하면, WebFlexVer2는 OPC 수집기를 Windows Service로 돌리고, MVC 웹에서 디바이스/태그/수집옵션/서비스/실시간 데이터를 관리하는 .NET 8 기반 OPC IoT 수집 플랫폼
+
 ---
 
 ## 작업 방식
