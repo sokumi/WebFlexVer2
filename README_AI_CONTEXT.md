@@ -9,13 +9,8 @@
 - 기능 구현: 새 페이지 기능에 맞게 새로 작성
 - 기존의 코드 스타일은 유지하고, 공통으로 사용하는 코드를 사용, 기존 모델 중심으로 사용하고 무분별한 dto 및 type 생성하지 않음
 
-# WebFlexVer2 AI 작업 컨텍스트
 
-이 문서는 새 대화창에서 WebFlexVer2 작업을 이어가기 위한 요약 문서입니다.
-
-새 대화에서는 먼저 이 파일을 읽고, 저장소 최신 코드를 확인한 뒤 작업합니다.
-
-
+저장소 코드 설명
 OPC 기반 설비/태그를 등록하고, OPC UA 데이터를 수집해서 PostgreSQL/TimescaleDB에 저장하고, 웹에서 실시간 상태와 수집 데이터를 관리/조회하는 산업용 IoT 모니터링/수집 관리 시스템이에요.
 
 프로젝트 역할
@@ -91,6 +86,16 @@ timescale, timescale_minute, currentvalue, currentvalue_minute.
 현재 시계열 모델은 tag_id, group_id, value, status, cookie_value, source_timestamp, received_at 중심입니다. 예전 endpoint_url/node_id 중심에서 tag_id/group_id 중심으로 바뀐 상태입니다.
 
 한 줄로 정리하면, WebFlexVer2는 OPC 수집기를 Windows Service로 돌리고, MVC 웹에서 디바이스/태그/수집옵션/서비스/실시간 데이터를 관리하는 .NET 8 기반 OPC IoT 수집 플랫폼
+
+
+# WebFlexVer2 AI 작업 컨텍스트
+
+이 문서는 새 대화창에서 WebFlexVer2 작업을 이어가기 위한 요약 문서입니다.
+
+새 대화에서는 먼저 이 파일을 읽고, 저장소 최신 코드를 확인한 뒤 작업합니다.
+
+
+
 
 ---
 
