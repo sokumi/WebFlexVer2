@@ -81739,14 +81739,18 @@ function initWebFlexIcons() {
     (0,lucide__WEBPACK_IMPORTED_MODULE_4__.createIcons)({
         icons: lucide__WEBPACK_IMPORTED_MODULE_5__
     });
+    removeLucideMarkerFromSvg();
+}
+function removeLucideMarkerFromSvg() {
+    document.querySelectorAll("svg[data-lucide]").forEach(svg => {
+        svg.removeAttribute("data-lucide");
+    });
 }
 function exposeWebFlexIcons() {
     const target = window;
     target.lucide = {
         createIcons: () => {
-            (0,lucide__WEBPACK_IMPORTED_MODULE_4__.createIcons)({
-                icons: lucide__WEBPACK_IMPORTED_MODULE_5__
-            });
+            initWebFlexIcons();
         }
     };
 }
@@ -81905,7 +81909,14 @@ function bindSidebarToggle() {
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     });
     mobileButton === null || mobileButton === void 0 ? void 0 : mobileButton.addEventListener("click", () => {
-        setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
+        if (isMobile()) {
+            setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
+            return;
+        }
+        sidebar.classList.toggle("is-collapsed");
+        const isCollapsed = sidebar.classList.contains("is-collapsed");
+        mobileButton.setAttribute("aria-expanded", String(!isCollapsed));
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     });
     backdrop === null || backdrop === void 0 ? void 0 : backdrop.addEventListener("click", () => {
         setMobileSidebarOpen(false);

@@ -43,6 +43,14 @@ function initWebFlexIcons(): void {
     createIcons({
         icons
     });
+
+    removeLucideMarkerFromSvg();
+}
+
+function removeLucideMarkerFromSvg(): void {
+    document.querySelectorAll<SVGElement>("svg[data-lucide]").forEach(svg => {
+        svg.removeAttribute("data-lucide");
+    });
 }
 
 function exposeWebFlexIcons(): void {
@@ -50,9 +58,7 @@ function exposeWebFlexIcons(): void {
 
     target.lucide = {
         createIcons: () => {
-            createIcons({
-                icons
-            });
+            initWebFlexIcons();
         }
     };
 }
@@ -247,7 +253,17 @@ function bindSidebarToggle(): void {
     });
 
     mobileButton?.addEventListener("click", () => {
-        setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
+        if (isMobile()) {
+            setMobileSidebarOpen(!sidebar.classList.contains("is-open"));
+            return;
+        }
+
+        sidebar.classList.toggle("is-collapsed");
+
+        const isCollapsed = sidebar.classList.contains("is-collapsed");
+        mobileButton.setAttribute("aria-expanded", String(!isCollapsed));
+
+        window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     });
 
     backdrop?.addEventListener("click", () => {

@@ -832,7 +832,7 @@ body {
     }
 
 .wf-mobile-menu-toggle {
-    display: none;
+    display: inline-flex;
     flex: 0 0 auto;
 }
 
@@ -1043,11 +1043,7 @@ body {
 
     body.wf-sidebar-open {
         overflow: hidden;
-    }
-
-    .wf-mobile-menu-toggle {
-        display: inline-flex;
-    }
+    } 
 
     .wf-main {
         flex: 1 1 auto;
