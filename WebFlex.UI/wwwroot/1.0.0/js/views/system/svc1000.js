@@ -11077,7 +11077,7 @@ class Page {
             .removeClass("is-running is-stopped is-not-installed is-error is-unknown")
             .addClass("is-error");
     }
-    async post(url, successMessage) {
+    async post(url, successMessage = null) {
         var _a, _b, _c;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_1__.api.post({
@@ -11153,9 +11153,9 @@ class Page {
         this.updateLogCount(text);
     }
     updateLogCount(text) {
-        this.logCount = text.trim().length === 0
+        this.logCount = String(text).trim().length === 0
             ? 0
-            : text.split(/\r?\n/).filter(x => x.trim().length > 0).length;
+            : String(text).split(/\r?\n/).filter((x) => x.trim().length > 0).length;
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#serviceLogCount").text(`${this.logCount.toLocaleString()}개 항목`);
     }
     getVisualStatus(data) {

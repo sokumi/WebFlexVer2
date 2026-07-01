@@ -325,8 +325,7 @@
     }
 
 .wf-tag-code {
-    color: var(--wf-success);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--wf-success); 
     font-weight: 800;
 }
 

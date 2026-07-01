@@ -70,57 +70,8 @@
             </div>
         </header>
 
-        <div class="wf-current-table-head">
-            <table class="wf-current-table">
-                <colgroup>
-                    <col style="width: 60px;" />
-                    <col style="width: 220px;" />
-                    <col style="width: 110px;" />
-                    <col style="width: 170px;" />
-                    <col style="width: 180px;" />
-                    <col style="width: 220px;" />
-                    <col style="width: 110px;" />
-                    <col style="width: 130px;" />
-                    <col style="width: 170px;" />
-                    <col style="width: 170px;" />
-                </colgroup>
-                <thead>
-                    <tr>
-                        <th>번호</th>
-                        <th>수집 항목 설정</th>
-                        <th>그룹</th>
-                        <th>태그 ID</th>
-                        <th>현재값</th>
-                        <th>변환값</th>
-                        <th>상태</th>
-                        <th>업데이트</th>
-                        <th>Source Time</th>
-                        <th>Updated Time</th>
-                    </tr>
-                </thead>
-            </table>
-        </div>
-
-        <div id="currentValueScroll" class="wf-current-scroll">
-            <table class="wf-current-table">
-                <colgroup>
-                    <col style="width: 60px;" />
-                    <col style="width: 220px;" />
-                    <col style="width: 110px;" />
-                    <col style="width: 170px;" />
-                    <col style="width: 180px;" />
-                    <col style="width: 220px;" />
-                    <col style="width: 110px;" />
-                    <col style="width: 130px;" />
-                    <col style="width: 170px;" />
-                    <col style="width: 170px;" />
-                </colgroup>
-                <tbody id="currentValueBody">
-                    <tr>
-                        <td colspan="10" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="wf-current-grid-wrap">
+            <div id="currentValueGrid" class="wf-current-tabulator"></div>
 
             <div id="currentValueLoading" class="wf-current-loading d-none">
                 <span class="spinner-border spinner-border-sm"></span>

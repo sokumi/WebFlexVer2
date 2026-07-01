@@ -3,31 +3,13 @@
 import { api } from "../../framework/common";
 import { notify } from "../../framework/notify";
 
-type ServiceStatusRow = {
-    serviceName: string;
-    displayName: string;
-    status: string;
-    exists: boolean;
-    exePath: string;
-    error?: string | null;
-};
-
-type ServiceCommandResult = {
-    success: boolean;
-    message?: string;
-    output?: string;
-    error?: string;
-};
-
-type ServiceVisualStatus = "running" | "stopped" | "not-installed" | "error" | "unknown";
-
 export default class Page {
     isAutoRefresh = true;
     isLogCollapsed = true;
     logCount = 0;
-    refreshTimerId: number | null = null;
+    refreshTimerId: any = null;
 
-    init(): void {
+    init() {
         $("#btnRefresh").on("click", () => {
             void this.loadStatus(true);
         });
@@ -72,7 +54,7 @@ export default class Page {
         });
     }
 
-    async loadStatus(showToast: boolean = false): Promise<void> {
+    async loadStatus(showToast: any = false) {
         try {
             const result = await api.get({
                 url: "/system/service/status"
@@ -82,7 +64,7 @@ export default class Page {
                 throw new Error(result.message ?? "서비스 상태 조회에 실패했습니다.");
             }
 
-            const data = result.data as ServiceStatusRow;
+            const data = result.data;
 
             this.renderStatus(data);
             this.setButtonState(data);
@@ -106,7 +88,7 @@ export default class Page {
         }
     }
 
-    renderStatus(data: ServiceStatusRow): void {
+    renderStatus(data: any) {
         const displayName = data.displayName || "WebFlex Collector Service";
         const serviceName = data.serviceName || "WebFlexCollector";
         const exePath = data.exePath || "-";
@@ -131,7 +113,7 @@ export default class Page {
             .addClass(`is-${visualStatus}`);
     }
 
-    renderErrorStatus(): void {
+    renderErrorStatus() {
         $("#serviceStatus").text("조회 실패");
 
         $("#serviceHeroCard")
@@ -143,7 +125,7 @@ export default class Page {
             .addClass("is-error");
     }
 
-    async post(url: string, successMessage?: string): Promise<void> {
+    async post(url: any, successMessage: any = null) {
         try {
             const result = await api.post({
                 url,
@@ -166,7 +148,7 @@ export default class Page {
         }
     }
 
-    async installService(): Promise<void> {
+    async installService() {
         if (!confirm("WebFlex OPC Collector 서비스를 등록할까요?")) {
             return;
         }
@@ -174,7 +156,7 @@ export default class Page {
         await this.post("/system/service/install", "서비스 등록이 완료되었습니다.");
     }
 
-    async restartService(): Promise<void> {
+    async restartService() {
         if (!confirm("WebFlex OPC Collector 서비스를 재시작할까요?")) {
             return;
         }
@@ -182,7 +164,7 @@ export default class Page {
         await this.post("/system/service/restart", "서비스 재시작 요청이 완료되었습니다.");
     }
 
-    async uninstallService(): Promise<void> {
+    async uninstallService() {
         if (!confirm("WebFlex OPC Collector 서비스를 삭제할까요?")) {
             return;
         }
@@ -190,7 +172,7 @@ export default class Page {
         await this.post("/system/service/uninstall", "서비스 삭제가 완료되었습니다.");
     }
 
-    setButtonState(data: ServiceStatusRow): void {
+    setButtonState(data: any) {
         const exists = data.exists === true;
         const status = data.status ?? "";
 
@@ -205,11 +187,11 @@ export default class Page {
         $("#btnUninstall").prop("disabled", !exists || isRunning);
     }
 
-    toggleLog(): void {
+    toggleLog() {
         this.setLogCollapsed(!this.isLogCollapsed);
     }
 
-    setLogCollapsed(isCollapsed: boolean): void {
+    setLogCollapsed(isCollapsed: any) {
         this.isLogCollapsed = isCollapsed;
 
         $("#serviceLogCard").toggleClass("is-collapsed", isCollapsed);
@@ -219,13 +201,14 @@ export default class Page {
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     }
 
-    writeResult(data: unknown): void {
+    writeResult(data: any) {
         const text = JSON.stringify(data, null, 2);
+
         $("#resultBox").text(text);
         this.updateLogCount(text);
     }
 
-    writeError(error: unknown): void {
+    writeError(error: any) {
         const text = error instanceof Error
             ? error.message
             : String(error);
@@ -234,15 +217,15 @@ export default class Page {
         this.updateLogCount(text);
     }
 
-    updateLogCount(text: string): void {
-        this.logCount = text.trim().length === 0
+    updateLogCount(text: any) {
+        this.logCount = String(text).trim().length === 0
             ? 0
-            : text.split(/\r?\n/).filter(x => x.trim().length > 0).length;
+            : String(text).split(/\r?\n/).filter((x: any) => x.trim().length > 0).length;
 
         $("#serviceLogCount").text(`${this.logCount.toLocaleString()}개 항목`);
     }
 
-    getVisualStatus(data: ServiceStatusRow): ServiceVisualStatus {
+    getVisualStatus(data: any) {
         if (data.status === "Running") {
             return "running";
         }
@@ -262,7 +245,7 @@ export default class Page {
         return "unknown";
     }
 
-    getStatusText(data: ServiceStatusRow): string {
+    getStatusText(data: any) {
         if (!data.exists || data.status === "NotInstalled") {
             return "미등록";
         }
@@ -282,7 +265,7 @@ export default class Page {
         return data.status || "알 수 없음";
     }
 
-    setTextWithFlash(selector: string, value: unknown): void {
+    setTextWithFlash(selector: any, value: any) {
         const $el = $(selector);
         const newText = value == null || value === "" ? "-" : String(value);
         const oldText = $el.text();
@@ -294,7 +277,7 @@ export default class Page {
         $el.text(newText);
         $el.removeClass("value-flash");
 
-        const element = $el[0] as HTMLElement | undefined;
+        const element = $el[0] as any;
 
         if (element != null) {
             void element.offsetWidth;

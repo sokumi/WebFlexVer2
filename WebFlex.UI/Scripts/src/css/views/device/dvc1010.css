@@ -98,8 +98,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     background: var(--wf-surface-soft);
-    color: var(--wf-text-muted);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--wf-text-muted); 
 }
 
 .wf-tag-controlbar-actions {

@@ -301,7 +301,7 @@ class Page {
             this.majorGroups = (_c = data.majorGroups) !== null && _c !== void 0 ? _c : [];
             this.groups = (_d = data.groups) !== null && _d !== void 0 ? _d : [];
             this.expandedMajorIds.clear();
-            this.majorGroups.forEach(x => this.expandedMajorIds.add(x.id));
+            this.majorGroups.forEach((x) => this.expandedMajorIds.add(x.id));
             this.renderTree();
             this.renderGroupSelects();
         }
@@ -334,35 +334,50 @@ class Page {
     renderTree() {
         const keyword = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtTreeKeyword").toLowerCase();
         const totalTagCount = this.groups.reduce((sum, x) => { var _a; return sum + Number((_a = x.tagCount) !== null && _a !== void 0 ? _a : 0); }, 0);
-        const noneGroups = this.groups.filter(x => !x.majorGroupId);
+        const noneGroups = this.groups.filter((x) => !x.majorGroupId);
         let html = `
             <button type="button" class="wf-group-tree-row ${this.selectedMajorGroupId == null ? "is-active" : ""}" data-tree-all>
-                <span class="wf-group-tree-left"><i data-lucide="globe"></i><span>전체</span></span>
+                <span class="wf-group-tree-left">
+                    <i data-lucide="globe"></i>
+                    <span>전체</span>
+                </span>
                 <span class="wf-group-tree-count">${totalTagCount}</span>
             </button>
         `;
-        this.majorGroups.forEach(major => {
+        this.majorGroups.forEach((major) => {
             var _a;
-            const childGroups = this.groups.filter(x => x.majorGroupId === major.id);
+            const childGroups = this.groups.filter((x) => x.majorGroupId === major.id);
             const majorMatch = String((_a = major.name) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword);
-            const childMatch = childGroups.some(x => { var _a; return String((_a = x.name) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword); });
-            if (keyword.length > 0 && !majorMatch && !childMatch)
+            const childMatch = childGroups.some((x) => { var _a; return String((_a = x.name) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword); });
+            if (keyword.length > 0 && !majorMatch && !childMatch) {
                 return;
+            }
             const expanded = this.expandedMajorIds.has(major.id);
             const tagCount = childGroups.reduce((sum, x) => { var _a; return sum + Number((_a = x.tagCount) !== null && _a !== void 0 ? _a : 0); }, 0);
             html += `
-                <button type="button" class="wf-group-tree-row ${this.selectedMajorGroupId === major.id ? "is-active" : ""}" data-major-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}">
-                    <span class="wf-group-tree-left"><i data-lucide="${expanded ? "chevron-down" : "chevron-right"}"></i><i data-lucide="folder"></i><span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.name)}</span></span>
+                <button type="button"
+                        class="wf-group-tree-row ${this.selectedMajorGroupId === major.id ? "is-active" : ""}"
+                        data-major-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}">
+                    <span class="wf-group-tree-left">
+                        <i data-lucide="${expanded ? "chevron-down" : "chevron-right"}"></i>
+                        <i data-lucide="folder"></i>
+                        <span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.name)}</span>
+                    </span>
                     <span class="wf-group-tree-count">${tagCount}</span>
                 </button>
             `;
-            if (!expanded)
+            if (!expanded) {
                 return;
-            childGroups.forEach(group => {
+            }
+            childGroups.forEach((group) => {
                 var _a;
                 html += `
                     <button type="button" class="wf-group-tree-row is-child" data-group-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}">
-                        <span class="wf-group-tree-left"><i data-lucide="corner-down-right"></i><i data-lucide="folder"></i><span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)}</span></span>
+                        <span class="wf-group-tree-left">
+                            <i data-lucide="corner-down-right"></i>
+                            <i data-lucide="folder"></i>
+                            <span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)}</span>
+                        </span>
                         <span class="wf-group-tree-count">${(_a = group.tagCount) !== null && _a !== void 0 ? _a : 0}</span>
                     </button>
                 `;
@@ -372,13 +387,22 @@ class Page {
             const tagCount = noneGroups.reduce((sum, x) => { var _a; return sum + Number((_a = x.tagCount) !== null && _a !== void 0 ? _a : 0); }, 0);
             html += `
                 <div class="wf-group-tree-divider"></div>
-                <button type="button" class="wf-group-tree-row ${this.selectedMajorGroupId === "__none" ? "is-active" : ""}" data-major-id="__none">
-                    <span class="wf-group-tree-left"><i data-lucide="folder-question"></i><span>미지정</span></span>
+                <button type="button"
+                        class="wf-group-tree-row ${this.selectedMajorGroupId === "__none" ? "is-active" : ""}"
+                        data-major-id="__none">
+                    <span class="wf-group-tree-left">
+                        <i data-lucide="folder-question"></i>
+                        <span>미지정</span>
+                    </span>
                     <span class="wf-group-tree-count">${tagCount}</span>
                 </button>
             `;
         }
         $("#groupTree").html(html);
+        this.bindTreeEvents();
+        this.createIcons();
+    }
+    bindTreeEvents() {
         $("#groupTree").find("[data-tree-all]").on("click", async () => {
             this.selectedMajorGroupId = null;
             await this.loadGroups();
@@ -388,10 +412,12 @@ class Page {
             const id = String($(event.currentTarget).data("major-id"));
             this.selectedMajorGroupId = id;
             if (id !== "__none") {
-                if (this.expandedMajorIds.has(id))
+                if (this.expandedMajorIds.has(id)) {
                     this.expandedMajorIds.delete(id);
-                else
+                }
+                else {
                     this.expandedMajorIds.add(id);
+                }
             }
             await this.loadGroups();
             this.renderTree();
@@ -402,68 +428,115 @@ class Page {
             this.renderGroupTable();
             void this.loadTags(groupId);
         });
-        this.createIcons();
     }
     renderGroupTable() {
         const keyword = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupKeyword").toLowerCase();
-        const rows = this.groups.filter(x => { var _a, _b, _c; return keyword.length === 0 || String((_a = x.name) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) || String((_b = x.majorGroupName) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) || String((_c = x.description) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword); });
+        const rows = this.groups.filter((x) => {
+            var _a, _b, _c;
+            if (keyword.length === 0) {
+                return true;
+            }
+            return String((_a = x.name) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) ||
+                String((_b = x.majorGroupName) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) ||
+                String((_c = x.description) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword);
+        });
         $("#lblGroupSummary").text(`총 ${rows.length}건`);
         if (rows.length === 0) {
-            $("#groupTableBody").html(`<tr><td colspan="7" class="text-center text-muted py-5">표시할 중그룹이 없습니다.</td></tr>`);
+            $("#groupTableBody").html(`
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-5">표시할 중그룹이 없습니다.</td>
+                </tr>
+            `);
             this.syncSelectedState();
             return;
         }
         let html = "";
-        rows.forEach(group => {
-            var _a, _b, _c, _d, _e, _f;
+        rows.forEach((group) => {
             const expanded = this.expandedGroupIds.has(group.id);
-            html += `
-                <tr>
-                    <td class="wf-icon-col"><button type="button" class="wf-group-expand-btn" data-toggle-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}"><i data-lucide="${expanded ? "chevron-down" : "chevron-right"}"></i></button></td>
-                    <td><span class="wf-group-badge"><i data-lucide="folder"></i>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = group.majorGroupName) !== null && _a !== void 0 ? _a : "미지정")}</span></td>
-                    <td><strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)}</strong>${group.sortOrder != null ? `<span class="wf-order-badge ms-1">#${group.sortOrder}</span>` : ""}</td>
-                    <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = group.description) !== null && _b !== void 0 ? _b : "")}</td>
-                    <td class="wf-number-col">${(_c = group.sortOrder) !== null && _c !== void 0 ? _c : ""}</td>
-                    <td class="wf-number-col"><span class="wf-tag-count-badge">${(_d = group.tagCount) !== null && _d !== void 0 ? _d : 0}</span></td>
-                    <td class="wf-action-col">
-                        <button type="button" class="wf-row-icon-btn" data-edit-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}" title="수정"><i data-lucide="pencil"></i></button>
-                        <button type="button" class="wf-row-icon-btn is-danger" data-delete-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}" title="삭제"><i data-lucide="trash-2"></i></button>
-                    </td>
-                </tr>
-            `;
+            html += this.renderGroupRow(group, expanded);
             if (expanded) {
-                html += `
-        <tr class="wf-tag-panel-row">
-            <td colspan="7">
-                <div class="wf-tag-panel">
-                    <div class="wf-tag-panel-header">
-                        <div class="wf-tag-panel-title">
-                            <i data-lucide="tag"></i>
-                            <span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)} 태그 (${(_e = group.tagCount) !== null && _e !== void 0 ? _e : 0})</span>
-                        </div>
-
-                        <div class="wf-tag-panel-tools">
-                            <div class="wf-grid-search wf-tag-search">
-                                <i data-lucide="search"></i>
-                                <input type="text"
-                                       class="form-control"
-                                       data-tag-keyword="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}"
-                                       value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_f = this.tagKeywords.get(group.id)) !== null && _f !== void 0 ? _f : "")}"
-                                       placeholder="태그 검색..." />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="wf-tag-panel-body" id="tagBody_${this.cssEscape(group.id)}">
-                        ${this.renderTags(group.id)}
-                    </div>
-                </div>
-            </td>
-        </tr>
-    `;
+                html += this.renderTagPanelRow(group);
             }
         });
         $("#groupTableBody").html(html);
+        this.bindGroupTableEvents();
+        this.expandedGroupIds.forEach(groupId => {
+            if (!this.tagMap.has(groupId)) {
+                void this.loadTags(groupId);
+            }
+        });
+        this.syncSelectedState();
+        this.createIcons();
+    }
+    renderGroupRow(group, expanded) {
+        var _a, _b, _c, _d;
+        return `
+            <tr>
+                <td class="wf-icon-col">
+                    <button type="button" class="wf-group-expand-btn" data-toggle-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}">
+                        <i data-lucide="${expanded ? "chevron-down" : "chevron-right"}"></i>
+                    </button>
+                </td>
+                <td>
+                    <span class="wf-group-badge">
+                        <i data-lucide="folder"></i>
+                        ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = group.majorGroupName) !== null && _a !== void 0 ? _a : "미지정")}
+                    </span>
+                </td>
+                <td>
+                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)}</strong>
+                    ${group.sortOrder != null ? `<span class="wf-order-badge ms-1">#${group.sortOrder}</span>` : ""}
+                </td>
+                <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = group.description) !== null && _b !== void 0 ? _b : "")}</td>
+                <td class="wf-number-col">${(_c = group.sortOrder) !== null && _c !== void 0 ? _c : ""}</td>
+                <td class="wf-number-col">
+                    <span class="wf-tag-count-badge">${(_d = group.tagCount) !== null && _d !== void 0 ? _d : 0}</span>
+                </td>
+                <td class="wf-action-col">
+                    <button type="button" class="wf-row-icon-btn" data-edit-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}" title="수정">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                    <button type="button" class="wf-row-icon-btn is-danger" data-delete-group="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.id)}" title="삭제">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }
+    renderTagPanelRow(group) {
+        var _a, _b;
+        const groupId = group.id;
+        return `
+            <tr class="wf-tag-panel-row">
+                <td colspan="7">
+                    <div class="wf-tag-panel">
+                        <div class="wf-tag-panel-header">
+                            <div class="wf-tag-panel-title">
+                                <i data-lucide="tag"></i>
+                                <span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.name)} 태그 (${(_a = group.tagCount) !== null && _a !== void 0 ? _a : 0})</span>
+                            </div>
+
+                            <div class="wf-tag-panel-tools">
+                                <div class="wf-grid-search wf-tag-search">
+                                    <i data-lucide="search"></i>
+                                    <input type="text"
+                                           class="form-control"
+                                           data-tag-keyword="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(groupId)}"
+                                           value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = this.tagKeywords.get(groupId)) !== null && _b !== void 0 ? _b : "")}"
+                                           placeholder="태그 검색..." />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="wf-tag-panel-body" id="tagBody_${this.cssEscape(groupId)}">
+                            ${this.renderTags(groupId)}
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    }
+    bindGroupTableEvents() {
         $("#groupTableBody").find("[data-toggle-group]").on("click", event => {
             event.stopPropagation();
             void this.toggleGroup(String($(event.currentTarget).data("toggle-group")));
@@ -471,48 +544,50 @@ class Page {
         $("#groupTableBody").find("[data-edit-group]").on("click", event => {
             event.stopPropagation();
             const groupId = String($(event.currentTarget).data("edit-group"));
-            const group = this.groups.find(x => x.id === groupId);
-            if (group)
+            const group = this.groups.find((x) => x.id === groupId);
+            if (group) {
                 this.openGroupEdit(group);
+            }
         });
         $("#groupTableBody").find("[data-delete-group]").on("click", event => {
             event.stopPropagation();
             void this.deleteGroup(String($(event.currentTarget).data("delete-group")));
         });
-        $("#groupTableBody").find(".wf-tag-check").on("click", event => event.stopPropagation());
-        $("#groupTableBody").find(".wf-tag-check").on("change", event => this.onTagCheckChanged(event));
+        this.bindTagCheckEvents($("#groupTableBody"));
         $("#groupTableBody").find("[data-tag-keyword]").on("input", event => {
             var _a;
             const groupId = String($(event.currentTarget).data("tag-keyword"));
             const keyword = String((_a = $(event.currentTarget).val()) !== null && _a !== void 0 ? _a : "");
             this.tagKeywords.set(groupId, keyword);
-            const host = $(`#tagBody_${this.cssEscape(groupId)}`);
-            host.html(this.renderTags(groupId));
-            host.find(".wf-tag-check").on("click", e => e.stopPropagation());
-            host.find(".wf-tag-check").on("change", e => this.onTagCheckChanged(e));
-            host.find(".wf-tag-check-all").on("change", e => this.toggleAllTagsInGroup(e, groupId));
+            this.refreshTagBody(groupId);
         });
-        this.expandedGroupIds.forEach(groupId => { if (!this.tagMap.has(groupId))
-            void this.loadTags(groupId); });
+    }
+    bindTagCheckEvents(host, groupId = null) {
+        host.find(".wf-tag-check").on("click", (event) => event.stopPropagation());
+        host.find(".wf-tag-check").on("change", (event) => this.onTagCheckChanged(event));
+        if (groupId != null) {
+            host.find(".wf-tag-check-all").on("change", (event) => this.toggleAllTagsInGroup(event, groupId));
+        }
+        else {
+            host.find(".wf-tag-check-all").on("change", (event) => {
+                const targetGroupId = String($(event.currentTarget).data("tag-group-id"));
+                this.toggleAllTagsInGroup(event, targetGroupId);
+            });
+        }
+    }
+    refreshTagBody(groupId) {
+        const host = $(`#tagBody_${this.cssEscape(groupId)}`);
+        host.html(this.renderTags(groupId));
+        this.bindTagCheckEvents(host, groupId);
         this.syncSelectedState();
-        this.createIcons();
     }
     toggleAllTagsInGroup(event, groupId) {
         var _a, _b;
         const checked = $(event.currentTarget).prop("checked") === true;
         const keyword = ((_a = this.tagKeywords.get(groupId)) !== null && _a !== void 0 ? _a : "").toLowerCase();
         const tags = (_b = this.tagMap.get(groupId)) !== null && _b !== void 0 ? _b : [];
-        const rows = tags.filter(tag => {
-            var _a, _b, _c, _d;
-            if (keyword.length === 0) {
-                return true;
-            }
-            return String((_a = tag.id) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword)
-                || String((_b = tag.nodeId) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword)
-                || String((_c = tag.tagName) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword)
-                || String((_d = tag.description) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(keyword);
-        });
-        rows.forEach(tag => {
+        const rows = tags.filter((tag) => this.isMatchedTagKeyword(tag, keyword));
+        rows.forEach((tag) => {
             if (checked) {
                 this.selectedTagIds.add(tag.id);
             }
@@ -520,12 +595,7 @@ class Page {
                 this.selectedTagIds.delete(tag.id);
             }
         });
-        const host = $(`#tagBody_${this.cssEscape(groupId)}`);
-        host.html(this.renderTags(groupId));
-        host.find(".wf-tag-check").on("click", e => e.stopPropagation());
-        host.find(".wf-tag-check").on("change", e => this.onTagCheckChanged(e));
-        host.find(".wf-tag-check-all").on("change", e => this.toggleAllTagsInGroup(e, groupId));
-        this.syncSelectedState();
+        this.refreshTagBody(groupId);
     }
     renderTags(groupId) {
         var _a;
@@ -534,61 +604,65 @@ class Page {
             return `<div class="wf-tag-empty-text">태그 불러오는 중...</div>`;
         }
         const keyword = ((_a = this.tagKeywords.get(groupId)) !== null && _a !== void 0 ? _a : "").toLowerCase();
-        const rows = tags.filter(tag => {
-            var _a, _b, _c, _d;
-            if (keyword.length === 0) {
-                return true;
-            }
-            return String((_a = tag.id) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword)
-                || String((_b = tag.nodeId) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword)
-                || String((_c = tag.tagName) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword)
-                || String((_d = tag.description) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(keyword);
-        });
+        const rows = tags.filter((tag) => this.isMatchedTagKeyword(tag, keyword));
         if (rows.length === 0) {
             return `<div class="wf-tag-empty-text">표시할 태그가 없습니다.</div>`;
         }
-        const allChecked = rows.length > 0 && rows.every(tag => this.selectedTagIds.has(tag.id));
+        const allChecked = rows.length > 0 && rows.every((tag) => this.selectedTagIds.has(tag.id));
         return `
-        <table class="wf-group-inner-table">
-            <thead>
-                <tr>
-                    <th class="wf-check-col">
-                        <input type="checkbox"
-                               class="form-check-input wf-tag-check-all"
-                               data-tag-group-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(groupId)}"
-                               ${allChecked ? "checked" : ""} />
-                    </th>
-                    <th class="wf-number-col">순서</th>
-                    <th>필드명</th>
-                    <th>태그명</th>
-                    <th>설명</th>
-                    <th class="wf-number-col">위젯</th>
-                    <th class="wf-number-col">정렬</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${rows.map((tag, index) => {
-            var _a, _b, _c, _d;
-            return `
+            <table class="wf-group-inner-table">
+                <thead>
                     <tr>
-                        <td class="wf-check-col">
+                        <th class="wf-check-col">
                             <input type="checkbox"
-                                   class="form-check-input wf-tag-check"
-                                   data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.id)}"
-                                   ${this.selectedTagIds.has(tag.id) ? "checked" : ""} />
-                        </td>
-                        <td class="wf-number-col"><span class="wf-order-badge">${index + 1}</span></td>
-                        <td class="wf-tag-code">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = tag.nodeId) !== null && _a !== void 0 ? _a : tag.id)}</td>
-                        <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = tag.tagName) !== null && _b !== void 0 ? _b : "")}</td>
-                        <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_c = tag.description) !== null && _c !== void 0 ? _c : "")}</td>
-                        <td class="wf-number-col">${tag.showOnDashboard ? "사용" : "미사용"}</td>
-                        <td class="wf-number-col">${(_d = tag.sortOrder) !== null && _d !== void 0 ? _d : ""}</td>
+                                   class="form-check-input wf-tag-check-all"
+                                   data-tag-group-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(groupId)}"
+                                   ${allChecked ? "checked" : ""} />
+                        </th>
+                        <th class="wf-number-col">순서</th>
+                        <th>필드명</th>
+                        <th>태그명</th>
+                        <th>설명</th>
+                        <th class="wf-number-col">위젯</th>
+                        <th class="wf-number-col">정렬</th>
                     </tr>
-                `;
-        }).join("")}
-            </tbody>
-        </table>
-    `;
+                </thead>
+                <tbody>
+                    ${rows.map((tag, index) => this.renderTagRow(tag, index)).join("")}
+                </tbody>
+            </table>
+        `;
+    }
+    renderTagRow(tag, index) {
+        var _a, _b, _c, _d;
+        return `
+            <tr>
+                <td class="wf-check-col">
+                    <input type="checkbox"
+                           class="form-check-input wf-tag-check"
+                           data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.id)}"
+                           ${this.selectedTagIds.has(tag.id) ? "checked" : ""} />
+                </td>
+                <td class="wf-number-col">
+                    <span class="wf-order-badge">${index + 1}</span>
+                </td>
+                <td class="wf-tag-code">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = tag.nodeId) !== null && _a !== void 0 ? _a : tag.id)}</td>
+                <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = tag.tagName) !== null && _b !== void 0 ? _b : "")}</td>
+                <td>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_c = tag.description) !== null && _c !== void 0 ? _c : "")}</td>
+                <td class="wf-number-col">${tag.showOnDashboard ? "사용" : "미사용"}</td>
+                <td class="wf-number-col">${(_d = tag.sortOrder) !== null && _d !== void 0 ? _d : ""}</td>
+            </tr>
+        `;
+    }
+    isMatchedTagKeyword(tag, keyword) {
+        var _a, _b, _c, _d;
+        if (keyword.length === 0) {
+            return true;
+        }
+        return String((_a = tag.id) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) ||
+            String((_b = tag.nodeId) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) ||
+            String((_c = tag.tagName) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword) ||
+            String((_d = tag.description) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(keyword);
     }
     async toggleGroup(groupId) {
         if (this.expandedGroupIds.has(groupId)) {
@@ -613,9 +687,7 @@ class Page {
             this.tagMap.set(groupId, (_a = result.data) !== null && _a !== void 0 ? _a : []);
             if (host.length > 0) {
                 host.html(this.renderTags(groupId));
-                host.find(".wf-tag-check").on("click", event => event.stopPropagation());
-                host.find(".wf-tag-check").on("change", event => this.onTagCheckChanged(event));
-                host.find(".wf-tag-check-all").on("change", event => this.toggleAllTagsInGroup(event, groupId));
+                this.bindTagCheckEvents(host, groupId);
             }
             this.syncSelectedState();
         }
@@ -627,18 +699,28 @@ class Page {
     }
     onTagCheckChanged(event) {
         const tagId = String($(event.currentTarget).data("tag-id"));
-        if ($(event.currentTarget).prop("checked") === true)
+        if ($(event.currentTarget).prop("checked") === true) {
             this.selectedTagIds.add(tagId);
-        else
+        }
+        else {
             this.selectedTagIds.delete(tagId);
+        }
         this.syncSelectedState();
     }
     async selectGroupTags(groupId, checked) {
         var _a;
-        if (!this.tagMap.has(groupId))
+        if (!this.tagMap.has(groupId)) {
             await this.loadTags(groupId);
+        }
         const tags = (_a = this.tagMap.get(groupId)) !== null && _a !== void 0 ? _a : [];
-        tags.forEach(tag => checked ? this.selectedTagIds.add(tag.id) : this.selectedTagIds.delete(tag.id));
+        tags.forEach((tag) => {
+            if (checked) {
+                this.selectedTagIds.add(tag.id);
+            }
+            else {
+                this.selectedTagIds.delete(tag.id);
+            }
+        });
         this.renderGroupTable();
     }
     openMajorList() {
@@ -653,17 +735,38 @@ class Page {
         this.openDrawer();
     }
     renderMajorList() {
-        const html = this.majorGroups.map(major => {
-            var _a;
-            return `
-            <div class="wf-major-item"><div><strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.name)}</strong>${major.sortOrder != null ? `<span class="wf-order-badge">#${major.sortOrder}</span>` : ""}<p>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = major.description) !== null && _a !== void 0 ? _a : "")}</p></div>
-            <div><button type="button" class="wf-row-icon-btn" data-edit-major="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}"><i data-lucide="pencil"></i></button><button type="button" class="wf-row-icon-btn is-danger" data-delete-major="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}"><i data-lucide="trash-2"></i></button></div></div>
-        `;
-        }).join("");
+        const html = this.majorGroups.map((major) => this.renderMajorItem(major)).join("");
         $("#majorList").html(html || `<div class="wf-tag-empty-text">등록된 대그룹이 없습니다.</div>`);
-        $("#majorList").find("[data-edit-major]").on("click", event => { var _a; return this.openMajorEdit((_a = this.majorGroups.find(x => x.id === String($(event.currentTarget).data("edit-major")))) !== null && _a !== void 0 ? _a : null); });
-        $("#majorList").find("[data-delete-major]").on("click", event => void this.deleteMajor(String($(event.currentTarget).data("delete-major"))));
+        $("#majorList").find("[data-edit-major]").on("click", event => {
+            var _a;
+            const majorId = String($(event.currentTarget).data("edit-major"));
+            const major = (_a = this.majorGroups.find((x) => x.id === majorId)) !== null && _a !== void 0 ? _a : null;
+            this.openMajorEdit(major);
+        });
+        $("#majorList").find("[data-delete-major]").on("click", event => {
+            void this.deleteMajor(String($(event.currentTarget).data("delete-major")));
+        });
         this.createIcons();
+    }
+    renderMajorItem(major) {
+        var _a;
+        return `
+            <div class="wf-major-item">
+                <div>
+                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.name)}</strong>
+                    ${major.sortOrder != null ? `<span class="wf-order-badge">#${major.sortOrder}</span>` : ""}
+                    <p>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = major.description) !== null && _a !== void 0 ? _a : "")}</p>
+                </div>
+                <div>
+                    <button type="button" class="wf-row-icon-btn" data-edit-major="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                    <button type="button" class="wf-row-icon-btn is-danger" data-delete-major="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(major.id)}">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
+            </div>
+        `;
     }
     openMajorEdit(major) {
         var _a, _b, _c, _d;
@@ -728,11 +831,17 @@ class Page {
             await this.saveGroup();
             return;
         }
-        if (this.drawerMode === "move-tags")
+        if (this.drawerMode === "move-tags") {
             await this.moveTags();
+        }
     }
     async saveMajor() {
-        const request = { ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtEditId"), MAJOR_GROUP_NAME: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupName"), SORT_ORDER: this.readNumber("#numSortOrder"), DESCRIPTION: this.getDescription() };
+        const request = {
+            ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtEditId"),
+            MAJOR_GROUP_NAME: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupName"),
+            SORT_ORDER: this.readNumber("#numSortOrder"),
+            DESCRIPTION: this.getDescription()
+        };
         if (request.MAJOR_GROUP_NAME.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("대그룹명을 입력해 주세요.");
             return;
@@ -740,7 +849,13 @@ class Page {
         await this.postAndReload("/device/save-major", request, "대그룹 저장 중 오류가 발생했습니다.");
     }
     async saveGroup() {
-        const request = { ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtEditId"), MAJOR_GROUP_ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMajorGroup"), GROUP_NAME: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupName"), SORT_ORDER: this.readNumber("#numSortOrder"), DESCRIPTION: this.getDescription() };
+        const request = {
+            ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtEditId"),
+            MAJOR_GROUP_ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMajorGroup"),
+            GROUP_NAME: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupName"),
+            SORT_ORDER: this.readNumber("#numSortOrder"),
+            DESCRIPTION: this.getDescription()
+        };
         if (request.GROUP_NAME.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("중그룹명을 입력해 주세요.");
             return;
@@ -748,33 +863,43 @@ class Page {
         await this.postAndReload("/device/save-group", request, "중그룹 저장 중 오류가 발생했습니다.");
     }
     async moveTags() {
-        const request = { TAG_IDS: Array.from(this.selectedTagIds), GROUP_ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMoveGroup") };
+        const request = {
+            TAG_IDS: Array.from(this.selectedTagIds),
+            GROUP_ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMoveGroup")
+        };
         if (request.GROUP_ID.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("이동할 중그룹을 선택해 주세요.");
             return;
         }
-        await this.postAndReload("/device/move-tags", request, "태그 이동 중 오류가 발생했습니다.", () => this.selectedTagIds.clear());
+        await this.postAndReload("/device/move-tags", request, "태그 이동 중 오류가 발생했습니다.", () => {
+            this.selectedTagIds.clear();
+        });
     }
     async deleteTags() {
         if (this.selectedTagIds.size === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("삭제할 태그를 선택해 주세요.");
             return;
         }
-        if (!confirm(`${this.selectedTagIds.size}개의 태그를 삭제하시겠습니까?`))
+        if (!confirm(`${this.selectedTagIds.size}개의 태그를 삭제하시겠습니까?`)) {
             return;
-        await this.postAndReload("/device/delete-tags", { TAG_IDS: Array.from(this.selectedTagIds) }, "태그 삭제 중 오류가 발생했습니다.", () => this.selectedTagIds.clear());
+        }
+        await this.postAndReload("/device/delete-tags", { TAG_IDS: Array.from(this.selectedTagIds) }, "태그 삭제 중 오류가 발생했습니다.", () => {
+            this.selectedTagIds.clear();
+        });
     }
     async deleteMajor(majorId) {
-        if (!confirm("대그룹을 삭제하시겠습니까? 하위 중그룹은 미지정으로 변경됩니다."))
+        if (!confirm("대그룹을 삭제하시겠습니까? 하위 중그룹은 미지정으로 변경됩니다.")) {
             return;
+        }
         await this.postAndReload("/device/delete-major", { ID: majorId }, "대그룹 삭제 중 오류가 발생했습니다.");
     }
     async deleteGroup(groupId) {
-        if (!confirm("중그룹을 삭제하시겠습니까? 태그가 등록된 중그룹은 삭제할 수 없습니다."))
+        if (!confirm("중그룹을 삭제하시겠습니까? 태그가 등록된 중그룹은 삭제할 수 없습니다.")) {
             return;
+        }
         await this.postAndReload("/device/delete-group", { ID: groupId }, "중그룹 삭제 중 오류가 발생했습니다.");
     }
-    async postAndReload(url, data, errorMessage, afterSuccess) {
+    async postAndReload(url, data, errorMessage, afterSuccess = null) {
         var _a, _b;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url, data });
@@ -793,12 +918,30 @@ class Page {
         }
     }
     renderGroupSelects() {
-        $("#selMajorGroup").html([`<option value="">미지정</option>`, ...this.majorGroups.map(x => `<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.id)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.name)}</option>`)].join(""));
-        $("#selMoveGroup").html(this.groups.map(x => { var _a; return `<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.id)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = x.majorGroupName) !== null && _a !== void 0 ? _a : "미지정")} / ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.name)}</option>`; }).join(""));
+        $("#selMajorGroup").html([
+            `<option value="">미지정</option>`,
+            ...this.majorGroups.map((x) => `<option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.id)}">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.name)}</option>`)
+        ].join(""));
+        $("#selMoveGroup").html(this.groups.map((x) => {
+            var _a;
+            return `
+            <option value="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.id)}">
+                ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = x.majorGroupName) !== null && _a !== void 0 ? _a : "미지정")} / ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(x.name)}
+            </option>
+        `;
+        }).join(""));
     }
-    openDrawer() { $("#groupDrawerBackdrop").removeClass("d-none"); $("#groupDrawer").addClass("is-open"); this.createIcons(); }
-    closeDrawer() { $("#groupDrawerBackdrop").addClass("d-none"); $("#groupDrawer").removeClass("is-open"); this.drawerMode = null; }
-    toggleTree(show) {
+    openDrawer() {
+        $("#groupDrawerBackdrop").removeClass("d-none");
+        $("#groupDrawer").addClass("is-open");
+        this.createIcons();
+    }
+    closeDrawer() {
+        $("#groupDrawerBackdrop").addClass("d-none");
+        $("#groupDrawer").removeClass("is-open");
+        this.drawerMode = null;
+    }
+    toggleTree(show = null) {
         const layout = $(".wf-group-content");
         const collapsed = show == null
             ? !layout.hasClass("is-tree-collapsed")
@@ -820,14 +963,37 @@ class Page {
         $("#lblSelectedSummary").text("선택 없음");
         $("#groupActionBar").addClass("d-none");
     }
-    readNumber(selector) { const value = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)(selector); if (value.length === 0)
-        return null; const numberValue = Number(value); return Number.isFinite(numberValue) ? numberValue : null; }
-    getDescription() { const description = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtDescription"); const descriptionLong = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtDescriptionLong"); if (description.length === 0 && descriptionLong.length === 0)
-        return null; if (descriptionLong.length === 0)
-        return description; if (description.length === 0)
-        return descriptionLong; return `${description}\n${descriptionLong}`; }
-    cssEscape(value) { return String(value).replace(/([ #;?%&,.+*~':"!^$[\]()=>|/@])/g, "\\$1"); }
-    createIcons() { var _a; (_a = window.lucide) === null || _a === void 0 ? void 0 : _a.createIcons(); }
+    readNumber(selector) {
+        const value = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)(selector);
+        if (value.length === 0) {
+            return null;
+        }
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
+    }
+    getDescription() {
+        const description = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtDescription");
+        const descriptionLong = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtDescriptionLong");
+        if (description.length === 0 && descriptionLong.length === 0) {
+            return null;
+        }
+        if (descriptionLong.length === 0) {
+            return description;
+        }
+        if (description.length === 0) {
+            return descriptionLong;
+        }
+        return `${description}\n${descriptionLong}`;
+    }
+    cssEscape(value) {
+        return String(value).replace(/([ #;?%&,.+*~':"!^$[\]()=>|/@])/g, "\\$1");
+    }
+    createIcons() {
+        var _a;
+        (_a = window.lucide) === null || _a === void 0 ? void 0 : _a.createIcons();
+    }
 }
 
 

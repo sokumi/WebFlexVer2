@@ -10866,6 +10866,30 @@ class WebFlexGrid {
     async updateData(rows) {
         await this.instance.updateData(rows);
     }
+    /**
+     * addData 후 스크롤 위치를 보존합니다.
+     * 기본 addData 는 내부적으로 스크롤을 초기화하는 경우가 있어
+     * 무한 스크롤 시 위치가 맨 위로 돌아가는 문제를 방지합니다.
+     *
+     * renderVertical: "virtual" (기본값) 사용 중 스크롤 도중 addData 로 데이터가
+     * 계속 늘어나면, Tabulator 내부의 가상 렌더링 범위(scrollHeight, vDom top/bottom)
+     * 계산이 어긋나 이후 위로 스크롤했을 때 이미 지나간 행이 빈 화면으로 보이는
+     * 문제가 발생할 수 있습니다. addData 직후 redraw(true) 로 내부 range 를
+     * 강제로 재계산시켜 방지합니다. 페이지 로딩 시에만 호출되므로
+     * 실시간 셀 업데이트(patchRowCells) 성능에는 영향이 없습니다.
+     */
+    async addDataPreserveScroll(rows) {
+        var _a;
+        const holder = this.element.querySelector(".tabulator-tableholder");
+        const scrollTop = (_a = holder === null || holder === void 0 ? void 0 : holder.scrollTop) !== null && _a !== void 0 ? _a : 0;
+        await this.instance.addData(rows);
+        this.instance.redraw(true);
+        if (holder != null && scrollTop > 0) {
+            requestAnimationFrame(() => {
+                holder.scrollTop = scrollTop;
+            });
+        }
+    }
     async deleteRow(row) {
         await this.instance.deleteRow(row);
     }
@@ -10910,12 +10934,89 @@ class WebFlexGrid {
         this.element.classList.remove("is-loading");
         this.element.removeAttribute("data-loading-message");
     }
+    /**
+     * 지정한 attribute 를 가진 행이 현재 화면(가상 DOM 렌더링 창)에
+     * 실제로 존재하는지 저비용으로 확인합니다.
+     *
+     * Tabulator 의 getRow()/getCell() API 는 호출 시 화면 밖(virtual DOM 밖)
+     * 행이라도 엘리먼트를 강제로 생성(materialize)합니다. 실시간 업데이트가
+     * 초당 수십~수백 건 들어오는 상황에서 patchRowCells 를 화면 밖 행에도
+     * 그대로 호출하면, 보이지도 않는 수천 개 행의 DOM 을 만들었다 버리는
+     * 낭비가 누적되어 결국 렉으로 이어집니다.
+     *
+     * 사용법: rowFormatter 에서 행 엘리먼트에 attribute 를 심어두고
+     * (예: element.setAttribute("data-key", data.rowKey)),
+     * 실시간 업데이트 시 patchRowCells 호출 전에 이 메서드로 먼저
+     * 화면에 렌더링된 행인지 확인한 뒤에만 patchRowCells 를 호출하세요.
+     *
+     * @param attributeName  rowFormatter 에서 심어둔 attribute 이름 (예: "data-key")
+     * @param attributeValue 확인할 행의 키 값
+     */
+    isRowRendered(attributeName, attributeValue) {
+        const selector = `[${attributeName}="${this.escapeAttributeSelector(attributeValue)}"]`;
+        return this.element.querySelector(selector) != null;
+    }
+    /**
+     * Tabulator 의 포매터/재렌더링 파이프라인을 거치지 않고
+     * 특정 행의 셀 innerHTML 을 직접 교체합니다.
+     *
+     * SSE 실시간 업데이트처럼 초당 수십~수백 건이 들어올 때
+     * updateData() 대신 이 메서드를 사용하면 렌더링 부하를 대폭 줄일 수 있습니다.
+     *
+     * 주의: 화면 밖(virtual DOM 밖) 행에 대해 호출하면 Tabulator 가 해당 행의
+     * 엘리먼트를 강제로 생성합니다. 대량 실시간 업데이트 시에는 isRowRendered() 로
+     * 먼저 화면에 렌더링된 행인지 확인한 뒤 호출하는 것을 권장합니다.
+     *
+     * @param key    Tabulator index 필드 값 (rowKey)
+     * @param patches  { 필드명: 새 innerHTML } 맵
+     * @returns 행이 존재하면 true, 없으면 false
+     */
+    patchRowCells(key, patches) {
+        var _a;
+        const row = (_a = this.instance) === null || _a === void 0 ? void 0 : _a.getRow(key);
+        if (row == null || row === false) {
+            return false;
+        }
+        for (const [field, html] of Object.entries(patches)) {
+            const cell = row.getCell(field);
+            if (cell == null || cell === false) {
+                continue;
+            }
+            cell.getElement().innerHTML = html;
+        }
+        return true;
+    }
+    /**
+     * Tabulator 행의 루트 <tr> 엘리먼트를 반환합니다.
+     * flash 클래스 토글 등 행 전체에 직접 접근할 때 사용합니다.
+     *
+     * @param key  Tabulator index 필드 값 (rowKey)
+     * @returns HTMLElement 또는 null
+     */
+    getRowElement(key) {
+        var _a;
+        const row = (_a = this.instance) === null || _a === void 0 ? void 0 : _a.getRow(key);
+        if (row == null || row === false) {
+            return null;
+        }
+        return row.getElement();
+    }
+    /**
+     * .tabulator-tableholder 요소를 반환합니다.
+     * 스크롤 위치 제어나 무한 스크롤 감지에 사용합니다.
+     */
+    getScrollHolder() {
+        return this.element.querySelector(".tabulator-tableholder");
+    }
     applyOptions() {
         var _a, _b;
         if (this.table == null) {
             return;
         }
         (_b = (_a = this.table).setOptions) === null || _b === void 0 ? void 0 : _b.call(_a, this.tableOptions);
+    }
+    escapeAttributeSelector(value) {
+        return String(value !== null && value !== void 0 ? value : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     }
     resolveElement(selector) {
         if (typeof selector !== "string") {

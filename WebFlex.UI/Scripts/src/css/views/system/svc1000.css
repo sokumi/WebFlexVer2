@@ -181,8 +181,7 @@
 
     .wf-service-meta-item strong {
         min-width: 0;
-        color: var(--wf-text);
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        color: var(--wf-text); 
         font-size: 13px;
         font-weight: 900;
         word-break: break-all;
@@ -303,8 +302,7 @@
     padding: 16px 18px;
     overflow: auto;
     background: color-mix(in srgb, var(--wf-surface-soft) 78%, var(--wf-surface));
-    color: var(--wf-text-subtle);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    color: var(--wf-text-subtle); 
     font-size: 12px;
     line-height: 1.55;
     white-space: pre-wrap;

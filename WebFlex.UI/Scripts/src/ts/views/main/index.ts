@@ -1,43 +1,14 @@
-﻿import type { CurrentValueDto } from "../../dtos/currentValueDto";
-
-type CurrentValueRow = CurrentValueDto & {
-    collectionSetting?: string | null;
-    cookieValue?: string | null;
-    updateCount?: number | null;
-};
-
-type CurrentValuePageResponse = {
-    success: boolean;
-    data: {
-        totalCount: number;
-        skip: number;
-        take: number;
-        rows: CurrentValueRow[];
-    };
-};
-
-type CurrentValueGroupResponse = {
-    success: boolean;
-    data: CurrentValueGroupDto[];
-};
-
-type CurrentValueGroupDto = {
-    groupId?: string | null;
-    groupName?: string | null;
-    count: number;
-    badCount: number;
-};
-
-type StreamStatus = "wait" | "connected" | "error";
+﻿import { TabulatorFull as Tabulator } from "tabulator-tables";
 
 export default class Page {
-    rows: CurrentValueRow[] = [];
-    rowMap = new Map<string, CurrentValueRow>();
+    rows: any[] = [];
+    rowMap = new Map<string, any>();
+    groupRows: any[] = [];
 
-    // 가상 스크롤로 실제 렌더링된 <tr> 만 추적 (key -> element)
-    rowElements = new Map<string, HTMLTableRowElement>();
-
-    eventSource: EventSource | null = null;
+    grid: any = null;
+    eventSource: any = null;
+    gridReady = false;
+    pendingReload = false;
 
     totalCount = 0;
     loadedCount = 0;
@@ -49,25 +20,189 @@ export default class Page {
     readonly pageSize = 120;
     isLoading = false;
     hasMore = true;
+    searchTimer: any = null;
 
-    searchTimer: number | null = null;
-    flashKeys = new Set<string>();
+    init() {
+        this.initGrid();
+        this.bindEvents();
 
-    // 가상 스크롤 관련 상태
-    readonly bufferRows = 8;
-    readonly fallbackRowHeight = 40;
-    measuredRowHeight: number | null = null;
-    windowStart = -1;
-    windowEnd = -1;
-    renderWindowScheduled = false;
+        void this.loadGroups();
+        this.connectStream();
 
-    init(): void {
-        $("#btnToggleGroupPanel").on("click", () => {
-            this.toggleGroupPanel();
+        window.addEventListener("beforeunload", () => {
+            this.eventSource?.close();
+            this.grid?.destroy?.();
+        });
+    }
+
+    initGrid() {
+        const host = document.getElementById("currentValueGrid");
+
+        if (host == null) {
+            console.error("currentValueGrid element not found.");
+            return;
+        }
+
+        this.grid = new Tabulator(host, {
+            index: "rowKey",
+            height: "100%",
+            layout: "fitColumns",
+            // renderVertical 은 기본값인 "virtual" (가상 스크롤) 을 사용합니다.
+            // "basic" 은 전체 행을 DOM에 유지하기 때문에 2000행 규모에서
+            // SSE 갱신마다 브라우저 부하가 급격히 커집니다.
+            // 이전에는 스크롤 중 addData() 로 데이터를 계속 이어붙이는 방식과
+            // virtual 모드가 겹치면서 내부 렌더 범위(vDom top/bottom, scrollHeight)
+            // 계산이 어긋나 "위로 스크롤 시 지나온 행이 안 보이는" 문제가 있었습니다.
+            // 이제는 reload() 에서 스크롤과 무관하게 전체 데이터를 미리 다 불러온 뒤
+            // (loadAllPages), addData 직후 redraw(true) 로 범위를 강제 재계산하므로
+            // virtual 모드에서도 안전합니다. SSE 업데이트는 여전히 updateData() 대신
+            // 화면에 실제로 렌더링된 행만 골라 patchRowCells() 로 직접 DOM 패치합니다.
+            reactiveData: false,
+            movableColumns: true,
+            placeholder: "조회된 데이터가 없습니다.",
+            columns: [
+                {
+                    title: "번호",
+                    field: "rowNumber",
+                    width: 64,
+                    hozAlign: "center",
+                    headerSort: false,
+                    formatter: (cell: any) => {
+                        return `<span class="wf-current-row-index">${this.escapeHtml(cell.getValue())}</span>`;
+                    }
+                },
+                {
+                    title: "수집 항목 설정",
+                    field: "collectionSetting",
+                    minWidth: 190,
+                    formatter: (cell: any) => {
+                        const value = cell.getValue() ?? "-";
+                        return `<span class="wf-current-setting-text" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</span>`;
+                    }
+                },
+                {
+                    title: "그룹",
+                    field: "groupName",
+                    width: 130,
+                    formatter: (cell: any) => {
+                        const row = cell.getData();
+                        const value = row.groupName ?? row.groupId ?? "-";
+                        return `<span class="wf-current-group-text" title="${this.escapeHtml(row.groupId ?? "")}">${this.escapeHtml(value)}</span>`;
+                    }
+                },
+                {
+                    title: "태그 ID",
+                    field: "tagId",
+                    minWidth: 160,
+                    formatter: (cell: any) => {
+                        const value = cell.getValue() ?? "";
+                        return `<strong class="wf-current-tag" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</strong>`;
+                    }
+                },
+                {
+                    title: "현재값",
+                    field: "value",
+                    minWidth: 160,
+                    formatter: (cell: any) => {
+                        const value = cell.getValue() ?? "-";
+                        return `<span class="wf-current-value" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</span>`;
+                    }
+                },
+                {
+                    title: "변환값",
+                    field: "cookieValue",
+                    minWidth: 190,
+                    formatter: (cell: any) => {
+                        const value = cell.getValue() ?? "-";
+                        return `<span class="wf-current-cookie-value" title="${this.escapeHtml(value)}">${this.escapeHtml(value)}</span>`;
+                    }
+                },
+                {
+                    title: "상태",
+                    field: "status",
+                    width: 110,
+                    formatter: (cell: any) => {
+                        const value = cell.getValue();
+                        const isGood = this.isGoodStatus(value);
+                        return `
+                            <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
+                                <span class="wf-status-dot"></span>
+                                <span class="wf-status-text">${this.escapeHtml(this.formatStatus(value))}</span>
+                            </span>
+                        `;
+                    }
+                },
+                {
+                    title: "업데이트",
+                    field: "updateCount",
+                    width: 120,
+                    hozAlign: "right",
+                    formatter: (cell: any) => this.escapeHtml(this.formatNumber(cell.getValue()))
+                },
+                {
+                    title: "Source Time",
+                    field: "sourceTimestamp",
+                    minWidth: 165,
+                    formatter: (cell: any) => this.escapeHtml(this.formatDate(cell.getValue()))
+                },
+                {
+                    title: "Updated Time",
+                    field: "updatedAt",
+                    minWidth: 165,
+                    formatter: (cell: any) => this.escapeHtml(this.formatDate(cell.getValue()))
+                }
+            ],
+            rowFormatter: (row: any) => {
+                const data = row.getData();
+                const element = row.getElement();
+                element.setAttribute("data-key", data.rowKey ?? "");
+            },
+            renderComplete: () => {
+                this.bindGridScroll();
+                this.updateVisibleRange();
+            }
         });
 
-        $("#currentValueScroll").on("scroll", () => {
-            this.handleScroll();
+        this.grid?.on?.("tableBuilt", () => {
+            this.onGridReady();
+        });
+
+        this.grid?.on?.("scrollVertical", () => {
+            this.handleGridScroll();
+        });
+
+        window.setTimeout(() => {
+            this.onGridReady();
+        }, 0);
+    }
+
+    onGridReady() {
+        if (this.gridReady) {
+            return;
+        }
+
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as any;
+
+        if (holder == null) {
+            window.setTimeout(() => {
+                this.onGridReady();
+            }, 30);
+            return;
+        }
+
+        this.gridReady = true;
+        this.bindGridScroll();
+
+        if (this.pendingReload) {
+            this.pendingReload = false;
+        }
+
+        void this.reload();
+    }
+
+    bindEvents() {
+        $("#btnToggleGroupPanel").on("click", () => {
+            this.toggleGroupPanel();
         });
 
         $("#groupFilterHost").on("click", "[data-group-id]", event => {
@@ -91,19 +226,45 @@ export default class Page {
         });
 
         window.addEventListener("resize", () => {
-            this.scheduleRenderWindow();
-        });
-
-        void this.loadGroups();
-        void this.reload();
-        this.connectStream();
-
-        window.addEventListener("beforeunload", () => {
-            this.eventSource?.close();
+            this.grid?.redraw?.(true);
+            this.updateVisibleRange();
         });
     }
 
-    toggleGroupPanel(): void {
+    bindGridScroll() {
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as any;
+
+        if (holder == null || holder.dataset.webflexScrollBound === "true") {
+            return;
+        }
+
+        holder.dataset.webflexScrollBound = "true";
+
+        holder.addEventListener("scroll", () => {
+            this.handleGridScroll();
+        });
+    }
+
+    handleGridScroll() {
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as any;
+
+        if (holder == null) {
+            return;
+        }
+
+        const remain = holder.scrollHeight - holder.scrollTop - holder.clientHeight;
+
+        // loadAllPages() 가 화면 진입 시 전체 데이터를 이미 다 불러오므로
+        // 이 시점엔 보통 hasMore 가 false 라 loadNextPage() 는 즉시 반환됩니다.
+        // 배경 로딩이 아직 끝나지 않은 극히 짧은 순간을 위한 안전망으로만 남겨둡니다.
+        if (remain < 320) {
+            void this.loadNextPage();
+        }
+
+        this.updateVisibleRange();
+    }
+
+    toggleGroupPanel() {
         const $panel = $("#currentGroupPanel");
         const collapsed = !$panel.hasClass("is-collapsed");
 
@@ -112,29 +273,56 @@ export default class Page {
         $("#lblGroupToggleText").text(collapsed ? "펼치기" : "접기");
 
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
+        window.setTimeout(() => {
+            this.grid?.redraw?.(true);
+            this.updateVisibleRange();
+        }, 210);
     }
 
-    async reload(): Promise<void> {
+    async reload() {
+        if (!this.gridReady || this.grid == null) {
+            this.pendingReload = true;
+            return;
+        }
+
         this.rows = [];
         this.rowMap.clear();
-        this.rowElements.clear();
         this.totalCount = 0;
         this.loadedCount = 0;
         this.hasMore = true;
-        this.flashKeys.clear();
-        this.windowStart = -1;
-        this.windowEnd = -1;
 
-        $("#currentValueBody").html(`
-            <tr>
-                <td colspan="10" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
-            </tr>
-        `);
+        this.updateHeaderCount();
+        $("#lblVisibleRange").text("0 ~ 0");
 
-        await this.loadNextPage();
+        if (this.grid.getDataCount?.() > 0) {
+            await this.grid.replaceData([]);
+        }
+
+        await this.loadAllPages();
     }
 
-    async loadGroups(): Promise<void> {
+    /**
+     * 전체 데이터를 스크롤과 무관하게 백그라운드에서 순차적으로 모두 불러옵니다.
+     *
+     * Tabulator 의 virtual DOM (가상 스크롤) 은 자체적으로 화면에 보이는 구간만
+     * 렌더링(windowing)해주므로, 예전 순수 테이블에서 직접 구현했던
+     * "가상 스크롤"과 동일한 역할을 이미 대신 해줍니다. 따라서 서버 페이징을
+     * 스크롤 위치에 맞춰 추가로 붙일 필요가 없고, 오히려 스크롤 도중 addData 를
+     * 반복 호출하면 virtual DOM 의 내부 렌더 범위 계산이 어긋나는 원인이 됩니다.
+     * 태그 수가 (~2000개 수준으로) 크지 않으므로 화면 진입 시 전량을 미리
+     * 불러와 버리는 편이 가장 단순하고 안전합니다.
+     *
+     * setTimeout(0) 으로 매 페이지 사이에 브라우저에 제어권을 양보하여
+     * 메인 스레드를 길게 블로킹하지 않도록 합니다.
+     */
+    async loadAllPages() {
+        while (this.hasMore) {
+            await this.loadNextPage();
+            await new Promise(resolve => window.setTimeout(resolve, 0));
+        }
+    }
+
+    async loadGroups() {
         try {
             const response = await fetch("/main/list/groups");
 
@@ -142,32 +330,32 @@ export default class Page {
                 throw new Error(await response.text());
             }
 
-            const result = await response.json() as CurrentValueGroupResponse;
+            const result: any = await response.json();
 
             if (!result.success) {
                 return;
             }
 
-            this.renderGroups(result.data ?? []);
+            this.groupRows = result.data ?? [];
+            this.renderGroups(this.groupRows);
         } catch (e) {
             console.error(e);
         }
     }
 
-    renderGroups(groups: CurrentValueGroupDto[]): void {
-        const total = groups.reduce((sum, item) => sum + item.count, 0);
-
-        const html: string[] = [];
+    renderGroups(groups: any[]) {
+        const total = groups.reduce((sum: any, item: any) => sum + Number(item.count ?? 0), 0);
+        const html: any[] = [];
 
         html.push(`
-        <button type="button"
-                class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
-                data-group-id=""
-                data-group-name="전체 그룹">
-            전체
-            <span>${total.toLocaleString()}</span>
-        </button>
-    `);
+            <button type="button"
+                    class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
+                    data-group-id=""
+                    data-group-name="전체 그룹">
+                전체
+                <span>${total.toLocaleString()}</span>
+            </button>
+        `);
 
         for (const group of groups) {
             const groupId = group.groupId ?? "";
@@ -175,21 +363,21 @@ export default class Page {
             const displayName = groupName || "미지정";
 
             html.push(`
-            <button type="button"
-                    class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
-                    data-group-id="${this.escapeHtml(groupId)}"
-                    data-group-name="${this.escapeHtml(displayName)}"
-                    title="${this.escapeHtml(groupId)}">
-                ${this.escapeHtml(displayName)}
-                <span>${group.count.toLocaleString()}</span>
-                ${group.badCount > 0 ? `<em>${group.badCount.toLocaleString()}</em>` : ""}
-            </button>
-        `);
+                <button type="button"
+                        class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
+                        data-group-id="${this.escapeHtml(groupId)}"
+                        data-group-name="${this.escapeHtml(displayName)}"
+                        title="${this.escapeHtml(groupId)}">
+                    ${this.escapeHtml(displayName)}
+                    <span>${Number(group.count ?? 0).toLocaleString()}</span>
+                    ${Number(group.badCount ?? 0) > 0 ? `<em>${Number(group.badCount ?? 0).toLocaleString()}</em>` : ""}
+                </button>
+            `);
         }
 
         $("#groupFilterHost").html(html.join(""));
 
-        const selected = groups.find(x => (x.groupId ?? "") === this.selectedGroupId);
+        const selected = groups.find((x: any) => (x.groupId ?? "") === this.selectedGroupId);
         $("#lblGroupSummary").text(
             this.selectedGroupId.length === 0
                 ? "전체 그룹"
@@ -199,7 +387,7 @@ export default class Page {
         this.refreshIcons();
     }
 
-    selectGroup(groupId: string): void {
+    selectGroup(groupId: any) {
         if (this.selectedGroupId === groupId) {
             return;
         }
@@ -218,7 +406,7 @@ export default class Page {
         void this.reload();
     }
 
-    requestSearch(): void {
+    requestSearch() {
         if (this.searchTimer != null) {
             window.clearTimeout(this.searchTimer);
             this.searchTimer = null;
@@ -238,7 +426,7 @@ export default class Page {
         }, 150);
     }
 
-    applySearchImmediately(): void {
+    applySearchImmediately() {
         if (this.searchTimer != null) {
             window.clearTimeout(this.searchTimer);
             this.searchTimer = null;
@@ -254,7 +442,7 @@ export default class Page {
         void this.reload();
     }
 
-    async loadNextPage(): Promise<void> {
+    async loadNextPage() {
         if (this.isLoading || !this.hasMore) {
             return;
         }
@@ -281,22 +469,26 @@ export default class Page {
                 throw new Error(await response.text());
             }
 
-            const result = await response.json() as CurrentValuePageResponse;
+            const result: any = await response.json();
 
             if (!result.success) {
                 throw new Error("CurrentValue 조회 실패");
             }
 
-            const page = result.data;
-            const pageRows = (page.rows ?? []).map(x => this.normalizeCurrentRow(x));
+            const page = result.data ?? {};
+            const pageRows = (page.rows ?? []).map((x: any) => this.normalizeCurrentRow(x));
+            const newRows: any[] = [];
 
-            this.totalCount = page.totalCount;
+            this.totalCount = Number(page.totalCount ?? 0);
 
             for (const row of pageRows) {
                 const key = this.makeKey(row.groupId, row.tagId);
 
                 if (!this.rowMap.has(key)) {
+                    row.rowKey = key;
+                    row.rowNumber = this.rows.length + 1;
                     this.rows.push(row);
+                    newRows.push(row);
                 }
 
                 this.rowMap.set(key, row);
@@ -305,41 +497,75 @@ export default class Page {
             this.loadedCount = this.rows.length;
             this.hasMore = this.loadedCount < this.totalCount;
 
+            if (this.grid != null) {
+                if (newRows.length > 0) {
+                    // addData 후 스크롤 위치가 맨 위로 초기화되는 문제를 방지합니다.
+                    await this.addDataPreserveScroll(newRows);
+                } else if (this.rows.length === 0) {
+                    await this.grid.replaceData([]);
+                }
+            }
+
             this.updateHeaderCount();
-            this.renderWindow(true);
+            this.bindGridScroll();
+            this.updateVisibleRange();
         } catch (e) {
             console.error(e);
 
             if (this.rows.length === 0) {
-                $("#currentValueBody").html(`
-                    <tr>
-                        <td colspan="10" class="wf-current-empty-cell">데이터 조회에 실패했습니다.</td>
-                    </tr>
-                `);
+                await this.grid?.replaceData?.([]);
             }
         } finally {
             this.isLoading = false;
             $("#currentValueLoading").addClass("d-none");
+
+            window.setTimeout(() => {
+                this.ensureScrollableOrLoadMore();
+            }, 0);
         }
     }
 
-    handleScroll(): void {
-        const scrollEl = document.getElementById("currentValueScroll") as HTMLDivElement | null;
+    /**
+     * addData 후 스크롤 위치를 복원합니다.
+     * Tabulator 의 addData 는 내부적으로 스크롤을 초기화할 수 있습니다.
+     *
+     * virtual 모드에서는 addData 직후 scrollHeight / 렌더 범위(vDom top/bottom)가
+     * 즉시 정확히 재계산되지 않는 경우가 있어, 이후 위로 스크롤했을 때 이미
+     * 지나간 행이 빈 화면으로 보이는 원인이 됩니다. redraw(true) 로 강제
+     * 재계산시켜 방지합니다. 페이지 로딩(loadAllPages) 시에만 호출되므로
+     * SSE 실시간 셀 패치(patchRowCells) 성능에는 영향이 없습니다.
+     */
+    private async addDataPreserveScroll(rows: any[]): Promise<void> {
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as HTMLElement | null;
+        const scrollTop = holder?.scrollTop ?? 0;
 
-        if (scrollEl == null) {
+        await this.grid.addData(rows);
+        this.grid.redraw(true);
+
+        if (holder != null && scrollTop > 0) {
+            requestAnimationFrame(() => {
+                holder.scrollTop = scrollTop;
+            });
+        }
+    }
+
+    ensureScrollableOrLoadMore() {
+        if (this.isLoading || !this.hasMore) {
             return;
         }
 
-        const remain = scrollEl.scrollHeight - scrollEl.scrollTop - scrollEl.clientHeight;
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as any;
 
-        if (remain < 260) {
-            void this.loadNextPage();
+        if (holder == null) {
+            return;
         }
 
-        this.scheduleRenderWindow();
+        if (holder.scrollHeight <= holder.clientHeight + 20) {
+            void this.loadNextPage();
+        }
     }
 
-    connectStream(): void {
+    connectStream() {
         this.eventSource?.close();
         this.setStreamStatus("wait", "연결 중");
 
@@ -350,7 +576,7 @@ export default class Page {
             this.setStreamStatus("connected", "연결됨");
         });
 
-        source.addEventListener("currentvalue", (event: MessageEvent) => {
+        source.addEventListener("currentvalue", (event: any) => {
             try {
                 const row = this.normalizeCurrentRow(JSON.parse(event.data));
                 this.applyUpdate(row);
@@ -365,7 +591,7 @@ export default class Page {
         };
     }
 
-    applyUpdate(row: CurrentValueRow): void {
+    applyUpdate(row: any) {
         if (!this.isMatchedCurrentFilter(row)) {
             return;
         }
@@ -374,8 +600,6 @@ export default class Page {
         const existing = this.rowMap.get(key);
 
         if (existing == null) {
-            // 아직 사용자가 해당 위치까지 스크롤해서 불러오지 않은 데이터는
-            // 무한 스크롤 순서를 깨지 않기 위해 즉시 삽입하지 않는다.
             this.updateCount++;
             this.updateHeaderCount();
             return;
@@ -388,6 +612,7 @@ export default class Page {
             existing.updatedAt !== row.updatedAt;
 
         existing.collectionSetting = row.collectionSetting ?? existing.collectionSetting;
+        existing.groupName = this.getGroupDisplayName(existing.groupId);
         existing.value = row.value;
         existing.cookieValue = row.cookieValue;
         existing.status = row.status;
@@ -399,22 +624,71 @@ export default class Page {
         this.updateCount++;
         this.updateHeaderCount();
 
-        // 현재 가상 스크롤 윈도우에 렌더링되어 있는 행만 DOM을 직접 패치한다.
-        // 화면 밖에 있는 행은 데이터(rowMap)만 갱신하고 DOM 작업은 하지 않는다.
-        const tr = this.rowElements.get(key);
-
-        if (tr == null) {
+        if (this.grid == null) {
             return;
         }
 
-        this.patchRowElement(tr, existing);
+        // 화면(가상 DOM 렌더링 창)에 실제로 보이는 행일 때만 DOM 을 패치합니다.
+        // grid.getRow()/getCell() 은 호출 시 화면 밖 행이라도 엘리먼트를 강제로
+        // 생성(materialize)하기 때문에, 이 체크 없이 patchRowCells 를 그대로
+        // 호출하면 보이지도 않는 수천 개 행의 DOM 을 초당 수십~수백 번
+        // 만들었다 버리는 낭비가 쌓여 결국 렉으로 이어집니다.
+        // data-key 는 rowFormatter 에서 실제로 렌더링된 행에만 찍히므로
+        // 이 selector 로 화면에 보이는 행인지 저비용으로 먼저 확인합니다.
+        // existing 객체는 이미 최신값으로 갱신되었으므로, 화면 밖 행은 나중에
+        // 스크롤되어 다시 보일 때 포매터가 알아서 최신값으로 그려줍니다.
+        const isRendered = document.querySelector(
+            `#currentValueGrid .tabulator-tableholder [data-key="${this.escapeSelectorValue(key)}"]`
+        ) != null;
 
-        if (changed) {
+        if (!isRendered) {
+            return;
+        }
+
+        // Tabulator 의 updateData() / 포매터 재실행 없이 셀 DOM 만 직접 교체합니다.
+        // updateData() 는 Tabulator 내부 렌더링 파이프라인을 타므로
+        // 2000 개 행이 로드된 상태에서 초당 수십 번 호출되면 CPU 부하가 급격히 올라갑니다.
+        const isGood = this.isGoodStatus(existing.status);
+
+        const patched = this.patchRowCells(key, {
+            value: `<span class="wf-current-value" title="${this.escapeHtml(existing.value ?? "")}">${this.escapeHtml(existing.value ?? "-")}</span>`,
+            cookieValue: `<span class="wf-current-cookie-value" title="${this.escapeHtml(existing.cookieValue ?? "")}">${this.escapeHtml(existing.cookieValue ?? "-")}</span>`,
+            status: `<span class="wf-current-status ${isGood ? "is-good" : "is-bad"}"><span class="wf-status-dot"></span><span class="wf-status-text">${this.escapeHtml(this.formatStatus(existing.status))}</span></span>`,
+            updateCount: this.escapeHtml(this.formatNumber(existing.updateCount)),
+            sourceTimestamp: this.escapeHtml(this.formatDate(existing.sourceTimestamp)),
+            updatedAt: this.escapeHtml(this.formatDate(existing.updatedAt))
+        });
+
+        if (patched && changed) {
             this.triggerFlash(key);
         }
     }
 
-    isMatchedCurrentFilter(row: CurrentValueRow): boolean {
+    /**
+     * Tabulator 포매터 파이프라인을 거치지 않고 특정 행의 셀 innerHTML 을 직접 교체합니다.
+     * @returns 행이 존재하면 true, 없으면 false
+     */
+    private patchRowCells(key: any, patches: Record<string, string>): boolean {
+        const row = this.grid?.getRow?.(key);
+
+        if (row == null || row === false) {
+            return false;
+        }
+
+        for (const [field, html] of Object.entries(patches)) {
+            const cell = row.getCell(field);
+
+            if (cell == null || cell === false) {
+                continue;
+            }
+
+            cell.getElement().innerHTML = html;
+        }
+
+        return true;
+    }
+
+    isMatchedCurrentFilter(row: any) {
         const groupId = row.groupId ?? "";
 
         if (this.selectedGroupId.length > 0 && groupId !== this.selectedGroupId) {
@@ -429,283 +703,64 @@ export default class Page {
 
         return String(row.collectionSetting ?? "").toLowerCase().includes(q) ||
             String(row.groupId ?? "").toLowerCase().includes(q) ||
+            String(row.groupName ?? "").toLowerCase().includes(q) ||
             String(row.tagId ?? "").toLowerCase().includes(q) ||
             String(row.value ?? "").toLowerCase().includes(q) ||
             String(row.cookieValue ?? "").toLowerCase().includes(q);
     }
 
-    triggerFlash(key: string): void {
-        this.flashKeys.add(key);
+    triggerFlash(key: any) {
+        const row = this.grid?.getRow?.(key);
 
-        const tr = this.rowElements.get(key);
-
-        if (tr != null) {
-            tr.classList.add("value-flash");
+        if (row == null || row === false) {
+            return;
         }
 
+        const element = row.getElement() as HTMLElement;
+
+        element.classList.remove("value-flash");
+        void element.offsetWidth; // reflow 강제하여 애니메이션 재시작
+        element.classList.add("value-flash");
+
         window.setTimeout(() => {
-            this.flashKeys.delete(key);
-
-            const currentTr = this.rowElements.get(key);
-
-            if (currentTr != null) {
-                currentTr.classList.remove("value-flash");
-            }
+            element.classList.remove("value-flash");
         }, 1600);
     }
 
-    scheduleRenderWindow(): void {
-        if (this.renderWindowScheduled) {
-            return;
-        }
-
-        this.renderWindowScheduled = true;
-
-        window.requestAnimationFrame(() => {
-            this.renderWindowScheduled = false;
-            this.renderWindow();
-        });
-    }
-
-    /**
-     * 가상 스크롤: 실제 화면에 보이는 구간(+버퍼)만 <tr> 로 렌더링하고,
-     * 위/아래 구간은 높이만 차지하는 spacer <tr> 로 채운다.
-     * force=true 면 보이는 구간(startIndex~endIndex)이 이전과 같아도
-     * (예: 데이터 개수가 늘어난 경우) 무조건 다시 그린다.
-     */
-    renderWindow(force: boolean = false): void {
-        const tbody = document.getElementById("currentValueBody") as HTMLTableSectionElement | null;
-        const scrollEl = document.getElementById("currentValueScroll") as HTMLDivElement | null;
-
-        if (tbody == null || scrollEl == null) {
-            return;
-        }
-
+    updateVisibleRange() {
         if (this.rows.length === 0) {
-            tbody.innerHTML = `
-            <tr>
-                <td colspan="10" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
-            </tr>
-        `;
-            this.rowElements.clear();
-            this.windowStart = -1;
-            this.windowEnd = -1;
             $("#lblVisibleRange").text("0 ~ 0");
             return;
         }
 
-        const rowHeight = this.measuredRowHeight ?? this.fallbackRowHeight;
-        const scrollTop = scrollEl.scrollTop;
-        const viewportHeight = scrollEl.clientHeight;
+        const holder = document.querySelector("#currentValueGrid .tabulator-tableholder") as any;
+        const rowHeight = 42;
 
-        let startIndex = Math.floor(scrollTop / rowHeight) - this.bufferRows;
-        let endIndex = Math.ceil((scrollTop + viewportHeight) / rowHeight) + this.bufferRows;
-
-        startIndex = Math.max(0, startIndex);
-        endIndex = Math.min(this.rows.length, endIndex);
-
-        if (
-            !force &&
-            startIndex === this.windowStart &&
-            endIndex === this.windowEnd &&
-            tbody.childElementCount > 0
-        ) {
+        if (holder == null) {
+            $("#lblVisibleRange").text(`1 ~ ${this.loadedCount}`);
             return;
         }
 
-        this.windowStart = startIndex;
-        this.windowEnd = endIndex;
+        const start = Math.max(1, Math.floor(holder.scrollTop / rowHeight) + 1);
+        const end = Math.min(this.loadedCount, Math.ceil((holder.scrollTop + holder.clientHeight) / rowHeight));
 
-        const topSpacerHeight = startIndex * rowHeight;
-        const bottomSpacerHeight = (this.rows.length - endIndex) * rowHeight;
-
-        const fragment = document.createDocumentFragment();
-
-        if (topSpacerHeight > 0) {
-            fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
-        }
-
-        this.rowElements.clear();
-
-        for (let i = startIndex; i < endIndex; i++) {
-            const row = this.rows[i];
-            const key = this.makeKey(row.groupId, row.tagId);
-            const tr = this.buildRowElement(row, i, key);
-
-            this.rowElements.set(key, tr);
-            fragment.appendChild(tr);
-        }
-
-        if (bottomSpacerHeight > 0) {
-            fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
-        }
-
-        tbody.innerHTML = "";
-        tbody.appendChild(fragment);
-
-        if (this.measuredRowHeight == null) {
-            const sample = tbody.querySelector("tr:not(.wf-virtual-spacer)") as HTMLTableRowElement | null;
-
-            if (sample != null && sample.offsetHeight > 0) {
-                this.measuredRowHeight = sample.offsetHeight;
-                // 추정치가 아닌 실측 높이로 윈도우를 다시 계산한다.
-                this.windowStart = -1;
-                this.windowEnd = -1;
-                this.renderWindow(true);
-                return;
-            }
-        }
-
-        $("#lblVisibleRange").text(`${startIndex + 1} ~ ${endIndex}`);
-        this.refreshIcons();
+        $("#lblVisibleRange").text(`${start} ~ ${end}`);
     }
 
-    buildSpacerRow(height: number): HTMLTableRowElement {
-        const tr = document.createElement("tr");
-        tr.className = "wf-virtual-spacer";
-        tr.style.height = `${Math.max(0, height)}px`;
-
-        const td = document.createElement("td");
-        td.colSpan = 10;
-        td.style.padding = "0";
-        td.style.border = "none";
-
-        tr.appendChild(td);
-
-        return tr;
-    }
-
-    buildRowElement(row: CurrentValueRow, index: number, key: string): HTMLTableRowElement {
-        const template = document.createElement("template");
-        template.innerHTML = this.renderRow(row, index, key).trim();
-
-        return template.content.firstElementChild as HTMLTableRowElement;
-    }
-
-    /**
-     * 화면에 렌더링되어 있는 <tr> 의 값 관련 셀만 직접 갱신한다.
-     * (innerHTML 재생성 없이 textContent / title / class 만 변경)
-     */
-    patchRowElement(tr: HTMLTableRowElement, row: CurrentValueRow): void {
-        const valueEl = tr.querySelector('[data-cell="value"]') as HTMLElement | null;
-
-        if (valueEl != null) {
-            valueEl.textContent = row.value ?? "-";
-            valueEl.title = row.value ?? "";
-        }
-
-        const cookieEl = tr.querySelector('[data-cell="cookie"]') as HTMLElement | null;
-
-        if (cookieEl != null) {
-            cookieEl.textContent = row.cookieValue ?? "-";
-            cookieEl.title = row.cookieValue ?? "";
-        }
-
-        const statusEl = tr.querySelector('[data-cell="status"]') as HTMLElement | null;
-
-        if (statusEl != null) {
-            const isGood = this.isGoodStatus(row.status);
-
-            statusEl.classList.toggle("is-good", isGood);
-            statusEl.classList.toggle("is-bad", !isGood);
-
-            const statusTextEl = statusEl.querySelector(".wf-status-text") as HTMLElement | null;
-
-            if (statusTextEl != null) {
-                statusTextEl.textContent = this.formatStatus(row.status);
-            }
-        }
-
-        const updateCountEl = tr.querySelector('[data-cell="updateCount"]') as HTMLElement | null;
-
-        if (updateCountEl != null) {
-            updateCountEl.textContent = this.formatNumber(row.updateCount);
-        }
-
-        const sourceTimeEl = tr.querySelector('[data-cell="sourceTimestamp"]') as HTMLElement | null;
-
-        if (sourceTimeEl != null) {
-            sourceTimeEl.textContent = this.formatDate(row.sourceTimestamp);
-        }
-
-        const updatedAtEl = tr.querySelector('[data-cell="updatedAt"]') as HTMLElement | null;
-
-        if (updatedAtEl != null) {
-            updatedAtEl.textContent = this.formatDate(row.updatedAt);
-        }
-    }
-
-    renderRow(row: CurrentValueRow, index: number, key: string): string {
-        const groupId = row.groupId ?? "";
-        const isGood = this.isGoodStatus(row.status);
-        const statusText = this.formatStatus(row.status);
-        const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
-        const collectionSetting = row.collectionSetting ?? "";
-
-        return `
-        <tr class="${flashClass}" data-key="${this.escapeHtml(key)}">
-            <td>
-                <span class="wf-current-row-index">${index + 1}</span>
-            </td>
-            <td>
-                <span class="wf-current-setting-text"
-                      title="${this.escapeHtml(collectionSetting)}">
-                    ${this.escapeHtml(collectionSetting || "-")}
-                </span>
-            </td>
-            <td>
-                <span class="wf-current-group-text"
-                      title="${this.escapeHtml(groupId)}">
-                    ${this.escapeHtml(groupId || "-")}
-                </span>
-            </td>
-            <td>
-                <strong class="wf-current-tag"
-                        title="${this.escapeHtml(row.tagId)}">
-                    ${this.escapeHtml(row.tagId)}
-                </strong>
-            </td>
-            <td>
-                <span class="wf-current-value"
-                      data-cell="value"
-                      title="${this.escapeHtml(row.value ?? "")}">
-                    ${this.escapeHtml(row.value ?? "-")}
-                </span>
-            </td>
-            <td>
-                <span class="wf-current-cookie-value"
-                      data-cell="cookie"
-                      title="${this.escapeHtml(row.cookieValue ?? "")}">
-                    ${this.escapeHtml(row.cookieValue ?? "-")}
-                </span>
-            </td>
-            <td>
-                <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}" data-cell="status">
-                    <span class="wf-status-dot"></span>
-                    <span class="wf-status-text">${this.escapeHtml(statusText)}</span>
-                </span>
-            </td>
-            <td class="text-end" data-cell="updateCount">${this.formatNumber(row.updateCount)}</td>
-            <td data-cell="sourceTimestamp">${this.formatDate(row.sourceTimestamp)}</td>
-            <td data-cell="updatedAt">${this.formatDate(row.updatedAt)}</td>
-        </tr>
-    `;
-    }
-
-    updateHeaderCount(): void {
+    updateHeaderCount() {
         $("#lblTotalCount").text(this.totalCount.toLocaleString());
         $("#lblLoadedCount").text(this.loadedCount.toLocaleString());
         $("#lblUpdateCount").text(this.updateCount.toLocaleString());
     }
 
-    setStreamStatus(status: StreamStatus, text: string): void {
+    setStreamStatus(status: any, text: any) {
         $("#lblStreamStatus").text(text);
         $("#lblStreamChip")
             .removeClass("is-wait is-connected is-error")
             .addClass(`is-${status}`);
     }
 
-    formatStatus(status?: string | number | null): string {
+    formatStatus(status: any) {
         if (status == null || status === "") {
             return "-";
         }
@@ -729,7 +784,7 @@ export default class Page {
         return String(status);
     }
 
-    isGoodStatus(status?: string | number | null): boolean {
+    isGoodStatus(status: any) {
         if (status == null || status === "") {
             return true;
         }
@@ -745,11 +800,17 @@ export default class Page {
             normalized === "0x00000000";
     }
 
-    normalizeCurrentRow(row: any): CurrentValueRow {
+    normalizeCurrentRow(row: any) {
+        const groupId = this.readValue(row, "groupId", "GROUP_ID", "group_id");
+        const tagId = String(this.readValue(row, "tagId", "TAG_ID", "tag_id") ?? "");
+        const key = this.makeKey(groupId, tagId);
+
         return {
             ...row,
-            groupId: this.readValue(row, "groupId", "GROUP_ID", "group_id"),
-            tagId: String(this.readValue(row, "tagId", "TAG_ID", "tag_id") ?? ""),
+            rowKey: key,
+            groupId,
+            groupName: this.readValue(row, "groupName", "GROUP_NAME", "group_name") ?? this.getGroupDisplayName(groupId),
+            tagId,
             collectionSetting: this.readValue(row, "collectionSetting", "DESCRIPTION", "description"),
             value: this.readValue(row, "value", "VALUE"),
             cookieValue: this.readValue(row, "cookieValue", "COOKIE_VALUE", "cookie_value"),
@@ -761,7 +822,19 @@ export default class Page {
         };
     }
 
-    readValue(row: any, ...names: string[]): any {
+    getGroupDisplayName(groupId: any) {
+        const id = String(groupId ?? "");
+
+        if (id.length === 0) {
+            return "";
+        }
+
+        const group = this.groupRows.find((x: any) => String(x.groupId ?? "") === id);
+
+        return String(group?.groupName ?? id);
+    }
+
+    readValue(row: any, ...names: any[]) {
         if (row == null) {
             return null;
         }
@@ -772,7 +845,7 @@ export default class Page {
             }
         }
 
-        const targets = names.map(x => this.normalizeFieldName(x));
+        const targets = names.map((x: any) => this.normalizeFieldName(x));
 
         for (const key of Object.keys(row)) {
             if (targets.includes(this.normalizeFieldName(key))) {
@@ -783,7 +856,7 @@ export default class Page {
         return null;
     }
 
-    readNumber(row: any, ...names: string[]): number | null {
+    readNumber(row: any, ...names: any[]) {
         const value = this.readValue(row, ...names);
 
         if (value == null || value === "") {
@@ -797,18 +870,18 @@ export default class Page {
             : null;
     }
 
-    normalizeFieldName(value: string): string {
+    normalizeFieldName(value: any) {
         return String(value ?? "")
             .replace(/_/g, "")
             .replace(/-/g, "")
             .toLowerCase();
     }
 
-    makeKey(groupId: string | null | undefined, tagId: string): string {
-        return `${groupId ?? ""}||${tagId}`;
+    makeKey(groupId: any, tagId: any) {
+        return `${groupId ?? ""}||${tagId ?? ""}`;
     }
 
-    formatDate(value?: string | null): string {
+    formatDate(value: any) {
         if (value == null || value === "") {
             return "-";
         }
@@ -816,7 +889,7 @@ export default class Page {
         const date = new Date(value);
 
         if (Number.isNaN(date.getTime())) {
-            return this.escapeHtml(value);
+            return String(value);
         }
 
         const yyyy = date.getFullYear();
@@ -829,7 +902,7 @@ export default class Page {
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 
-    formatNumber(value?: number | string | null): string {
+    formatNumber(value: any) {
         if (value == null || value === "") {
             return "-";
         }
@@ -843,7 +916,7 @@ export default class Page {
         return numberValue.toLocaleString();
     }
 
-    refreshIcons(): void {
+    refreshIcons() {
         window.setTimeout(() => {
             const lucide = (window as any).lucide;
 
@@ -853,11 +926,11 @@ export default class Page {
         }, 0);
     }
 
-    escapeSelectorValue(value: string): string {
-        return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+    escapeSelectorValue(value: any) {
+        return String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
     }
 
-    escapeHtml(value: string | number | null | undefined): string {
+    escapeHtml(value: any) {
         return String(value ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
