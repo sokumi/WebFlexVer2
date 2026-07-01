@@ -298,8 +298,53 @@ class Page {
         card.state = this.resolveCardState(card);
         card.stateText = this.getStateText(card.state);
         card.footerText = this.getFooterText(card.state);
-        const $old = $(`[data-group-id="${this.escapeSelectorValue(groupId)}"]`);
-        $old.replaceWith(this.renderCard(card));
+        this.updateCardElement(card, tag);
+    }
+    updateCardElement(card, tag) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
+        const groupId = card.groupId;
+        const state = (_a = card.state) !== null && _a !== void 0 ? _a : "gray";
+        const $card = $(`[data-group-id="${this.escapeSelectorValue(groupId)}"]`);
+        if ($card.length === 0) {
+            return;
+        }
+        $card
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${state}`);
+        const $badge = $card.find(".wf-dashboard-state-badge");
+        $badge
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${state}`)
+            .html(`
+            ${this.getStateIcon(state)}
+            ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_b = card.stateText) !== null && _b !== void 0 ? _b : "")}
+        `);
+        $card.find(".wf-dashboard-connect-counts .is-red")
+            .text(Number((_c = card.disconnectedCount) !== null && _c !== void 0 ? _c : 0).toLocaleString());
+        $card.find(".wf-dashboard-connect-counts .is-gray")
+            .text(Number((_d = card.totalCount) !== null && _d !== void 0 ? _d : 0).toLocaleString());
+        $card.find(".wf-dashboard-connect-counts .is-green")
+            .text(Number((_e = card.connectedCount) !== null && _e !== void 0 ? _e : 0).toLocaleString());
+        const $tagRow = $card.find(`[data-tag-id="${this.escapeSelectorValue(tag.tagId)}"]`);
+        const tagState = (_f = tag.state) !== null && _f !== void 0 ? _f : "gray";
+        const tagValue = (_j = (_h = (_g = tag.cookieValue) !== null && _g !== void 0 ? _g : tag.displayValue) !== null && _h !== void 0 ? _h : tag.value) !== null && _j !== void 0 ? _j : "---";
+        $tagRow.find(".wf-dashboard-tag-dot")
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${tagState}`);
+        $tagRow.find("strong").text(tagValue);
+        const $footer = $card.find(".wf-dashboard-card-footer");
+        $footer.find("span").html(`
+        ${this.getFooterIcon(state)}
+        ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_k = card.footerText) !== null && _k !== void 0 ? _k : "")}
+    `);
+        const hasZap = state === "flashRed" || state === "red";
+        const $zap = $footer.children("i[data-lucide='zap'], svg.lucide-zap");
+        if (hasZap && $zap.length === 0) {
+            $footer.append(`<i data-lucide="zap"></i>`);
+        }
+        if (!hasZap) {
+            $zap.remove();
+        }
         this.refreshIcons();
     }
     applyConnectionCount(card, previousStatus, currentStatus) {

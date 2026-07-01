@@ -137,41 +137,51 @@ class Page {
         }
     }
     renderGroups(groups) {
-        var _a;
+        var _a, _b, _c;
         const total = groups.reduce((sum, item) => sum + item.count, 0);
         const html = [];
         html.push(`
-            <button type="button"
-                    class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
-                    data-group-id="">
-                전체
-                <span>${total.toLocaleString()}</span>
-            </button>
-        `);
+        <button type="button"
+                class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
+                data-group-id=""
+                data-group-name="전체 그룹">
+            전체
+            <span>${total.toLocaleString()}</span>
+        </button>
+    `);
         for (const group of groups) {
             const groupId = (_a = group.groupId) !== null && _a !== void 0 ? _a : "";
+            const groupName = (_b = group.groupName) !== null && _b !== void 0 ? _b : groupId;
+            const displayName = groupName || "미지정";
             html.push(`
-                <button type="button"
-                        class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
-                        data-group-id="${this.escapeHtml(groupId)}">
-                    ${this.escapeHtml(groupId || "미지정")}
-                    <span>${group.count.toLocaleString()}</span>
-                    ${group.badCount > 0 ? `<em>${group.badCount.toLocaleString()}</em>` : ""}
-                </button>
-            `);
+            <button type="button"
+                    class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
+                    data-group-id="${this.escapeHtml(groupId)}"
+                    data-group-name="${this.escapeHtml(displayName)}"
+                    title="${this.escapeHtml(groupId)}">
+                ${this.escapeHtml(displayName)}
+                <span>${group.count.toLocaleString()}</span>
+                ${group.badCount > 0 ? `<em>${group.badCount.toLocaleString()}</em>` : ""}
+            </button>
+        `);
         }
         $("#groupFilterHost").html(html.join(""));
-        $("#lblGroupSummary").text(this.selectedGroupId.length === 0 ? "전체 그룹" : this.selectedGroupId);
+        const selected = groups.find(x => { var _a; return ((_a = x.groupId) !== null && _a !== void 0 ? _a : "") === this.selectedGroupId; });
+        $("#lblGroupSummary").text(this.selectedGroupId.length === 0
+            ? "전체 그룹"
+            : (_c = selected === null || selected === void 0 ? void 0 : selected.groupName) !== null && _c !== void 0 ? _c : this.selectedGroupId);
         this.refreshIcons();
     }
     selectGroup(groupId) {
+        var _a;
         if (this.selectedGroupId === groupId) {
             return;
         }
         this.selectedGroupId = groupId;
         $("#groupFilterHost [data-group-id]").removeClass("is-active");
         $(`#groupFilterHost [data-group-id="${this.escapeSelectorValue(groupId)}"]`).addClass("is-active");
-        $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupId);
+        const groupName = String((_a = $(`#groupFilterHost [data-group-id="${this.escapeSelectorValue(groupId)}"]`).attr("data-group-name")) !== null && _a !== void 0 ? _a : "");
+        $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupName || groupId);
         void this.reload();
     }
     requestSearch() {
@@ -188,7 +198,7 @@ class Page {
             }
             this.keyword = nextKeyword;
             void this.reload();
-        }, 350);
+        }, 150);
     }
     applySearchImmediately() {
         var _a;
@@ -414,7 +424,9 @@ class Page {
         const topSpacerHeight = startIndex * rowHeight;
         const bottomSpacerHeight = (this.rows.length - endIndex) * rowHeight;
         const fragment = document.createDocumentFragment();
-        fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
+        if (topSpacerHeight > 0) {
+            fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
+        }
         this.rowElements.clear();
         for (let i = startIndex; i < endIndex; i++) {
             const row = this.rows[i];
@@ -423,7 +435,9 @@ class Page {
             this.rowElements.set(key, tr);
             fragment.appendChild(tr);
         }
-        fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
+        if (bottomSpacerHeight > 0) {
+            fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
+        }
         tbody.innerHTML = "";
         tbody.appendChild(fragment);
         if (this.measuredRowHeight == null) {

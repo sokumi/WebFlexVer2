@@ -126,13 +126,42 @@ public class MainListController : ControllerBase {
             .OrderBy(x => x.groupId)
             .ToListAsync(cancellationToken);
 
+        var groupIds = groups
+            .Select(x => x.groupId)
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Distinct()
+            .ToList();
+
+        var groupNameMap = await _webFlexDb.Set<OpcGroup>()
+            .AsNoTracking()
+            .Where(x => groupIds.Contains(x.ID))
+            .Select(x => new {
+                groupId = x.ID,
+                groupName = x.GROUP_NAME
+            })
+            .ToDictionaryAsync(
+                x => x.groupId,
+                x => x.groupName,
+                cancellationToken
+            );
+
+        var rows = groups
+            .Select(x => new {
+                x.groupId,
+                groupName = x.groupId != null && groupNameMap.TryGetValue(x.groupId, out var groupName)
+                    ? groupName
+                    : x.groupId,
+                x.count,
+                x.badCount
+            })
+            .ToList();
+
         return Ok(new {
             success = true,
-            data = groups
+            data = rows
         });
     }
-
-    // 기존 main.ts가 쓰던 stream endpoint 유지
+     
     [HttpGet("stream")]
     public async Task Stream(CancellationToken cancellationToken) {
         Response.Headers.CacheControl = "no-cache";

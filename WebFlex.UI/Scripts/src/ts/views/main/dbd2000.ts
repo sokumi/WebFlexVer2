@@ -176,8 +176,70 @@ export default class Page {
         card.stateText = this.getStateText(card.state);
         card.footerText = this.getFooterText(card.state);
 
-        const $old = $(`[data-group-id="${this.escapeSelectorValue(groupId)}"]`);
-        $old.replaceWith(this.renderCard(card));
+        this.updateCardElement(card, tag);
+    }
+
+    updateCardElement(card: any, tag: any): void {
+        const groupId = card.groupId;
+        const state = card.state ?? "gray";
+
+        const $card = $(`[data-group-id="${this.escapeSelectorValue(groupId)}"]`);
+
+        if ($card.length === 0) {
+            return;
+        }
+
+        $card
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${state}`);
+
+        const $badge = $card.find(".wf-dashboard-state-badge");
+
+        $badge
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${state}`)
+            .html(`
+            ${this.getStateIcon(state)}
+            ${escapeHtml(card.stateText ?? "")}
+        `);
+
+        $card.find(".wf-dashboard-connect-counts .is-red")
+            .text(Number(card.disconnectedCount ?? 0).toLocaleString());
+
+        $card.find(".wf-dashboard-connect-counts .is-gray")
+            .text(Number(card.totalCount ?? 0).toLocaleString());
+
+        $card.find(".wf-dashboard-connect-counts .is-green")
+            .text(Number(card.connectedCount ?? 0).toLocaleString());
+
+        const $tagRow = $card.find(`[data-tag-id="${this.escapeSelectorValue(tag.tagId)}"]`);
+        const tagState = tag.state ?? "gray";
+        const tagValue = tag.cookieValue ?? tag.displayValue ?? tag.value ?? "---";
+
+        $tagRow.find(".wf-dashboard-tag-dot")
+            .removeClass("is-gray is-flashRed is-red is-orange is-green")
+            .addClass(`is-${tagState}`);
+
+        $tagRow.find("strong").text(tagValue);
+
+        const $footer = $card.find(".wf-dashboard-card-footer");
+
+        $footer.find("span").html(`
+        ${this.getFooterIcon(state)}
+        ${escapeHtml(card.footerText ?? "")}
+    `);
+
+        const hasZap = state === "flashRed" || state === "red";
+        const $zap = $footer.children("i[data-lucide='zap'], svg.lucide-zap");
+
+        if (hasZap && $zap.length === 0) {
+            $footer.append(`<i data-lucide="zap"></i>`);
+        }
+
+        if (!hasZap) {
+            $zap.remove();
+        }
+
         this.refreshIcons();
     }
 

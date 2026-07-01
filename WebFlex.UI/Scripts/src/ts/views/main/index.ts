@@ -23,6 +23,7 @@ type CurrentValueGroupResponse = {
 
 type CurrentValueGroupDto = {
     groupId?: string | null;
+    groupName?: string | null;
     count: number;
     badCount: number;
 };
@@ -159,30 +160,41 @@ export default class Page {
         const html: string[] = [];
 
         html.push(`
-            <button type="button"
-                    class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
-                    data-group-id="">
-                전체
-                <span>${total.toLocaleString()}</span>
-            </button>
-        `);
+        <button type="button"
+                class="wf-current-group-chip ${this.selectedGroupId === "" ? "is-active" : ""}"
+                data-group-id=""
+                data-group-name="전체 그룹">
+            전체
+            <span>${total.toLocaleString()}</span>
+        </button>
+    `);
 
         for (const group of groups) {
             const groupId = group.groupId ?? "";
+            const groupName = group.groupName ?? groupId;
+            const displayName = groupName || "미지정";
 
             html.push(`
-                <button type="button"
-                        class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
-                        data-group-id="${this.escapeHtml(groupId)}">
-                    ${this.escapeHtml(groupId || "미지정")}
-                    <span>${group.count.toLocaleString()}</span>
-                    ${group.badCount > 0 ? `<em>${group.badCount.toLocaleString()}</em>` : ""}
-                </button>
-            `);
+            <button type="button"
+                    class="wf-current-group-chip ${this.selectedGroupId === groupId ? "is-active" : ""}"
+                    data-group-id="${this.escapeHtml(groupId)}"
+                    data-group-name="${this.escapeHtml(displayName)}"
+                    title="${this.escapeHtml(groupId)}">
+                ${this.escapeHtml(displayName)}
+                <span>${group.count.toLocaleString()}</span>
+                ${group.badCount > 0 ? `<em>${group.badCount.toLocaleString()}</em>` : ""}
+            </button>
+        `);
         }
 
         $("#groupFilterHost").html(html.join(""));
-        $("#lblGroupSummary").text(this.selectedGroupId.length === 0 ? "전체 그룹" : this.selectedGroupId);
+
+        const selected = groups.find(x => (x.groupId ?? "") === this.selectedGroupId);
+        $("#lblGroupSummary").text(
+            this.selectedGroupId.length === 0
+                ? "전체 그룹"
+                : selected?.groupName ?? this.selectedGroupId
+        );
 
         this.refreshIcons();
     }
@@ -197,7 +209,11 @@ export default class Page {
         $("#groupFilterHost [data-group-id]").removeClass("is-active");
         $(`#groupFilterHost [data-group-id="${this.escapeSelectorValue(groupId)}"]`).addClass("is-active");
 
-        $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupId);
+        const groupName = String(
+            $(`#groupFilterHost [data-group-id="${this.escapeSelectorValue(groupId)}"]`).attr("data-group-name") ?? ""
+        );
+
+        $("#lblGroupSummary").text(groupId.length === 0 ? "전체 그룹" : groupName || groupId);
 
         void this.reload();
     }
@@ -219,7 +235,7 @@ export default class Page {
 
             this.keyword = nextKeyword;
             void this.reload();
-        }, 350);
+        }, 150);
     }
 
     applySearchImmediately(): void {
@@ -504,7 +520,10 @@ export default class Page {
         const bottomSpacerHeight = (this.rows.length - endIndex) * rowHeight;
 
         const fragment = document.createDocumentFragment();
-        fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
+
+        if (topSpacerHeight > 0) {
+            fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
+        }
 
         this.rowElements.clear();
 
@@ -517,7 +536,9 @@ export default class Page {
             fragment.appendChild(tr);
         }
 
-        fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
+        if (bottomSpacerHeight > 0) {
+            fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
+        }
 
         tbody.innerHTML = "";
         tbody.appendChild(fragment);
