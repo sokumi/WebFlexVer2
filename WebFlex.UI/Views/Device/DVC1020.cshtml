@@ -6,6 +6,18 @@
     <section class="wf-group-content">
         <aside id="groupTreePanel" class="wf-card wf-group-tree-panel">
             <div class="wf-card-body">
+                <div class="wf-grid-toolbar wf-group-tree-toolbar">
+                    <div class="wf-grid-toolbar-left">
+                        <div class="wf-grid-toolbar-title">
+                            <span>대그룹 트리</span>
+                        </div>
+                    </div>
+                    <div class="wf-grid-toolbar-right">
+                        <button id="btnTreeCollapse" type="button" class="btn btn-light btn-sm">
+                            <i data-lucide="panel-left-close"></i>
+                        </button>
+                    </div>
+                </div>
 
                 <div class="wf-grid-search wf-group-tree-search">
                     <i data-lucide="search"></i>
@@ -21,13 +33,13 @@
             <section class="wf-card wf-group-list-card">
                 <div class="wf-card-body">
                     <div class="wf-grid-toolbar">
-                        <div class="wf-grid-toolbar-left">
+                        <div class="wf-grid-toolbar-left wf-group-search-line">
                             <button id="btnAllGroups" type="button" class="btn btn-light btn-sm">
                                 <i data-lucide="globe"></i>
                                 전체
                             </button>
 
-                            <div class="wf-grid-search">
+                            <div class="wf-grid-search wf-group-search-box">
                                 <i data-lucide="search"></i>
                                 <input id="txtGroupKeyword" type="text" class="form-control" placeholder="중그룹 검색..." />
                             </div>
