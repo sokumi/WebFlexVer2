@@ -1,0 +1,175 @@
+﻿@{
+    ViewData["Title"] = "그룹 태그 관리";
+}
+
+<div class="wf-page-layout wf-group-tag-page">
+    <section class="wf-group-content">
+        <aside id="groupTreePanel" class="wf-card wf-group-tree-panel">
+            <div class="wf-card-body">
+
+                <div class="wf-grid-search wf-group-tree-search">
+                    <i data-lucide="search"></i>
+                    <input id="txtTreeKeyword" type="text" class="form-control" placeholder="트리 검색..." />
+                </div>
+
+                <div id="groupTree" class="wf-group-tree"></div>
+            </div>
+        </aside>
+
+        <section class="wf-group-main">
+
+            <section class="wf-card wf-group-list-card">
+                <div class="wf-card-body">
+                    <div class="wf-grid-toolbar">
+                        <div class="wf-grid-toolbar-left">
+                            <button id="btnAllGroups" type="button" class="btn btn-light btn-sm">
+                                <i data-lucide="globe"></i>
+                                전체
+                            </button>
+
+                            <div class="wf-grid-search">
+                                <i data-lucide="search"></i>
+                                <input id="txtGroupKeyword" type="text" class="form-control" placeholder="중그룹 검색..." />
+                            </div>
+                        </div>
+
+                        <div class="wf-grid-toolbar-right">
+                            <button id="btnManageMajor" type="button" class="btn btn-light btn-sm">
+                                <i data-lucide="copy"></i>
+                                대그룹 관리
+                            </button>
+
+                            <button id="btnAddGroup" type="button" class="btn btn-success btn-sm">
+                                <i data-lucide="plus"></i>
+                                중그룹 추가
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="wf-table-wrap wf-fill">
+                        <table class="wf-group-table">
+                            <thead>
+                                <tr>
+                                    <th class="wf-check-col">
+                                        <input id="chkAllGroups" type="checkbox" class="form-check-input" />
+                                    </th>
+                                    <th class="wf-icon-col"></th>
+                                    <th>대그룹</th>
+                                    <th>중그룹명</th>
+                                    <th>설명</th>
+                                    <th class="wf-number-col">정렬</th>
+                                    <th class="wf-number-col">태그</th>
+                                    <th class="wf-action-col">관리</th>
+                                </tr>
+                            </thead>
+                            <tbody id="groupTableBody"></tbody>
+                        </table>
+                    </div>
+
+                    <div class="wf-grid-footer">
+                        <span id="lblGroupSummary">총 0건</span>
+                        <span id="lblSelectedSummary">선택 없음</span>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </section>
+</div>
+
+<div id="groupActionBar" class="wf-selected-actionbar d-none">
+    <div>
+        <span id="lblSelectedCount" class="wf-count-badge">0개</span>
+        <span>선택됨</span>
+    </div>
+
+    <div class="wf-selected-actions">
+        <button id="btnMoveSelected" type="button" class="btn btn-light btn-sm">
+            <i data-lucide="move-left"></i>
+            중그룹 이동
+        </button>
+        <button id="btnDeleteSelected" type="button" class="btn btn-outline-danger btn-sm">
+            <i data-lucide="trash-2"></i>
+            삭제
+        </button>
+        <button id="btnClearSelected" type="button" class="btn btn-light btn-sm">
+            <i data-lucide="x"></i>
+            선택 해제
+        </button>
+    </div>
+</div>
+
+<div id="groupDrawerBackdrop" class="wf-drawer-backdrop d-none"></div>
+
+<aside id="groupDrawer" class="wf-drawer">
+    <div class="wf-drawer-header">
+        <div>
+            <h3 id="drawerTitle">중그룹 추가</h3>
+            <p id="drawerDescription">그룹 정보를 입력하세요.</p>
+        </div>
+        <button id="btnCloseDrawer" type="button" class="btn btn-light btn-sm">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+
+    <div id="majorListPanel" class="wf-drawer-body d-none">
+        <div id="majorList" class="wf-major-list"></div>
+
+        <button id="btnAddMajor" type="button" class="btn btn-outline-primary w-100 mt-3">
+            <i data-lucide="plus"></i>
+            새 대그룹 추가
+        </button>
+    </div>
+
+    <form id="groupForm" class="wf-drawer-body d-none">
+        <input id="txtEditType" type="hidden" />
+        <input id="txtEditId" type="hidden" />
+
+        <div id="majorSelectField" class="wf-form-row">
+            <label for="selMajorGroup">대그룹</label>
+            <select id="selMajorGroup" class="form-select"></select>
+        </div>
+
+        <div class="wf-form-row">
+            <label for="txtGroupName">이름 <span class="text-danger">*</span></label>
+            <input id="txtGroupName" type="text" class="form-control" placeholder="이름을 입력하세요" />
+        </div>
+
+        <div class="wf-form-row">
+            <label for="numSortOrder">정렬 순서</label>
+            <input id="numSortOrder" type="number" class="form-control" placeholder="미지정" />
+        </div>
+
+        <div class="wf-form-row">
+            <label for="txtDescription">설명</label>
+            <input id="txtDescription" type="text" class="form-control" placeholder="간단한 설명" />
+        </div>
+
+        <div class="wf-form-row">
+            <label for="txtDescriptionLong">추가 정보</label>
+            <textarea id="txtDescriptionLong" class="form-control" rows="6" maxlength="500" placeholder="추가 정보를 입력하세요."></textarea>
+            <div class="wf-text-counter">
+                <span id="lblDescriptionCount">0</span>/500
+            </div>
+        </div>
+    </form>
+
+    <div id="moveForm" class="wf-drawer-body d-none">
+        <div class="wf-form-row">
+            <label for="selMoveGroup">이동할 중그룹</label>
+            <select id="selMoveGroup" class="form-select"></select>
+        </div>
+        <div class="wf-help-text">선택된 태그를 대상 중그룹으로 이동합니다.</div>
+    </div>
+
+    <div class="wf-drawer-footer">
+        <button id="btnCancelDrawer" type="button" class="btn btn-light btn-sm">취소</button>
+        <button id="btnSaveDrawer" type="button" class="btn btn-primary btn-sm">
+            <i data-lucide="save"></i>
+            저장
+        </button>
+    </div>
+</aside>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/device/dvc1020.js" asp-append-version="true"></script>
+}

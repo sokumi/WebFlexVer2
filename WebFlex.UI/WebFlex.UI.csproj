@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\views\device\dvc1020.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\opc\opc1000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -49,6 +53,7 @@
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
     <Content Include="Scripts\src\ts\framework\page.ts" />
+    <Content Include="Scripts\src\ts\views\device\dvc1020.ts" />
     <Content Include="Scripts\src\ts\views\main\index.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />

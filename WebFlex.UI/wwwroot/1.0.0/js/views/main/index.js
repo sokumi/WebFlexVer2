@@ -37,6 +37,8 @@ class Page {
     constructor() {
         this.rows = [];
         this.rowMap = new Map();
+        // 가상 스크롤로 실제 렌더링된 <tr> 만 추적 (key -> element)
+        this.rowElements = new Map();
         this.eventSource = null;
         this.totalCount = 0;
         this.loadedCount = 0;
@@ -46,9 +48,15 @@ class Page {
         this.pageSize = 120;
         this.isLoading = false;
         this.hasMore = true;
-        this.renderTimer = null;
         this.searchTimer = null;
         this.flashKeys = new Set();
+        // 가상 스크롤 관련 상태
+        this.bufferRows = 8;
+        this.fallbackRowHeight = 40;
+        this.measuredRowHeight = null;
+        this.windowStart = -1;
+        this.windowEnd = -1;
+        this.renderWindowScheduled = false;
     }
     init() {
         $("#btnToggleGroupPanel").on("click", () => {
@@ -75,6 +83,9 @@ class Page {
                 this.applySearchImmediately();
             }
         });
+        window.addEventListener("resize", () => {
+            this.scheduleRenderWindow();
+        });
         void this.loadGroups();
         void this.reload();
         this.connectStream();
@@ -94,10 +105,13 @@ class Page {
     async reload() {
         this.rows = [];
         this.rowMap.clear();
+        this.rowElements.clear();
         this.totalCount = 0;
         this.loadedCount = 0;
         this.hasMore = true;
         this.flashKeys.clear();
+        this.windowStart = -1;
+        this.windowEnd = -1;
         $("#currentValueBody").html(`
             <tr>
                 <td colspan="10" class="wf-current-empty-cell">데이터를 불러오는 중입니다.</td>
@@ -227,7 +241,7 @@ class Page {
             this.loadedCount = this.rows.length;
             this.hasMore = this.loadedCount < this.totalCount;
             this.updateHeaderCount();
-            this.renderRows();
+            this.renderWindow(true);
         }
         catch (e) {
             console.error(e);
@@ -253,6 +267,7 @@ class Page {
         if (remain < 260) {
             void this.loadNextPage();
         }
+        this.scheduleRenderWindow();
     }
     connectStream() {
         var _a;
@@ -284,7 +299,6 @@ class Page {
         }
         const key = this.makeKey(row.groupId, row.tagId);
         const existing = this.rowMap.get(key);
-        let changed = false;
         if (existing == null) {
             // 아직 사용자가 해당 위치까지 스크롤해서 불러오지 않은 데이터는
             // 무한 스크롤 순서를 깨지 않기 위해 즉시 삽입하지 않는다.
@@ -292,11 +306,10 @@ class Page {
             this.updateHeaderCount();
             return;
         }
-        changed =
-            existing.value !== row.value ||
-                existing.cookieValue !== row.cookieValue ||
-                existing.status !== row.status ||
-                existing.updatedAt !== row.updatedAt;
+        const changed = existing.value !== row.value ||
+            existing.cookieValue !== row.cookieValue ||
+            existing.status !== row.status ||
+            existing.updatedAt !== row.updatedAt;
         existing.collectionSetting = (_a = row.collectionSetting) !== null && _a !== void 0 ? _a : existing.collectionSetting;
         existing.value = row.value;
         existing.cookieValue = row.cookieValue;
@@ -305,16 +318,18 @@ class Page {
         existing.receivedAt = row.receivedAt;
         existing.updatedAt = row.updatedAt;
         existing.updateCount = row.updateCount;
-        if (changed) {
-            this.flashKeys.add(key);
-            window.setTimeout(() => {
-                this.flashKeys.delete(key);
-                this.requestRender();
-            }, 1600);
-        }
         this.updateCount++;
         this.updateHeaderCount();
-        this.requestRender();
+        // 현재 가상 스크롤 윈도우에 렌더링되어 있는 행만 DOM을 직접 패치한다.
+        // 화면 밖에 있는 행은 데이터(rowMap)만 갱신하고 DOM 작업은 하지 않는다.
+        const tr = this.rowElements.get(key);
+        if (tr == null) {
+            return;
+        }
+        this.patchRowElement(tr, existing);
+        if (changed) {
+            this.triggerFlash(key);
+        }
     }
     isMatchedCurrentFilter(row) {
         var _a, _b, _c, _d, _e, _f;
@@ -332,18 +347,41 @@ class Page {
             String((_e = row.value) !== null && _e !== void 0 ? _e : "").toLowerCase().includes(q) ||
             String((_f = row.cookieValue) !== null && _f !== void 0 ? _f : "").toLowerCase().includes(q);
     }
-    requestRender() {
-        if (this.renderTimer != null) {
+    triggerFlash(key) {
+        this.flashKeys.add(key);
+        const tr = this.rowElements.get(key);
+        if (tr != null) {
+            tr.classList.add("value-flash");
+        }
+        window.setTimeout(() => {
+            this.flashKeys.delete(key);
+            const currentTr = this.rowElements.get(key);
+            if (currentTr != null) {
+                currentTr.classList.remove("value-flash");
+            }
+        }, 1600);
+    }
+    scheduleRenderWindow() {
+        if (this.renderWindowScheduled) {
             return;
         }
-        this.renderTimer = window.setTimeout(() => {
-            this.renderTimer = null;
-            this.renderRows();
-        }, 80);
+        this.renderWindowScheduled = true;
+        window.requestAnimationFrame(() => {
+            this.renderWindowScheduled = false;
+            this.renderWindow();
+        });
     }
-    renderRows() {
+    /**
+     * 가상 스크롤: 실제 화면에 보이는 구간(+버퍼)만 <tr> 로 렌더링하고,
+     * 위/아래 구간은 높이만 차지하는 spacer <tr> 로 채운다.
+     * force=true 면 보이는 구간(startIndex~endIndex)이 이전과 같아도
+     * (예: 데이터 개수가 늘어난 경우) 무조건 다시 그린다.
+     */
+    renderWindow(force = false) {
+        var _a;
         const tbody = document.getElementById("currentValueBody");
-        if (tbody == null) {
+        const scrollEl = document.getElementById("currentValueScroll");
+        if (tbody == null || scrollEl == null) {
             return;
         }
         if (this.rows.length === 0) {
@@ -352,25 +390,120 @@ class Page {
                 <td colspan="10" class="wf-current-empty-cell">조회된 데이터가 없습니다.</td>
             </tr>
         `;
+            this.rowElements.clear();
+            this.windowStart = -1;
+            this.windowEnd = -1;
             $("#lblVisibleRange").text("0 ~ 0");
             return;
         }
-        tbody.innerHTML = this.rows
-            .map((row, index) => this.renderRow(row, index))
-            .join("");
-        $("#lblVisibleRange").text(`1 ~ ${this.rows.length.toLocaleString()}`);
+        const rowHeight = (_a = this.measuredRowHeight) !== null && _a !== void 0 ? _a : this.fallbackRowHeight;
+        const scrollTop = scrollEl.scrollTop;
+        const viewportHeight = scrollEl.clientHeight;
+        let startIndex = Math.floor(scrollTop / rowHeight) - this.bufferRows;
+        let endIndex = Math.ceil((scrollTop + viewportHeight) / rowHeight) + this.bufferRows;
+        startIndex = Math.max(0, startIndex);
+        endIndex = Math.min(this.rows.length, endIndex);
+        if (!force &&
+            startIndex === this.windowStart &&
+            endIndex === this.windowEnd &&
+            tbody.childElementCount > 0) {
+            return;
+        }
+        this.windowStart = startIndex;
+        this.windowEnd = endIndex;
+        const topSpacerHeight = startIndex * rowHeight;
+        const bottomSpacerHeight = (this.rows.length - endIndex) * rowHeight;
+        const fragment = document.createDocumentFragment();
+        fragment.appendChild(this.buildSpacerRow(topSpacerHeight));
+        this.rowElements.clear();
+        for (let i = startIndex; i < endIndex; i++) {
+            const row = this.rows[i];
+            const key = this.makeKey(row.groupId, row.tagId);
+            const tr = this.buildRowElement(row, i, key);
+            this.rowElements.set(key, tr);
+            fragment.appendChild(tr);
+        }
+        fragment.appendChild(this.buildSpacerRow(bottomSpacerHeight));
+        tbody.innerHTML = "";
+        tbody.appendChild(fragment);
+        if (this.measuredRowHeight == null) {
+            const sample = tbody.querySelector("tr:not(.wf-virtual-spacer)");
+            if (sample != null && sample.offsetHeight > 0) {
+                this.measuredRowHeight = sample.offsetHeight;
+                // 추정치가 아닌 실측 높이로 윈도우를 다시 계산한다.
+                this.windowStart = -1;
+                this.windowEnd = -1;
+                this.renderWindow(true);
+                return;
+            }
+        }
+        $("#lblVisibleRange").text(`${startIndex + 1} ~ ${endIndex}`);
         this.refreshIcons();
     }
-    renderRow(row, index) {
+    buildSpacerRow(height) {
+        const tr = document.createElement("tr");
+        tr.className = "wf-virtual-spacer";
+        tr.style.height = `${Math.max(0, height)}px`;
+        const td = document.createElement("td");
+        td.colSpan = 10;
+        td.style.padding = "0";
+        td.style.border = "none";
+        tr.appendChild(td);
+        return tr;
+    }
+    buildRowElement(row, index, key) {
+        const template = document.createElement("template");
+        template.innerHTML = this.renderRow(row, index, key).trim();
+        return template.content.firstElementChild;
+    }
+    /**
+     * 화면에 렌더링되어 있는 <tr> 의 값 관련 셀만 직접 갱신한다.
+     * (innerHTML 재생성 없이 textContent / title / class 만 변경)
+     */
+    patchRowElement(tr, row) {
+        var _a, _b, _c, _d;
+        const valueEl = tr.querySelector('[data-cell="value"]');
+        if (valueEl != null) {
+            valueEl.textContent = (_a = row.value) !== null && _a !== void 0 ? _a : "-";
+            valueEl.title = (_b = row.value) !== null && _b !== void 0 ? _b : "";
+        }
+        const cookieEl = tr.querySelector('[data-cell="cookie"]');
+        if (cookieEl != null) {
+            cookieEl.textContent = (_c = row.cookieValue) !== null && _c !== void 0 ? _c : "-";
+            cookieEl.title = (_d = row.cookieValue) !== null && _d !== void 0 ? _d : "";
+        }
+        const statusEl = tr.querySelector('[data-cell="status"]');
+        if (statusEl != null) {
+            const isGood = this.isGoodStatus(row.status);
+            statusEl.classList.toggle("is-good", isGood);
+            statusEl.classList.toggle("is-bad", !isGood);
+            const statusTextEl = statusEl.querySelector(".wf-status-text");
+            if (statusTextEl != null) {
+                statusTextEl.textContent = this.formatStatus(row.status);
+            }
+        }
+        const updateCountEl = tr.querySelector('[data-cell="updateCount"]');
+        if (updateCountEl != null) {
+            updateCountEl.textContent = this.formatNumber(row.updateCount);
+        }
+        const sourceTimeEl = tr.querySelector('[data-cell="sourceTimestamp"]');
+        if (sourceTimeEl != null) {
+            sourceTimeEl.textContent = this.formatDate(row.sourceTimestamp);
+        }
+        const updatedAtEl = tr.querySelector('[data-cell="updatedAt"]');
+        if (updatedAtEl != null) {
+            updatedAtEl.textContent = this.formatDate(row.updatedAt);
+        }
+    }
+    renderRow(row, index, key) {
         var _a, _b, _c, _d, _e, _f;
         const groupId = (_a = row.groupId) !== null && _a !== void 0 ? _a : "";
-        const key = this.makeKey(groupId, row.tagId);
         const isGood = this.isGoodStatus(row.status);
         const statusText = this.formatStatus(row.status);
         const flashClass = this.flashKeys.has(key) ? "value-flash" : "";
         const collectionSetting = (_b = row.collectionSetting) !== null && _b !== void 0 ? _b : "";
         return `
-        <tr class="${flashClass}">
+        <tr class="${flashClass}" data-key="${this.escapeHtml(key)}">
             <td>
                 <span class="wf-current-row-index">${index + 1}</span>
             </td>
@@ -394,25 +527,27 @@ class Page {
             </td>
             <td>
                 <span class="wf-current-value"
+                      data-cell="value"
                       title="${this.escapeHtml((_c = row.value) !== null && _c !== void 0 ? _c : "")}">
                     ${this.escapeHtml((_d = row.value) !== null && _d !== void 0 ? _d : "-")}
                 </span>
             </td>
             <td>
                 <span class="wf-current-cookie-value"
+                      data-cell="cookie"
                       title="${this.escapeHtml((_e = row.cookieValue) !== null && _e !== void 0 ? _e : "")}">
                     ${this.escapeHtml((_f = row.cookieValue) !== null && _f !== void 0 ? _f : "-")}
                 </span>
             </td>
             <td>
-                <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}">
+                <span class="wf-current-status ${isGood ? "is-good" : "is-bad"}" data-cell="status">
                     <span class="wf-status-dot"></span>
-                    ${this.escapeHtml(statusText)}
+                    <span class="wf-status-text">${this.escapeHtml(statusText)}</span>
                 </span>
             </td>
-            <td class="text-end">${this.formatNumber(row.updateCount)}</td>
-            <td>${this.formatDate(row.sourceTimestamp)}</td>
-            <td>${this.formatDate(row.updatedAt)}</td>
+            <td class="text-end" data-cell="updateCount">${this.formatNumber(row.updateCount)}</td>
+            <td data-cell="sourceTimestamp">${this.formatDate(row.sourceTimestamp)}</td>
+            <td data-cell="updatedAt">${this.formatDate(row.updatedAt)}</td>
         </tr>
     `;
     }

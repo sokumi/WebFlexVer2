@@ -33,4 +33,11 @@ public class DeviceController : Controller {
         return View(MVCPath.Device.DVC1010);
     }
 
+    [HttpGet, ActionName("dvc1020"), ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult DVC1020() {
+        ViewData["Title"] = "그룹 관리";
+
+        return View(MVCPath.Device.DVC1020);
+    }
+
 }
