@@ -16,6 +16,10 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
+    <Content Include="Scripts\src\css\views\main\dbd2000.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\opc\opc1000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -54,6 +58,7 @@
     </Content>
     <Content Include="Scripts\src\ts\framework\page.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1020.ts" />
+    <Content Include="Scripts\src\ts\views\main\dbd2000.ts" />
     <Content Include="Scripts\src\ts\views\main\index.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
     <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />

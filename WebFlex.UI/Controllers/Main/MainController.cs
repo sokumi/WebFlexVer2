@@ -10,9 +10,9 @@ public class MainController : Controller {
         return View(MVCPath.Main.Index);
     }
 
-    [HttpGet, ActionName("card"), ApiExplorerSettings(IgnoreApi = true)]
-    public IActionResult Card() {
+    [HttpGet, ActionName("dbd2000"), ApiExplorerSettings(IgnoreApi = true)]
+    public IActionResult DBD2000() {
         ViewData["Title"] = "카드 대시보드";
-        return View(MVCPath.Main.Card);
+        return View(MVCPath.Main.DBD2000);
     }
 }

@@ -7,7 +7,7 @@ public static class MVCPath {
 
     internal static class Main {
         public const string Index = "~/Views/Main/Index.cshtml";
-        public const string Card = "~/Views/Main/Card.cshtml";
+        public const string DBD2000 = "~/Views/Main/DBD2000.cshtml";
     }
 
     internal static class Device {
@@ -28,5 +28,5 @@ public static class MVCPath {
 
     internal static class System {
         public const string SVC1000 = "~/Views/System/SVC1000.cshtml";
-    } 
+    }
 }
