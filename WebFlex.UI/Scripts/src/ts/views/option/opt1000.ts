@@ -5,7 +5,9 @@ export default class Page {
     groups: any[] = [];
     tags: any[] = [];
     options: any[] = [];
+
     selectedGroupId = "";
+    selectedTagId = "";
     selectedTag: any = null;
 
     init(): void {
@@ -15,6 +17,7 @@ export default class Page {
 
     bindEvents(): void {
         $("#txtGroupKeyword").on("input", debounce(() => this.renderGroups(), 200));
+        $("#txtTagKeyword").on("input", debounce(() => this.renderTags(), 200));
 
         $("#btnSaveTagDisplay").on("click", () => {
             void this.saveTagDisplay();
@@ -90,6 +93,8 @@ export default class Page {
         this.selectedTag = null;
         this.options = [];
 
+        setValue("#txtTagKeyword", "");
+
         const group = this.groups.find(x => x.groupId === groupId);
         $("#lblSelectedGroup").text(group?.groupName ?? "태그 목록");
         $("#lblSelectedTag").text("태그 선택");
@@ -97,6 +102,7 @@ export default class Page {
         $("#tagDisplayForm").addClass("d-none");
         $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
 
+        this.closeDrawer();
         this.renderGroups();
         await this.loadTags();
     }
@@ -113,6 +119,11 @@ export default class Page {
             }
 
             this.tags = result.data ?? [];
+
+            if (this.selectedTagId.length > 0) {
+                this.selectedTag = this.tags.find(x => x.tagId === this.selectedTagId) ?? null;
+            }
+
             $("#lblTagCount").text(`${this.tags.length}건`);
             this.renderTags();
         } catch (e) {
@@ -122,42 +133,60 @@ export default class Page {
     }
 
     renderTags(): void {
+        const keyword = getValue("#txtTagKeyword").toLowerCase();
+
+        const rows = this.tags.filter(tag =>
+            keyword.length === 0 ||
+            String(tag.tagId ?? "").toLowerCase().includes(keyword) ||
+            String(tag.tagName ?? "").toLowerCase().includes(keyword) ||
+            String(tag.nodeId ?? "").toLowerCase().includes(keyword) ||
+            String(tag.description ?? "").toLowerCase().includes(keyword)
+        );
+
         if (this.tags.length === 0) {
             $("#tagList").html(`<div class="wf-option-empty">등록된 태그가 없습니다.</div>`);
             return;
         }
 
-        $("#tagList").html(this.tags.map(tag => `
-            <button type="button"
-                    class="wf-option-tag-item ${this.selectedTag?.tagId === tag.tagId ? "is-active" : ""}"
-                    data-tag-id="${escapeHtml(tag.tagId)}">
-                <span class="wf-option-tag-main">
-                    <strong>${escapeHtml(tag.description ?? tag.tagName ?? tag.nodeId ?? tag.tagId)}</strong>
-                    <em>${escapeHtml(tag.tagId)} / ${escapeHtml(tag.nodeId ?? "")}</em>
-                </span>
-                <span class="wf-option-tag-meta">
-                    ${tag.showOnDashboard ? `<b class="is-on">표시</b>` : `<b>숨김</b>`}
-                    <small>${Number(tag.optionCount ?? 0)}개</small>
-                </span>
-            </button>
-        `).join(""));
+        if (rows.length === 0) {
+            $("#tagList").html(`<div class="wf-option-empty">검색된 태그가 없습니다.</div>`);
+            return;
+        }
+
+        $("#tagList").html(rows.map(tag => `
+        <button type="button"
+                class="wf-option-tag-item ${this.selectedTag?.tagId === tag.tagId ? "is-active" : ""}"
+                data-tag-id="${escapeHtml(tag.tagId)}">
+            <span class="wf-option-tag-main">
+                <strong>${escapeHtml(tag.description ?? tag.tagName ?? tag.nodeId ?? tag.tagId)}</strong>
+                <em>${escapeHtml(tag.tagId)} / ${escapeHtml(tag.nodeId ?? "")}</em>
+            </span>
+            <span class="wf-option-tag-meta">
+                ${tag.showOnDashboard ? `<b class="is-on">표시</b>` : `<b>숨김</b>`}
+                <small>${Number(tag.optionCount ?? 0)}개</small>
+            </span>
+        </button>
+    `).join(""));
 
         $("#tagList").find("[data-tag-id]").on("click", event => {
-            const tagId = String($(event.currentTarget).data("tag-id"));
+            const tagId = String($(event.currentTarget).attr("data-tag-id") ?? "");
             void this.selectTag(tagId);
         });
     }
 
     async selectTag(tagId: string): Promise<void> {
-        this.selectedTag = this.tags.find(x => x.tagId === tagId);
+        this.selectedTagId = tagId;
+        this.selectedTag = this.tags.find(x => x.tagId === tagId) ?? null;
 
         if (this.selectedTag == null) {
+            notify.warning("선택한 태그 정보를 찾을 수 없습니다.");
             return;
         }
 
         $("#lblSelectedTag").text(this.selectedTag.description ?? this.selectedTag.tagName ?? this.selectedTag.tagId);
         $("#lblSelectedTagSub").text(`${this.selectedTag.tagId} / ${this.selectedTag.nodeId ?? ""}`);
         $("#tagDisplayForm").removeClass("d-none");
+
         setChecked("#chkShowDashboard", this.selectedTag.showOnDashboard);
         setValue("#numTagSortOrder", this.selectedTag.sortOrder ?? "");
 
@@ -166,11 +195,12 @@ export default class Page {
     }
 
     async loadOptions(): Promise<void> {
-        if (this.selectedTag == null) return;
+        const tagId = this.getSelectedTagId();
+        if (tagId.length === 0) return;
 
         try {
             const result = await api.get({
-                url: `/option/card/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
+                url: `/option/card/options?tagId=${encodeURIComponent(tagId)}`
             });
 
             if (!result.success) {
@@ -187,7 +217,7 @@ export default class Page {
     }
 
     renderOptions(): void {
-        if (this.selectedTag == null) {
+        if (this.getSelectedTagId().length === 0) {
             $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
             return;
         }
@@ -205,10 +235,18 @@ export default class Page {
                     <p>${escapeHtml(option.description ?? "")}</p>
                 </div>
                 <div class="wf-option-rule-actions">
-                    <button type="button" class="wf-row-icon-btn" data-edit-option="${escapeHtml(option.id)}">
+                    <button type="button"
+                            class="wf-option-icon-btn"
+                            title="조건 수정"
+                            aria-label="조건 수정"
+                            data-edit-option="${escapeHtml(option.id)}">
                         <i data-lucide="pencil"></i>
                     </button>
-                    <button type="button" class="wf-row-icon-btn is-danger" data-delete-option="${escapeHtml(option.id)}">
+                    <button type="button"
+                            class="wf-option-icon-btn is-danger"
+                            title="조건 삭제"
+                            aria-label="조건 삭제"
+                            data-delete-option="${escapeHtml(option.id)}">
                         <i data-lucide="trash-2"></i>
                     </button>
                 </div>
@@ -216,12 +254,16 @@ export default class Page {
         `).join(""));
 
         $("#optionList").find("[data-edit-option]").on("click", event => {
-            const id = String($(event.currentTarget).data("edit-option"));
+            event.stopPropagation();
+
+            const id = String($(event.currentTarget).attr("data-edit-option") ?? "");
             this.openOptionDrawer(this.options.find(x => x.id === id) ?? null);
         });
 
         $("#optionList").find("[data-delete-option]").on("click", event => {
-            const id = String($(event.currentTarget).data("delete-option"));
+            event.stopPropagation();
+
+            const id = String($(event.currentTarget).attr("data-delete-option") ?? "");
             void this.deleteOption(id);
         });
 
@@ -229,13 +271,15 @@ export default class Page {
     }
 
     async saveTagDisplay(): Promise<void> {
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+
+        if (tagId.length === 0) {
             notify.warning("태그를 선택해 주세요.");
             return;
         }
 
         const request = {
-            ID: this.selectedTag.tagId,
+            ID: tagId,
             SHOW_ON_DASHBOARD: getChecked("#chkShowDashboard"),
             SORT_ORDER: this.readNumber("#numTagSortOrder")
         };
@@ -249,6 +293,7 @@ export default class Page {
             }
 
             notify.success(result.message ?? "저장되었습니다.");
+            await this.loadGroups();
             await this.loadTags();
         } catch (e) {
             console.error(e);
@@ -257,7 +302,9 @@ export default class Page {
     }
 
     openOptionDrawer(option: any): void {
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+
+        if (tagId.length === 0) {
             notify.warning("태그를 선택해 주세요.");
             return;
         }
@@ -283,14 +330,16 @@ export default class Page {
     }
 
     async saveOption(): Promise<void> {
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+
+        if (tagId.length === 0) {
             notify.warning("태그를 선택해 주세요.");
             return;
         }
 
         const request = {
             ID: getValue("#txtOptionId"),
-            TAG_ID: this.selectedTag.tagId,
+            TAG_ID: tagId,
             STATE: getValue("#selState"),
             MATCH_TYPE: getValue("#selMatchType"),
             TEXT_VALUE: getValue("#txtTextValue"),
@@ -310,7 +359,9 @@ export default class Page {
 
             notify.success(result.message ?? "저장되었습니다.");
             this.closeDrawer();
+
             await this.loadOptions();
+            await this.loadGroups();
             await this.loadTags();
         } catch (e) {
             console.error(e);
@@ -334,11 +385,20 @@ export default class Page {
 
             notify.success(result.message ?? "삭제되었습니다.");
             await this.loadOptions();
+            await this.loadGroups();
             await this.loadTags();
         } catch (e) {
             console.error(e);
             notify.warning("조건 삭제 중 오류가 발생했습니다.");
         }
+    }
+
+    getSelectedTagId(): string {
+        if (this.selectedTagId.length > 0) {
+            return this.selectedTagId;
+        }
+
+        return String(this.selectedTag?.tagId ?? "");
     }
 
     getConditionText(option: any): string {
@@ -364,6 +424,7 @@ export default class Page {
     readNumber(selector: string): number | null {
         const value = getValue(selector);
         if (value.length === 0) return null;
+
         const numberValue = Number(value);
         return Number.isFinite(numberValue) ? numberValue : null;
     }

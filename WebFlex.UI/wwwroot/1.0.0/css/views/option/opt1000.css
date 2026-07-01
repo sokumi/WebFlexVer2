@@ -4,13 +4,14 @@
 .wf-option-card-page {
     height: calc(100vh - 112px);
     min-height: 0;
+    overflow: hidden;
 }
 
 .wf-option-card-layout {
     height: 100%;
     min-height: 0;
     display: grid;
-    grid-template-columns: 280px minmax(0, 1fr) 420px;
+    grid-template-columns: 400px minmax(0, 1fr) 450px;
     gap: 14px;
 }
 
@@ -29,12 +30,73 @@
         min-height: 0;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
     }
 
-.wf-option-search {
+.wf-option-panel-head {
     flex: 0 0 auto;
+    min-height: 54px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--wf-border);
+}
+
+.wf-option-panel-title-area {
+    min-width: 0;
+}
+
+.wf-option-head-search {
+    width: 150px;
+    flex: 0 0 150px;
+}
+
+.wf-option-tag-search {
+    width: 210px;
+    flex-basis: 210px;
+}
+
+.wf-option-head-search .form-control {
+    height: 34px;
+    font-size: 12px;
+}
+
+.wf-option-group-list,
+.wf-option-tag-list,
+.wf-option-rule-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    padding-top: 8px;
+}
+
+.wf-option-editor-head {
+    flex: 0 0 auto;
+    padding-bottom: 12px;
+}
+
+.wf-option-display-form {
+    flex: 0 0 auto;
+    display: grid;
+    gap: 10px;
+}
+
+.wf-option-editor-panel hr {
+    flex: 0 0 auto;
+    width: 100%;
+}
+
+.wf-option-rule-toolbar {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
     margin-bottom: 10px;
 }
+
 
 .wf-option-group-list,
 .wf-option-tag-list,
@@ -184,6 +246,41 @@
     gap: 4px;
 }
 
+.wf-option-icon-btn {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--wf-border);
+    border-radius: 6px;
+    background: var(--wf-surface);
+    color: var(--wf-text-muted);
+    padding: 0;
+    line-height: 1;
+    cursor: pointer;
+    transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
+
+    .wf-option-icon-btn:hover {
+        border-color: var(--wf-success);
+        background: var(--wf-success-soft);
+        color: var(--wf-success);
+    }
+
+    .wf-option-icon-btn.is-danger:hover {
+        border-color: var(--wf-danger);
+        background: var(--wf-danger-soft);
+        color: var(--wf-danger);
+    }
+
+    .wf-option-icon-btn svg {
+        width: 15px;
+        height: 15px;
+        stroke-width: 2.2;
+    }
+
 .wf-option-state {
     display: inline-flex;
     align-items: center;
@@ -221,6 +318,82 @@
     text-align: center;
 }
 
+.wf-drawer-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 1040;
+    background: rgba(15, 23, 42, 0.32);
+}
+
+.wf-drawer {
+    position: fixed;
+    top: 0;
+    right: 0;
+    z-index: 1050;
+    width: min(485px, 94vw);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--wf-surface);
+    border-left: 1px solid var(--wf-border);
+    box-shadow: -18px 0 40px rgba(15, 23, 42, 0.16);
+    transform: translateX(100%);
+    transition: transform 0.18s ease;
+}
+
+    .wf-drawer.is-open {
+        transform: translateX(0);
+    }
+
+.wf-drawer-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px;
+    border-bottom: 1px solid var(--wf-border);
+}
+
+    .wf-drawer-header h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 900;
+    }
+
+    .wf-drawer-header p {
+        margin: 6px 0 0;
+        color: var(--wf-text-muted);
+        font-size: 12px;
+    }
+
+.wf-drawer-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    align-content: start;
+    gap: 12px;
+    overflow: auto;
+    padding: 18px;
+}
+
+.wf-drawer-footer {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding: 14px 18px;
+    border-top: 1px solid var(--wf-border);
+    background: var(--wf-surface);
+}
+
+.wf-form-grid.two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
 @media (max-width: 1399px) {
     .wf-option-card-layout {
         grid-template-columns: 260px minmax(0, 1fr);
@@ -235,6 +408,7 @@
 @media (max-width: 991px) {
     .wf-option-card-page {
         height: auto;
+        overflow: visible;
     }
 
     .wf-option-card-layout {
@@ -245,6 +419,10 @@
     .wf-option-tag-panel,
     .wf-option-editor-panel {
         min-height: 360px;
+    }
+
+    .wf-form-grid.two {
+        grid-template-columns: 1fr;
     }
 }
 

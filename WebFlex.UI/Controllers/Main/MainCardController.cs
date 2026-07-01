@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using WebFlex.Shared;
 using WebFlex.UI.Common;
 using WebFlex.UI.Data;
@@ -38,9 +40,24 @@ public class MainCardController : WebFlexApiController {
                 .Where(x => tagIds.Contains(x.TAG_ID))
                 .ToListAsync();
 
+            var cardOptions = await _db.Set<OpcCardOption>()
+                .AsNoTracking()
+                .Where(x => x.IsEnabled && tagIds.Contains(x.TAG_ID))
+                .ToListAsync();
+
             var currentMap = currentValues
                 .GroupBy(x => x.TAG_ID)
                 .ToDictionary(x => x.Key, x => x.First());
+
+            var optionMap = cardOptions
+                .GroupBy(x => x.TAG_ID)
+                .ToDictionary(
+                    x => x.Key,
+                    x => x
+                        .OrderBy(option => option.SORT_ORDER ?? int.MaxValue)
+                        .ThenBy(option => GetStatePriority(option.STATE))
+                        .ToList()
+                );
 
             var cards = groups
                 .OrderBy(x => x.MajorGroup == null ? int.MaxValue : x.MajorGroup.SORT_ORDER ?? int.MaxValue)
@@ -59,8 +76,10 @@ public class MainCardController : WebFlexApiController {
 
                     var tagRows = dashboardTags.Select(tag => {
                         currentMap.TryGetValue(tag.ID, out var current);
+                        optionMap.TryGetValue(tag.ID, out var options);
 
-                        var state = ResolveDashboardState(current);
+                        var displayValue = current?.COOKIE_VALUE ?? current?.VALUE;
+                        var state = ResolveDashboardState(current, options ?? new List<OpcCardOption>());
 
                         return new {
                             tagId = tag.ID,
@@ -69,12 +88,25 @@ public class MainCardController : WebFlexApiController {
                             description = string.IsNullOrWhiteSpace(tag.DESCRIPTION)
                                 ? tag.TAG_NAME ?? tag.NODE_ID
                                 : tag.DESCRIPTION,
-                            value = current?.COOKIE_VALUE ?? current?.VALUE,
+                            value = current?.VALUE,
                             rawValue = current?.VALUE,
                             cookieValue = current?.COOKIE_VALUE,
+                            displayValue,
                             status = current?.STATUS?.ToString(),
                             state,
-                            sortOrder = tag.SORT_ORDER
+                            sortOrder = tag.SORT_ORDER,
+                            options = (options ?? new List<OpcCardOption>())
+                                .Select(option => new {
+                                    id = option.ID,
+                                    state = option.STATE,
+                                    matchType = option.MATCH_TYPE,
+                                    textValue = option.TEXT_VALUE,
+                                    minValue = option.MIN_VALUE,
+                                    maxValue = option.MAX_VALUE,
+                                    sortOrder = option.SORT_ORDER,
+                                    description = option.DESCRIPTION
+                                })
+                                .ToList()
                         };
                     }).ToList();
 
@@ -117,10 +149,121 @@ public class MainCardController : WebFlexApiController {
         }
     }
 
-    private static string ResolveDashboardState(CurrentValue? current) {
+    private static string ResolveDashboardState(CurrentValue? current, List<OpcCardOption> options) {
         if (current == null) return "gray";
         if (current.STATUS != VaribaleStatusType.Good) return "red";
-        return "green";
+
+        var value = current.COOKIE_VALUE ?? current.VALUE;
+
+        var matchedOption = options
+            .Where(option => IsMatched(option, value))
+            .OrderBy(option => option.SORT_ORDER ?? int.MaxValue)
+            .ThenBy(option => GetStatePriority(option.STATE))
+            .FirstOrDefault();
+
+        return string.IsNullOrWhiteSpace(matchedOption?.STATE)
+            ? "green"
+            : matchedOption.STATE;
+    }
+
+    private static bool IsMatched(OpcCardOption option, string? value) {
+        var matchType = option.MATCH_TYPE ?? "";
+        var textValue = option.TEXT_VALUE ?? "";
+        var sourceValue = value ?? "";
+
+        return matchType switch {
+            "Always" => true,
+            "Equals" => string.Equals(sourceValue, textValue, StringComparison.OrdinalIgnoreCase),
+            "Contains" => sourceValue.Contains(textValue, StringComparison.OrdinalIgnoreCase),
+            "BoolEquals" => IsBoolMatched(sourceValue, textValue),
+            "NumberRange" => IsNumberRangeMatched(sourceValue, option.MIN_VALUE, option.MAX_VALUE),
+            "NumberGte" => IsNumberGteMatched(sourceValue, option.MIN_VALUE),
+            "NumberLte" => IsNumberLteMatched(sourceValue, option.MAX_VALUE),
+            _ => false
+        };
+    }
+
+    private static bool IsBoolMatched(string value, string expected) {
+        if (!TryParseBool(value, out var boolValue)) return false;
+        if (!TryParseBool(expected, out var expectedValue)) return false;
+
+        return boolValue == expectedValue;
+    }
+
+    private static bool TryParseBool(string value, out bool result) {
+        result = false;
+
+        if (bool.TryParse(value, out result)) {
+            return true;
+        }
+
+        if (value == "1" ||
+            value.Equals("Y", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("YES", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("ON", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("가동", StringComparison.OrdinalIgnoreCase)) {
+            result = true;
+            return true;
+        }
+
+        if (value == "0" ||
+            value.Equals("N", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("NO", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("OFF", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("비가동", StringComparison.OrdinalIgnoreCase) ||
+            value.Equals("정지", StringComparison.OrdinalIgnoreCase)) {
+            result = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsNumberRangeMatched(string value, decimal? minValue, decimal? maxValue) {
+        if (!TryParseDecimal(value, out var numberValue)) return false;
+
+        if (minValue != null && numberValue < minValue.Value) return false;
+        if (maxValue != null && numberValue > maxValue.Value) return false;
+
+        return true;
+    }
+
+    private static bool IsNumberGteMatched(string value, decimal? minValue) {
+        if (minValue == null) return false;
+        if (!TryParseDecimal(value, out var numberValue)) return false;
+
+        return numberValue >= minValue.Value;
+    }
+
+    private static bool IsNumberLteMatched(string value, decimal? maxValue) {
+        if (maxValue == null) return false;
+        if (!TryParseDecimal(value, out var numberValue)) return false;
+
+        return numberValue <= maxValue.Value;
+    }
+
+    private static bool TryParseDecimal(string value, out decimal result) {
+        result = 0;
+
+        if (string.IsNullOrWhiteSpace(value)) {
+            return false;
+        }
+
+        var match = Regex.Match(
+            value.Replace(",", ""),
+            @"[-+]?\d*\.?\d+"
+        );
+
+        if (!match.Success) {
+            return false;
+        }
+
+        return decimal.TryParse(
+            match.Value,
+            NumberStyles.Any,
+            CultureInfo.InvariantCulture,
+            out result
+        );
     }
 
     private static string ResolveCardState(List<string> states, int totalCount, int connectedCount) {

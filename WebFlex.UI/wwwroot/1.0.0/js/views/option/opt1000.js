@@ -250,6 +250,7 @@ class Page {
         this.tags = [];
         this.options = [];
         this.selectedGroupId = "";
+        this.selectedTagId = "";
         this.selectedTag = null;
     }
     init() {
@@ -258,6 +259,7 @@ class Page {
     }
     bindEvents() {
         $("#txtGroupKeyword").on("input", (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.debounce)(() => this.renderGroups(), 200));
+        $("#txtTagKeyword").on("input", (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.debounce)(() => this.renderTags(), 200));
         $("#btnSaveTagDisplay").on("click", () => {
             void this.saveTagDisplay();
         });
@@ -325,17 +327,19 @@ class Page {
         this.selectedGroupId = groupId;
         this.selectedTag = null;
         this.options = [];
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#txtTagKeyword", "");
         const group = this.groups.find(x => x.groupId === groupId);
         $("#lblSelectedGroup").text((_a = group === null || group === void 0 ? void 0 : group.groupName) !== null && _a !== void 0 ? _a : "태그 목록");
         $("#lblSelectedTag").text("태그 선택");
         $("#lblSelectedTagSub").text("옵션을 수정할 태그를 선택하세요.");
         $("#tagDisplayForm").addClass("d-none");
         $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
+        this.closeDrawer();
         this.renderGroups();
         await this.loadTags();
     }
     async loadTags() {
-        var _a, _b;
+        var _a, _b, _c;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
                 url: `/option/card/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
@@ -345,6 +349,9 @@ class Page {
                 return;
             }
             this.tags = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            if (this.selectedTagId.length > 0) {
+                this.selectedTag = (_c = this.tags.find(x => x.tagId === this.selectedTagId)) !== null && _c !== void 0 ? _c : null;
+            }
             $("#lblTagCount").text(`${this.tags.length}건`);
             this.renderTags();
         }
@@ -354,53 +361,70 @@ class Page {
         }
     }
     renderTags() {
+        const keyword = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtTagKeyword").toLowerCase();
+        const rows = this.tags.filter(tag => {
+            var _a, _b, _c, _d;
+            return keyword.length === 0 ||
+                String((_a = tag.tagId) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) ||
+                String((_b = tag.tagName) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) ||
+                String((_c = tag.nodeId) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword) ||
+                String((_d = tag.description) !== null && _d !== void 0 ? _d : "").toLowerCase().includes(keyword);
+        });
         if (this.tags.length === 0) {
             $("#tagList").html(`<div class="wf-option-empty">등록된 태그가 없습니다.</div>`);
             return;
         }
-        $("#tagList").html(this.tags.map(tag => {
+        if (rows.length === 0) {
+            $("#tagList").html(`<div class="wf-option-empty">검색된 태그가 없습니다.</div>`);
+            return;
+        }
+        $("#tagList").html(rows.map(tag => {
             var _a, _b, _c, _d, _e, _f;
             return `
-            <button type="button"
-                    class="wf-option-tag-item ${((_a = this.selectedTag) === null || _a === void 0 ? void 0 : _a.tagId) === tag.tagId ? "is-active" : ""}"
-                    data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)}">
-                <span class="wf-option-tag-main">
-                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_d = (_c = (_b = tag.description) !== null && _b !== void 0 ? _b : tag.tagName) !== null && _c !== void 0 ? _c : tag.nodeId) !== null && _d !== void 0 ? _d : tag.tagId)}</strong>
-                    <em>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)} / ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_e = tag.nodeId) !== null && _e !== void 0 ? _e : "")}</em>
-                </span>
-                <span class="wf-option-tag-meta">
-                    ${tag.showOnDashboard ? `<b class="is-on">표시</b>` : `<b>숨김</b>`}
-                    <small>${Number((_f = tag.optionCount) !== null && _f !== void 0 ? _f : 0)}개</small>
-                </span>
-            </button>
-        `;
+        <button type="button"
+                class="wf-option-tag-item ${((_a = this.selectedTag) === null || _a === void 0 ? void 0 : _a.tagId) === tag.tagId ? "is-active" : ""}"
+                data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)}">
+            <span class="wf-option-tag-main">
+                <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_d = (_c = (_b = tag.description) !== null && _b !== void 0 ? _b : tag.tagName) !== null && _c !== void 0 ? _c : tag.nodeId) !== null && _d !== void 0 ? _d : tag.tagId)}</strong>
+                <em>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)} / ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_e = tag.nodeId) !== null && _e !== void 0 ? _e : "")}</em>
+            </span>
+            <span class="wf-option-tag-meta">
+                ${tag.showOnDashboard ? `<b class="is-on">표시</b>` : `<b>숨김</b>`}
+                <small>${Number((_f = tag.optionCount) !== null && _f !== void 0 ? _f : 0)}개</small>
+            </span>
+        </button>
+    `;
         }).join(""));
         $("#tagList").find("[data-tag-id]").on("click", event => {
-            const tagId = String($(event.currentTarget).data("tag-id"));
+            var _a;
+            const tagId = String((_a = $(event.currentTarget).attr("data-tag-id")) !== null && _a !== void 0 ? _a : "");
             void this.selectTag(tagId);
         });
     }
     async selectTag(tagId) {
-        var _a, _b, _c, _d;
-        this.selectedTag = this.tags.find(x => x.tagId === tagId);
+        var _a, _b, _c, _d, _e;
+        this.selectedTagId = tagId;
+        this.selectedTag = (_a = this.tags.find(x => x.tagId === tagId)) !== null && _a !== void 0 ? _a : null;
         if (this.selectedTag == null) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("선택한 태그 정보를 찾을 수 없습니다.");
             return;
         }
-        $("#lblSelectedTag").text((_b = (_a = this.selectedTag.description) !== null && _a !== void 0 ? _a : this.selectedTag.tagName) !== null && _b !== void 0 ? _b : this.selectedTag.tagId);
-        $("#lblSelectedTagSub").text(`${this.selectedTag.tagId} / ${(_c = this.selectedTag.nodeId) !== null && _c !== void 0 ? _c : ""}`);
+        $("#lblSelectedTag").text((_c = (_b = this.selectedTag.description) !== null && _b !== void 0 ? _b : this.selectedTag.tagName) !== null && _c !== void 0 ? _c : this.selectedTag.tagId);
+        $("#lblSelectedTagSub").text(`${this.selectedTag.tagId} / ${(_d = this.selectedTag.nodeId) !== null && _d !== void 0 ? _d : ""}`);
         $("#tagDisplayForm").removeClass("d-none");
         (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setChecked)("#chkShowDashboard", this.selectedTag.showOnDashboard);
-        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numTagSortOrder", (_d = this.selectedTag.sortOrder) !== null && _d !== void 0 ? _d : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numTagSortOrder", (_e = this.selectedTag.sortOrder) !== null && _e !== void 0 ? _e : "");
         this.renderTags();
         await this.loadOptions();
     }
     async loadOptions() {
         var _a, _b;
-        if (this.selectedTag == null)
+        const tagId = this.getSelectedTagId();
+        if (tagId.length === 0)
             return;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: `/option/card/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
+                url: `/option/card/options?tagId=${encodeURIComponent(tagId)}`
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "옵션 조회에 실패했습니다.");
@@ -415,7 +439,7 @@ class Page {
         }
     }
     renderOptions() {
-        if (this.selectedTag == null) {
+        if (this.getSelectedTagId().length === 0) {
             $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
             return;
         }
@@ -433,10 +457,18 @@ class Page {
                     <p>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = option.description) !== null && _a !== void 0 ? _a : "")}</p>
                 </div>
                 <div class="wf-option-rule-actions">
-                    <button type="button" class="wf-row-icon-btn" data-edit-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
+                    <button type="button"
+                            class="wf-option-icon-btn"
+                            title="조건 수정"
+                            aria-label="조건 수정"
+                            data-edit-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
                         <i data-lucide="pencil"></i>
                     </button>
-                    <button type="button" class="wf-row-icon-btn is-danger" data-delete-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
+                    <button type="button"
+                            class="wf-option-icon-btn is-danger"
+                            title="조건 삭제"
+                            aria-label="조건 삭제"
+                            data-delete-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
                         <i data-lucide="trash-2"></i>
                     </button>
                 </div>
@@ -444,24 +476,28 @@ class Page {
         `;
         }).join(""));
         $("#optionList").find("[data-edit-option]").on("click", event => {
-            var _a;
-            const id = String($(event.currentTarget).data("edit-option"));
-            this.openOptionDrawer((_a = this.options.find(x => x.id === id)) !== null && _a !== void 0 ? _a : null);
+            var _a, _b;
+            event.stopPropagation();
+            const id = String((_a = $(event.currentTarget).attr("data-edit-option")) !== null && _a !== void 0 ? _a : "");
+            this.openOptionDrawer((_b = this.options.find(x => x.id === id)) !== null && _b !== void 0 ? _b : null);
         });
         $("#optionList").find("[data-delete-option]").on("click", event => {
-            const id = String($(event.currentTarget).data("delete-option"));
+            var _a;
+            event.stopPropagation();
+            const id = String((_a = $(event.currentTarget).attr("data-delete-option")) !== null && _a !== void 0 ? _a : "");
             void this.deleteOption(id);
         });
         this.refreshIcons();
     }
     async saveTagDisplay() {
         var _a, _b;
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+        if (tagId.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
             return;
         }
         const request = {
-            ID: this.selectedTag.tagId,
+            ID: tagId,
             SHOW_ON_DASHBOARD: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getChecked)("#chkShowDashboard"),
             SORT_ORDER: this.readNumber("#numTagSortOrder")
         };
@@ -472,6 +508,7 @@ class Page {
                 return;
             }
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
+            await this.loadGroups();
             await this.loadTags();
         }
         catch (e) {
@@ -481,7 +518,8 @@ class Page {
     }
     openOptionDrawer(option) {
         var _a, _b, _c, _d, _e, _f, _g, _h;
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+        if (tagId.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
             return;
         }
@@ -504,13 +542,14 @@ class Page {
     }
     async saveOption() {
         var _a, _b;
-        if (this.selectedTag == null) {
+        const tagId = this.getSelectedTagId();
+        if (tagId.length === 0) {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
             return;
         }
         const request = {
             ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtOptionId"),
-            TAG_ID: this.selectedTag.tagId,
+            TAG_ID: tagId,
             STATE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selState"),
             MATCH_TYPE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMatchType"),
             TEXT_VALUE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtTextValue"),
@@ -528,6 +567,7 @@ class Page {
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
             this.closeDrawer();
             await this.loadOptions();
+            await this.loadGroups();
             await this.loadTags();
         }
         catch (e) {
@@ -550,12 +590,20 @@ class Page {
             }
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "삭제되었습니다.");
             await this.loadOptions();
+            await this.loadGroups();
             await this.loadTags();
         }
         catch (e) {
             console.error(e);
             _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("조건 삭제 중 오류가 발생했습니다.");
         }
+    }
+    getSelectedTagId() {
+        var _a, _b;
+        if (this.selectedTagId.length > 0) {
+            return this.selectedTagId;
+        }
+        return String((_b = (_a = this.selectedTag) === null || _a === void 0 ? void 0 : _a.tagId) !== null && _b !== void 0 ? _b : "");
     }
     getConditionText(option) {
         var _a, _b, _c, _d, _e, _f, _g;

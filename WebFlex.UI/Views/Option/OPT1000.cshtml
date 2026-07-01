@@ -6,17 +6,15 @@
     <section class="wf-option-card-layout">
         <aside class="wf-card wf-option-group-panel">
             <div class="wf-card-body">
-                <div class="wf-grid-toolbar">
-                    <div class="wf-grid-toolbar-left">
-                        <div class="wf-grid-toolbar-title">
-                            <span>중그룹</span>
-                        </div>
+                <div class="wf-option-panel-head">
+                    <div class="wf-grid-toolbar-title">
+                        <span>중그룹</span>
                     </div>
-                </div>
 
-                <div class="wf-grid-search wf-option-search">
-                    <i data-lucide="search"></i>
-                    <input id="txtGroupKeyword" type="text" class="form-control" placeholder="그룹 검색..." />
+                    <div class="wf-grid-search wf-option-head-search">
+                        <i data-lucide="search"></i>
+                        <input id="txtGroupKeyword" type="text" class="form-control" placeholder="그룹 검색..." />
+                    </div>
                 </div>
 
                 <div id="groupList" class="wf-option-group-list"></div>
@@ -25,15 +23,18 @@
 
         <section class="wf-card wf-option-tag-panel">
             <div class="wf-card-body">
-                <div class="wf-grid-toolbar">
-                    <div class="wf-grid-toolbar-left">
-                        <div>
-                            <div class="wf-grid-toolbar-title">
-                                <span id="lblSelectedGroup">태그 목록</span>
-                                <span id="lblTagCount" class="wf-count-badge">0건</span>
-                            </div>
-                            <div class="wf-grid-toolbar-desc">대시보드 표시 여부와 정렬 순서를 설정합니다.</div>
+                <div class="wf-option-panel-head">
+                    <div class="wf-option-panel-title-area">
+                        <div class="wf-grid-toolbar-title">
+                            <span id="lblSelectedGroup">태그 목록</span>
+                            <span id="lblTagCount" class="wf-count-badge">0건</span>
                         </div>
+                        <div class="wf-grid-toolbar-desc">대시보드 표시 여부와 정렬 순서를 설정합니다.</div>
+                    </div>
+
+                    <div class="wf-grid-search wf-option-head-search wf-option-tag-search">
+                        <i data-lucide="search"></i>
+                        <input id="txtTagKeyword" type="text" class="form-control" placeholder="태그 검색..." />
                     </div>
                 </div>
 

@@ -111,7 +111,7 @@ export default class Page {
 
     renderTag(tag: any): string {
         const state = tag.state ?? "gray";
-        const value = tag.cookieValue ?? tag.value ?? "---";
+        const value = tag.cookieValue ?? tag.displayValue ?? tag.value ?? "---";
 
         return `
             <div class="wf-dashboard-tag-row" data-tag-id="${escapeHtml(tag.tagId)}">
@@ -161,10 +161,16 @@ export default class Page {
             return;
         }
 
+        const previousStatus = tag.status;
+
         tag.value = row.value ?? row.VALUE;
+        tag.rawValue = row.value ?? row.VALUE;
         tag.cookieValue = row.cookieValue ?? row.COOKIE_VALUE;
+        tag.displayValue = tag.cookieValue ?? tag.value;
         tag.status = row.status ?? row.STATUS;
-        tag.state = this.resolveState(row.status ?? row.STATUS);
+        tag.state = this.resolveTagState(tag);
+
+        this.applyConnectionCount(card, previousStatus, tag.status);
 
         card.state = this.resolveCardState(card);
         card.stateText = this.getStateText(card.state);
@@ -175,14 +181,155 @@ export default class Page {
         this.refreshIcons();
     }
 
-    resolveState(status: any): string {
-        const text = String(status ?? "").toLowerCase();
+    applyConnectionCount(card: any, previousStatus: any, currentStatus: any): void {
+        const wasGood = this.isGoodStatus(previousStatus);
+        const isGood = this.isGoodStatus(currentStatus);
 
-        if (text === "0" || text === "good") {
-            return "green";
+        if (wasGood === isGood) {
+            return;
         }
 
-        return "red";
+        const connectedCount = Number(card.connectedCount ?? 0);
+        const totalCount = Number(card.totalCount ?? 0);
+
+        card.connectedCount = isGood
+            ? Math.min(totalCount, connectedCount + 1)
+            : Math.max(0, connectedCount - 1);
+
+        card.disconnectedCount = Math.max(0, totalCount - card.connectedCount);
+    }
+
+    resolveTagState(tag: any): string {
+        if (tag.status == null || tag.status === "") {
+            return "gray";
+        }
+
+        if (!this.isGoodStatus(tag.status)) {
+            return "red";
+        }
+
+        const value = tag.cookieValue ?? tag.value ?? "";
+        const options = tag.options ?? [];
+
+        const matchedOptions = options
+            .filter((option: any) => this.isMatched(option, value))
+            .sort((a: any, b: any) => {
+                const sortA = Number.isFinite(Number(a.sortOrder)) ? Number(a.sortOrder) : Number.MAX_SAFE_INTEGER;
+                const sortB = Number.isFinite(Number(b.sortOrder)) ? Number(b.sortOrder) : Number.MAX_SAFE_INTEGER;
+
+                if (sortA !== sortB) {
+                    return sortA - sortB;
+                }
+
+                return this.getPriority(a.state) - this.getPriority(b.state);
+            });
+
+        return matchedOptions.length > 0
+            ? matchedOptions[0].state
+            : "green";
+    }
+
+    isMatched(option: any, value: any): boolean {
+        const matchType = option.matchType ?? "";
+        const textValue = option.textValue ?? "";
+        const sourceValue = String(value ?? "");
+
+        if (matchType === "Always") {
+            return true;
+        }
+
+        if (matchType === "Equals") {
+            return sourceValue.toLowerCase() === String(textValue).toLowerCase();
+        }
+
+        if (matchType === "Contains") {
+            return sourceValue.toLowerCase().includes(String(textValue).toLowerCase());
+        }
+
+        if (matchType === "BoolEquals") {
+            const boolValue = this.parseBool(sourceValue);
+            const expectedValue = this.parseBool(textValue);
+
+            return boolValue != null &&
+                expectedValue != null &&
+                boolValue === expectedValue;
+        }
+
+        if (matchType === "NumberRange") {
+            const numberValue = this.parseNumber(sourceValue);
+
+            if (numberValue == null) {
+                return false;
+            }
+
+            const minValue = this.parseNumber(option.minValue);
+            const maxValue = this.parseNumber(option.maxValue);
+
+            if (minValue != null && numberValue < minValue) return false;
+            if (maxValue != null && numberValue > maxValue) return false;
+
+            return true;
+        }
+
+        if (matchType === "NumberGte") {
+            const numberValue = this.parseNumber(sourceValue);
+            const minValue = this.parseNumber(option.minValue);
+
+            return numberValue != null &&
+                minValue != null &&
+                numberValue >= minValue;
+        }
+
+        if (matchType === "NumberLte") {
+            const numberValue = this.parseNumber(sourceValue);
+            const maxValue = this.parseNumber(option.maxValue);
+
+            return numberValue != null &&
+                maxValue != null &&
+                numberValue <= maxValue;
+        }
+
+        return false;
+    }
+
+    parseNumber(value: any): number | null {
+        if (value == null || value === "") {
+            return null;
+        }
+
+        const match = String(value)
+            .replace(/,/g, "")
+            .match(/[-+]?\d*\.?\d+/);
+
+        if (match == null) {
+            return null;
+        }
+
+        const numberValue = Number(match[0]);
+
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
+    }
+
+    parseBool(value: any): boolean | null {
+        const text = String(value ?? "").trim().toLowerCase();
+
+        if (text === "true" || text === "1" || text === "y" || text === "yes" || text === "on" || text === "가동") {
+            return true;
+        }
+
+        if (text === "false" || text === "0" || text === "n" || text === "no" || text === "off" || text === "비가동" || text === "정지") {
+            return false;
+        }
+
+        return null;
+    }
+
+    isGoodStatus(status: any): boolean {
+        const text = String(status ?? "").toLowerCase();
+
+        return text === "0" || text === "good";
     }
 
     resolveCardState(card: any): string {
@@ -192,8 +339,12 @@ export default class Page {
             return "gray";
         }
 
+        if (Number(card.connectedCount ?? 0) === 0) {
+            return "gray";
+        }
+
         if (states.length === 0) {
-            return Number(card.connectedCount ?? 0) === 0 ? "gray" : "green";
+            return "green";
         }
 
         return states.sort((a: string, b: string) => this.getPriority(a) - this.getPriority(b))[0];

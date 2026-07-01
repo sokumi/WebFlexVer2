@@ -69,9 +69,7 @@ public static class WebFlexModelMapper {
         var properties = GetMappableProperties(typeof(T));
 
         foreach (var jsonProperty in element.EnumerateObject()) {
-            var jsonName = NormalizeJsonName(jsonProperty.Name);
-
-            if (!properties.TryGetValue(jsonName, out var property)) {
+            if (!TryGetMappableProperty(properties, jsonProperty.Name, out var property)) {
                 continue;
             }
 
@@ -202,11 +200,11 @@ public static class WebFlexModelMapper {
         }
 
         var normalizedNames = names
-            .Select(NormalizeJsonName)
+            .Select(NormalizeModelName)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         foreach (var item in element.EnumerateObject()) {
-            if (normalizedNames.Contains(NormalizeJsonName(item.Name))) {
+            if (normalizedNames.Contains(NormalizeModelName(item.Name))) {
                 property = item.Value;
                 return true;
             }
@@ -220,11 +218,50 @@ public static class WebFlexModelMapper {
             .GetProperties(BindingFlags.Public | BindingFlags.Instance)
             .Where(x => x.CanWrite)
             .Where(IsMappableProperty)
+            .GroupBy(x => NormalizeModelName(x.Name), StringComparer.OrdinalIgnoreCase)
             .ToDictionary(
-                x => NormalizeModelName(x.Name),
-                x => x,
+                x => x.Key,
+                x => x.First(),
                 StringComparer.OrdinalIgnoreCase
             );
+    }
+
+    private static bool TryGetMappableProperty(
+        IDictionary<string, PropertyInfo> properties,
+        string jsonPropertyName,
+        out PropertyInfo property) {
+        var jsonName = NormalizeModelName(jsonPropertyName);
+
+        if (properties.TryGetValue(jsonName, out property!)) {
+            return true;
+        }
+
+        foreach (var aliasName in GetFallbackAliasNames(jsonName)) {
+            if (properties.TryGetValue(aliasName, out property!)) {
+                return true;
+            }
+        }
+
+        property = default!;
+        return false;
+    }
+
+    private static IEnumerable<string> GetFallbackAliasNames(string normalizedJsonName) {
+        // 기존 호환용 alias.
+        // 단, 직접 매핑이 실패한 경우에만 적용한다.
+        // 예: OpcCardOption.TAG_ID가 있으면 TAG_ID로 먼저 매핑되고,
+        //     OpcTag처럼 TAG_ID 프로퍼티가 없는 모델에서만 tagId -> ID로 매핑된다.
+        if (normalizedJsonName == "tagid") {
+            yield return "id";
+        }
+
+        if (normalizedJsonName == "displayname") {
+            yield return "tagname";
+        }
+
+        if (normalizedJsonName == "expression") {
+            yield return "expressions";
+        }
     }
 
     private static bool IsMappableProperty(PropertyInfo property) {
@@ -273,9 +310,7 @@ public static class WebFlexModelMapper {
         var properties = GetMappableProperties(modelType);
 
         foreach (var jsonProperty in element.EnumerateObject()) {
-            var jsonName = NormalizeJsonName(jsonProperty.Name);
-
-            if (!properties.TryGetValue(jsonName, out var property)) {
+            if (!TryGetMappableProperty(properties, jsonProperty.Name, out var property)) {
                 continue;
             }
 
@@ -499,17 +534,6 @@ public static class WebFlexModelMapper {
             JsonValueKind.Null => null,
             JsonValueKind.Undefined => null,
             _ => property.GetRawText()
-        };
-    }
-
-    private static string NormalizeJsonName(string value) {
-        var name = NormalizeModelName(value);
-
-        return name switch {
-            "tagid" => "id",
-            "displayname" => "tagname",
-            "expression" => "expressions",
-            _ => name
         };
     }
 

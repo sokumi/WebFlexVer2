@@ -244,13 +244,13 @@ class Page {
         `;
     }
     renderTag(tag) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g;
         const state = (_a = tag.state) !== null && _a !== void 0 ? _a : "gray";
-        const value = (_c = (_b = tag.cookieValue) !== null && _b !== void 0 ? _b : tag.value) !== null && _c !== void 0 ? _c : "---";
+        const value = (_d = (_c = (_b = tag.cookieValue) !== null && _b !== void 0 ? _b : tag.displayValue) !== null && _c !== void 0 ? _c : tag.value) !== null && _d !== void 0 ? _d : "---";
         return `
             <div class="wf-dashboard-tag-row" data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)}">
                 <span class="wf-dashboard-tag-dot is-${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(state)}"></span>
-                <span class="wf-dashboard-tag-name">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_f = (_e = (_d = tag.description) !== null && _d !== void 0 ? _d : tag.tagName) !== null && _e !== void 0 ? _e : tag.nodeId) !== null && _f !== void 0 ? _f : tag.tagId)}</span>
+                <span class="wf-dashboard-tag-name">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_g = (_f = (_e = tag.description) !== null && _e !== void 0 ? _e : tag.tagName) !== null && _f !== void 0 ? _f : tag.nodeId) !== null && _g !== void 0 ? _g : tag.tagId)}</span>
                 <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value)}</strong>
             </div>
         `;
@@ -273,7 +273,7 @@ class Page {
         };
     }
     applyCurrentValue(row) {
-        var _a, _b, _c, _d, _e, _f;
+        var _a, _b, _c, _d, _e, _f, _g;
         const tagId = (_a = row.tagId) !== null && _a !== void 0 ? _a : row.TAG_ID;
         const groupId = this.tagToGroupMap.get(tagId);
         if (groupId == null) {
@@ -287,10 +287,14 @@ class Page {
         if (tag == null) {
             return;
         }
+        const previousStatus = tag.status;
         tag.value = (_c = row.value) !== null && _c !== void 0 ? _c : row.VALUE;
-        tag.cookieValue = (_d = row.cookieValue) !== null && _d !== void 0 ? _d : row.COOKIE_VALUE;
-        tag.status = (_e = row.status) !== null && _e !== void 0 ? _e : row.STATUS;
-        tag.state = this.resolveState((_f = row.status) !== null && _f !== void 0 ? _f : row.STATUS);
+        tag.rawValue = (_d = row.value) !== null && _d !== void 0 ? _d : row.VALUE;
+        tag.cookieValue = (_e = row.cookieValue) !== null && _e !== void 0 ? _e : row.COOKIE_VALUE;
+        tag.displayValue = (_f = tag.cookieValue) !== null && _f !== void 0 ? _f : tag.value;
+        tag.status = (_g = row.status) !== null && _g !== void 0 ? _g : row.STATUS;
+        tag.state = this.resolveTagState(tag);
+        this.applyConnectionCount(card, previousStatus, tag.status);
         card.state = this.resolveCardState(card);
         card.stateText = this.getStateText(card.state);
         card.footerText = this.getFooterText(card.state);
@@ -298,12 +302,122 @@ class Page {
         $old.replaceWith(this.renderCard(card));
         this.refreshIcons();
     }
-    resolveState(status) {
-        const text = String(status !== null && status !== void 0 ? status : "").toLowerCase();
-        if (text === "0" || text === "good") {
-            return "green";
+    applyConnectionCount(card, previousStatus, currentStatus) {
+        var _a, _b;
+        const wasGood = this.isGoodStatus(previousStatus);
+        const isGood = this.isGoodStatus(currentStatus);
+        if (wasGood === isGood) {
+            return;
         }
-        return "red";
+        const connectedCount = Number((_a = card.connectedCount) !== null && _a !== void 0 ? _a : 0);
+        const totalCount = Number((_b = card.totalCount) !== null && _b !== void 0 ? _b : 0);
+        card.connectedCount = isGood
+            ? Math.min(totalCount, connectedCount + 1)
+            : Math.max(0, connectedCount - 1);
+        card.disconnectedCount = Math.max(0, totalCount - card.connectedCount);
+    }
+    resolveTagState(tag) {
+        var _a, _b, _c;
+        if (tag.status == null || tag.status === "") {
+            return "gray";
+        }
+        if (!this.isGoodStatus(tag.status)) {
+            return "red";
+        }
+        const value = (_b = (_a = tag.cookieValue) !== null && _a !== void 0 ? _a : tag.value) !== null && _b !== void 0 ? _b : "";
+        const options = (_c = tag.options) !== null && _c !== void 0 ? _c : [];
+        const matchedOptions = options
+            .filter((option) => this.isMatched(option, value))
+            .sort((a, b) => {
+            const sortA = Number.isFinite(Number(a.sortOrder)) ? Number(a.sortOrder) : Number.MAX_SAFE_INTEGER;
+            const sortB = Number.isFinite(Number(b.sortOrder)) ? Number(b.sortOrder) : Number.MAX_SAFE_INTEGER;
+            if (sortA !== sortB) {
+                return sortA - sortB;
+            }
+            return this.getPriority(a.state) - this.getPriority(b.state);
+        });
+        return matchedOptions.length > 0
+            ? matchedOptions[0].state
+            : "green";
+    }
+    isMatched(option, value) {
+        var _a, _b;
+        const matchType = (_a = option.matchType) !== null && _a !== void 0 ? _a : "";
+        const textValue = (_b = option.textValue) !== null && _b !== void 0 ? _b : "";
+        const sourceValue = String(value !== null && value !== void 0 ? value : "");
+        if (matchType === "Always") {
+            return true;
+        }
+        if (matchType === "Equals") {
+            return sourceValue.toLowerCase() === String(textValue).toLowerCase();
+        }
+        if (matchType === "Contains") {
+            return sourceValue.toLowerCase().includes(String(textValue).toLowerCase());
+        }
+        if (matchType === "BoolEquals") {
+            const boolValue = this.parseBool(sourceValue);
+            const expectedValue = this.parseBool(textValue);
+            return boolValue != null &&
+                expectedValue != null &&
+                boolValue === expectedValue;
+        }
+        if (matchType === "NumberRange") {
+            const numberValue = this.parseNumber(sourceValue);
+            if (numberValue == null) {
+                return false;
+            }
+            const minValue = this.parseNumber(option.minValue);
+            const maxValue = this.parseNumber(option.maxValue);
+            if (minValue != null && numberValue < minValue)
+                return false;
+            if (maxValue != null && numberValue > maxValue)
+                return false;
+            return true;
+        }
+        if (matchType === "NumberGte") {
+            const numberValue = this.parseNumber(sourceValue);
+            const minValue = this.parseNumber(option.minValue);
+            return numberValue != null &&
+                minValue != null &&
+                numberValue >= minValue;
+        }
+        if (matchType === "NumberLte") {
+            const numberValue = this.parseNumber(sourceValue);
+            const maxValue = this.parseNumber(option.maxValue);
+            return numberValue != null &&
+                maxValue != null &&
+                numberValue <= maxValue;
+        }
+        return false;
+    }
+    parseNumber(value) {
+        if (value == null || value === "") {
+            return null;
+        }
+        const match = String(value)
+            .replace(/,/g, "")
+            .match(/[-+]?\d*\.?\d+/);
+        if (match == null) {
+            return null;
+        }
+        const numberValue = Number(match[0]);
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
+    }
+    parseBool(value) {
+        const text = String(value !== null && value !== void 0 ? value : "").trim().toLowerCase();
+        if (text === "true" || text === "1" || text === "y" || text === "yes" || text === "on" || text === "가동") {
+            return true;
+        }
+        if (text === "false" || text === "0" || text === "n" || text === "no" || text === "off" || text === "비가동" || text === "정지") {
+            return false;
+        }
+        return null;
+    }
+    isGoodStatus(status) {
+        const text = String(status !== null && status !== void 0 ? status : "").toLowerCase();
+        return text === "0" || text === "good";
     }
     resolveCardState(card) {
         var _a, _b, _c;
@@ -311,8 +425,11 @@ class Page {
         if (Number((_b = card.totalCount) !== null && _b !== void 0 ? _b : 0) === 0) {
             return "gray";
         }
+        if (Number((_c = card.connectedCount) !== null && _c !== void 0 ? _c : 0) === 0) {
+            return "gray";
+        }
         if (states.length === 0) {
-            return Number((_c = card.connectedCount) !== null && _c !== void 0 ? _c : 0) === 0 ? "gray" : "green";
+            return "green";
         }
         return states.sort((a, b) => this.getPriority(a) - this.getPriority(b))[0];
     }
