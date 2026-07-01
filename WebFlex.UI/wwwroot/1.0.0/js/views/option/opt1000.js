@@ -274,7 +274,7 @@ class Page {
     async loadGroups() {
         var _a, _b;
         try {
-            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/option/dashboard/tree" });
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/option/card/tree" });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "그룹 조회에 실패했습니다.");
                 return;
@@ -338,7 +338,7 @@ class Page {
         var _a, _b;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: `/option/dashboard/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
+                url: `/option/card/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "태그 조회에 실패했습니다.");
@@ -400,7 +400,7 @@ class Page {
             return;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
-                url: `/option/dashboard/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
+                url: `/option/card/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
             });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "옵션 조회에 실패했습니다.");
@@ -466,7 +466,7 @@ class Page {
             SORT_ORDER: this.readNumber("#numTagSortOrder")
         };
         try {
-            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/dashboard/save-tag", data: request });
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/card/save-tag", data: request });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
                 return;
@@ -520,7 +520,7 @@ class Page {
             DESCRIPTION: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtOptionDescription")
         };
         try {
-            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/dashboard/save-option", data: request });
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/card/save-option", data: request });
             if (!result.success) {
                 _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
                 return;
@@ -541,7 +541,7 @@ class Page {
             return;
         try {
             const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
-                url: "/option/dashboard/delete-option",
+                url: "/option/card/delete-option",
                 data: { ID: id }
             });
             if (!result.success) {

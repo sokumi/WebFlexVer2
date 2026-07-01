@@ -145,15 +145,17 @@ namespace WebFlex.UI.Migrations
                         new
                         {
                             ID = "DASH_CARD",
+                            ACTION_NAME = "DBD2000",
+                            CONTROLLER_NAME = "Main",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "panel-top",
                             IsEnabled = true,
                             MENU_CODE = "DASHBOARD.CARD",
-                            MENU_NAME = "CARD",
+                            MENU_NAME = "카드 대시보드",
                             PARENT_MENU_ID = "DASHBOARD",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 12,
-                            URL = "/main/dbd1000"
+                            URL = "/main/dbd2000"
                         },
                         new
                         {
@@ -302,12 +304,12 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "OPTIONS",
+                            ID = "OPC_OPTIONS",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "sliders-horizontal",
                             IsEnabled = true,
-                            MENU_CODE = "OPTIONS",
-                            MENU_NAME = "OPTIONS",
+                            MENU_CODE = "OPC_OPTIONS",
+                            MENU_NAME = "OPC OPTIONS",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 60
                         },
@@ -319,9 +321,9 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "settings-2",
                             IsEnabled = true,
-                            MENU_CODE = "OPTIONS.COLLECTOR",
+                            MENU_CODE = "OPC_OPTIONS.COLLECTOR",
                             MENU_NAME = "Collector 옵션",
-                            PARENT_MENU_ID = "OPTIONS",
+                            PARENT_MENU_ID = "OPC_OPTIONS",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 61,
                             URL = "/opc/opc1020"
@@ -334,9 +336,9 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "plug",
                             IsEnabled = true,
-                            MENU_CODE = "OPTIONS.CLIENT",
+                            MENU_CODE = "OPC_OPTIONS.CLIENT",
                             MENU_NAME = "Client 옵션",
-                            PARENT_MENU_ID = "OPTIONS",
+                            PARENT_MENU_ID = "OPC_OPTIONS",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 62,
                             URL = "/opc/opc1030"
@@ -349,9 +351,9 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "history",
                             IsEnabled = true,
-                            MENU_CODE = "OPTIONS.HISTORY",
+                            MENU_CODE = "OPC_OPTIONS.HISTORY",
                             MENU_NAME = "History 조회",
-                            PARENT_MENU_ID = "OPTIONS",
+                            PARENT_MENU_ID = "OPC_OPTIONS",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 63,
                             URL = "/opc/opc3000"
@@ -364,18 +366,29 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "database-zap",
                             IsEnabled = true,
-                            MENU_CODE = "OPTIONS.TIMESCALE",
+                            MENU_CODE = "OPC_OPTIONS.TIMESCALE",
                             MENU_NAME = "Timescale 설정",
-                            PARENT_MENU_ID = "OPTIONS",
+                            PARENT_MENU_ID = "OPC_OPTIONS",
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 64,
                             URL = "/opc/opc4000"
                         },
                         new
                         {
+                            ID = "OPTIONS",
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            ICON = "sliders-horizontal",
+                            IsEnabled = true,
+                            MENU_CODE = "OPTIONS",
+                            MENU_NAME = "OPTIONS",
+                            SHOW_IN_MENU = true,
+                            SORT_ORDER = 70
+                        },
+                        new
+                        {
                             ID = "OPTION_CARD",
-                            ACTION_NAME = "opt1000",
-                            CONTROLLER_NAME = "Options",
+                            ACTION_NAME = "OPT1000",
+                            CONTROLLER_NAME = "Option",
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             ICON = "panel-top",
                             IsEnabled = true,
@@ -383,7 +396,7 @@ namespace WebFlex.UI.Migrations
                             MENU_NAME = "카드 대시보드 옵션",
                             PARENT_MENU_ID = "OPTIONS",
                             SHOW_IN_MENU = true,
-                            SORT_ORDER = 65,
+                            SORT_ORDER = 71,
                             URL = "/option/opt1000"
                         });
                 });
@@ -694,8 +707,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "DASHBOARD",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -707,8 +720,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "DASH_MAIN",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -720,8 +733,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "DASH_CARD",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -734,7 +747,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "DASHBOARD",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -747,7 +760,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -760,7 +773,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "DASH_CARD",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -773,7 +786,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "SERVICE",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -786,7 +799,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -799,7 +812,7 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "OPCAuth"
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -811,8 +824,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "TestAuth"
+                            MENU_ID = "SERVICE",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -824,8 +837,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "TestAuth"
+                            MENU_ID = "SERVICE_DATA",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -837,8 +850,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "TestAuth"
+                            MENU_ID = "SERVICE_TREND",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -889,8 +902,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -902,8 +915,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE_MANAGE",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -915,8 +928,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE_TAG",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -928,8 +941,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE_GROUP",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -941,8 +954,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -954,8 +967,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "FileAuth"
+                            MENU_ID = "DEVICE_MANAGE",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -967,8 +980,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE_TAG",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -980,8 +993,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE_GROUP",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -993,8 +1006,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1006,8 +1019,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE_MANAGE",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1019,8 +1032,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE_TAG",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1032,8 +1045,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "FileUserAuth"
+                            MENU_ID = "DEVICE_GROUP",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1045,8 +1058,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPC",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1058,8 +1071,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPC_COLLECT",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1071,8 +1084,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPC_OPTIONS",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1084,8 +1097,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTION_COLLECT",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1097,8 +1110,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTION_CLIENT",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1110,8 +1123,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTION_HISTORY",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1123,8 +1136,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPTION_TSD",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1136,8 +1149,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPC",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1149,8 +1162,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPC_COLLECT",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1162,8 +1175,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPC_OPTIONS",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1175,8 +1188,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPTION_COLLECT",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1188,8 +1201,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "UserAuth"
+                            MENU_ID = "OPTION_CLIENT",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1201,7 +1214,7 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
+                            MENU_ID = "OPTION_HISTORY",
                             ROLE_ID = "BizAuth"
                         },
                         new
@@ -1214,7 +1227,7 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
+                            MENU_ID = "OPTION_TSD",
                             ROLE_ID = "BizAuth"
                         },
                         new
@@ -1227,8 +1240,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "BizAuth"
+                            MENU_ID = "OPC",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1240,8 +1253,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "BizAuth"
+                            MENU_ID = "OPC_COLLECT",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1253,8 +1266,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "BizAuth"
+                            MENU_ID = "OPC_OPTIONS",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1266,8 +1279,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "BizAuth"
+                            MENU_ID = "OPTION_COLLECT",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1279,8 +1292,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASHBOARD",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "OPTION_CLIENT",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1292,8 +1305,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_MAIN",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "OPTION_HISTORY",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1305,8 +1318,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DASH_CARD",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "OPTION_TSD",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1318,8 +1331,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "SYSTEM",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1331,8 +1344,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_DATA",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "SYSTEM_SVC",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1344,8 +1357,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "SERVICE_TREND",
-                            ROLE_ID = "WOPCUserAuth"
+                            MENU_ID = "SYSTEM",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1357,8 +1370,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "SYSTEM_SVC",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1370,8 +1383,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_MANAGE",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "SYSTEM",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1383,8 +1396,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_TAG",
-                            ROLE_ID = "DevAuth"
+                            MENU_ID = "SYSTEM_SVC",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
@@ -1396,7 +1409,7 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_GROUP",
+                            MENU_ID = "OPTIONS",
                             ROLE_ID = "DevAuth"
                         },
                         new
@@ -1409,8 +1422,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTION_CARD",
+                            ROLE_ID = "DevAuth"
                         },
                         new
                         {
@@ -1422,8 +1435,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_MANAGE",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTIONS",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1435,8 +1448,8 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_TAG",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTION_CARD",
+                            ROLE_ID = "BizAuth"
                         },
                         new
                         {
@@ -1448,311 +1461,12 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "DEVICE_GROUP",
-                            ROLE_ID = "WebflexUser"
+                            MENU_ID = "OPTIONS",
+                            ROLE_ID = "TestAuth"
                         },
                         new
                         {
                             ID = "RM0063",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "DEVICE",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0064",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "DEVICE_MANAGE",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0065",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "DEVICE_TAG",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0066",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "DEVICE_GROUP",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0067",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPC",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0068",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPC_COLLECT",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0069",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "SYSTEM",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0070",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "SYSTEM_SVC",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0071",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTIONS",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0072",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_COLLECT",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0073",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_CLIENT",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0074",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_HISTORY",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0075",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_TSD",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0076",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_CARD",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0077",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPC",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0078",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPC_COLLECT",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0079",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "SYSTEM",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0080",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "SYSTEM_SVC",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0081",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTIONS",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0082",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_COLLECT",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0083",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_CLIENT",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0084",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_HISTORY",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0085",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_TSD",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0086",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,

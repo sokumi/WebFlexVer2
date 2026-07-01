@@ -35,7 +35,7 @@ export default class Page {
 
     async loadGroups(): Promise<void> {
         try {
-            const result = await api.get({ url: "/option/dashboard/tree" });
+            const result = await api.get({ url: "/option/card/tree" });
 
             if (!result.success) {
                 notify.warning(result.message ?? "그룹 조회에 실패했습니다.");
@@ -104,7 +104,7 @@ export default class Page {
     async loadTags(): Promise<void> {
         try {
             const result = await api.get({
-                url: `/option/dashboard/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
+                url: `/option/card/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
             });
 
             if (!result.success) {
@@ -170,7 +170,7 @@ export default class Page {
 
         try {
             const result = await api.get({
-                url: `/option/dashboard/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
+                url: `/option/card/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
             });
 
             if (!result.success) {
@@ -241,7 +241,7 @@ export default class Page {
         };
 
         try {
-            const result = await api.post({ url: "/option/dashboard/save-tag", data: request });
+            const result = await api.post({ url: "/option/card/save-tag", data: request });
 
             if (!result.success) {
                 notify.warning(result.message ?? "저장에 실패했습니다.");
@@ -301,7 +301,7 @@ export default class Page {
         };
 
         try {
-            const result = await api.post({ url: "/option/dashboard/save-option", data: request });
+            const result = await api.post({ url: "/option/card/save-option", data: request });
 
             if (!result.success) {
                 notify.warning(result.message ?? "저장에 실패했습니다.");
@@ -323,7 +323,7 @@ export default class Page {
 
         try {
             const result = await api.post({
-                url: "/option/dashboard/delete-option",
+                url: "/option/card/delete-option",
                 data: { ID: id }
             });
 
