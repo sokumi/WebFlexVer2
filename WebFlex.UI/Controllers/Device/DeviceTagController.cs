@@ -249,7 +249,6 @@ public class DeviceTagController : WebFlexController {
             var insertCount = 0;
             var skipCount = 0;
 
-            var nextSortOrder = await CreateNextSortOrderAsync(deviceId);
             var tagIds = await _newNo.NewNosAsync("GT", nodeItems.Count);
             var tagIdIndex = 0;
 
@@ -273,7 +272,7 @@ public class DeviceTagController : WebFlexController {
                 tag.SAVE_TO_DATABASE = true;
                 tag.SHOW_ON_DASHBOARD = false;
                 tag.SAMPLINGINTERVALMS = device.SAMPLINGINTERVALMS ?? 1000;
-                tag.SORT_ORDER = nextSortOrder++;
+                tag.SORT_ORDER = null;
                 tag.IsEnabled = true;
                 tag.CreatedAt = now;
                 tag.UpdatedAt = now;
@@ -525,20 +524,6 @@ public class DeviceTagController : WebFlexController {
     private async Task<int> CreateGroupSortOrderAsync() {
         var values = await _db.Set<OpcGroup>()
             .AsNoTracking()
-            .Select(x => x.SORT_ORDER)
-            .ToListAsync();
-
-        return values
-            .Where(x => x.HasValue)
-            .Select(x => x!.Value)
-            .DefaultIfEmpty(0)
-            .Max() + 1;
-    }
-
-    private async Task<int> CreateNextSortOrderAsync(string deviceId) {
-        var values = await _db.Set<OpcTag>()
-            .AsNoTracking()
-            .Where(x => x.DEVICE_ID == deviceId)
             .Select(x => x.SORT_ORDER)
             .ToListAsync();
 

@@ -40,7 +40,6 @@ export default class Page {
     selectedTagIds = new Set<string>();
     tagMap = new Map<string, TagRow[]>();
     drawerMode: DrawerMode | null = null;
-    private selectedGroupIds = new Set<string>();
     private tagKeywords = new Map<string, string>();
 
     public async init(): Promise<void> {
@@ -60,7 +59,6 @@ export default class Page {
         $("#txtTreeKeyword").on("input", debounce(() => this.renderTree(), 200));
         $("#txtGroupKeyword").on("input", debounce(() => this.renderGroupTable(), 200));
 
-        $("#chkAllGroups").on("change", () => this.selectVisibleGroups());
         $("#btnManageMajor").on("click", () => this.openMajorList());
         $("#btnAddGroup").on("click", () => this.openGroupEdit(null));
         $("#btnAddMajor").on("click", () => this.openMajorEdit(null));
@@ -221,10 +219,9 @@ export default class Page {
         const rows = this.groups.filter(x => keyword.length === 0 || String(x.name ?? "").toLowerCase().includes(keyword) || String(x.majorGroupName ?? "").toLowerCase().includes(keyword) || String(x.description ?? "").toLowerCase().includes(keyword));
 
         $("#lblGroupSummary").text(`총 ${rows.length}건`);
-        $("#chkAllGroups").prop("checked", false);
 
         if (rows.length === 0) {
-            $("#groupTableBody").html(`<tr><td colspan="8" class="text-center text-muted py-5">표시할 중그룹이 없습니다.</td></tr>`);
+            $("#groupTableBody").html(`<tr><td colspan="7" class="text-center text-muted py-5">표시할 중그룹이 없습니다.</td></tr>`);
             this.syncSelectedState();
             return;
         }
@@ -235,7 +232,6 @@ export default class Page {
             const expanded = this.expandedGroupIds.has(group.id);
             html += `
                 <tr>
-                    <td class="wf-check-col"><input type="checkbox" class="form-check-input wf-group-check" data-group-id="${escapeHtml(group.id)}" /></td>
                     <td class="wf-icon-col"><button type="button" class="wf-group-expand-btn" data-toggle-group="${escapeHtml(group.id)}"><i data-lucide="${expanded ? "chevron-down" : "chevron-right"}"></i></button></td>
                     <td><span class="wf-group-badge"><i data-lucide="folder"></i>${escapeHtml(group.majorGroupName ?? "미지정")}</span></td>
                     <td><strong>${escapeHtml(group.name)}</strong>${group.sortOrder != null ? `<span class="wf-order-badge ms-1">#${group.sortOrder}</span>` : ""}</td>
@@ -252,7 +248,7 @@ export default class Page {
             if (expanded) {
                 html += `
         <tr class="wf-tag-panel-row">
-            <td colspan="8">
+            <td colspan="7">
                 <div class="wf-tag-panel">
                     <div class="wf-tag-panel-header">
                         <div class="wf-tag-panel-title">
@@ -298,19 +294,7 @@ export default class Page {
             event.stopPropagation();
             void this.deleteGroup(String($(event.currentTarget).data("delete-group")));
         });
-        $("#groupTableBody").find(".wf-group-check").on("click", event => event.stopPropagation());
-        $("#groupTableBody").find(".wf-group-check").on("change", event => {
-            const groupId = String($(event.currentTarget).data("group-id"));
-            const checked = $(event.currentTarget).prop("checked") === true;
 
-            if (checked) {
-                this.selectedGroupIds.add(groupId);
-            } else {
-                this.selectedGroupIds.delete(groupId);
-            }
-
-            this.syncSelectedState();
-        });
         $("#groupTableBody").find(".wf-tag-check").on("click", event => event.stopPropagation());
         $("#groupTableBody").find(".wf-tag-check").on("change", event => this.onTagCheckChanged(event));
 
@@ -482,23 +466,6 @@ export default class Page {
         this.renderGroupTable();
     }
 
-    private selectVisibleGroups(): void {
-        const checked = $("#chkAllGroups").prop("checked") === true;
-
-        $("#groupTableBody .wf-group-check").each((_, element) => {
-            const groupId = String($(element).data("group-id"));
-            $(element).prop("checked", checked);
-
-            if (checked) {
-                this.selectedGroupIds.add(groupId);
-            } else {
-                this.selectedGroupIds.delete(groupId);
-            }
-        });
-
-        this.syncSelectedState();
-    }
-
     openMajorList(): void {
         this.drawerMode = "major-list";
         $("#drawerTitle").text("대그룹 관리");
@@ -610,7 +577,7 @@ export default class Page {
     }
 
     async deleteGroup(groupId: string): Promise<void> {
-        if (!confirm("중그룹을 삭제하시겠습니까? 하위 태그의 그룹은 미지정으로 변경됩니다.")) return;
+        if (!confirm("중그룹을 삭제하시겠습니까? 태그가 등록된 중그룹은 삭제할 수 없습니다.")) return;
         await this.postAndReload("/device/delete-group", { ID: groupId }, "중그룹 삭제 중 오류가 발생했습니다.");
     }
 
@@ -651,7 +618,6 @@ export default class Page {
     }
     private syncSelectedState(): void {
         const tagCount = this.selectedTagIds.size;
-        const groupCount = this.selectedGroupIds.size;
 
         if (tagCount > 0) {
             $("#lblSelectedCount").text(`${tagCount}개`);
@@ -660,7 +626,7 @@ export default class Page {
             return;
         }
 
-        $("#lblSelectedSummary").text(groupCount === 0 ? "선택 없음" : `${groupCount}개 그룹 선택`);
+        $("#lblSelectedSummary").text("선택 없음");
         $("#groupActionBar").addClass("d-none");
     }
     readNumber(selector: string): number | null { const value = getValue(selector); if (value.length === 0) return null; const numberValue = Number(value); return Number.isFinite(numberValue) ? numberValue : null; }

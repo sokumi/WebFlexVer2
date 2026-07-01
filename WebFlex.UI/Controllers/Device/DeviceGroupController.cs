@@ -288,19 +288,14 @@ public class DeviceGroupController : WebFlexController {
             var entity = await _db.Set<OpcGroup>().FirstOrDefaultAsync(x => x.ID == model.ID);
             if (entity == null) throw new WebFlexMessageException("중그룹을 찾을 수 없습니다.");
 
-            var tags = await _db.Set<OpcTag>().Where(x => x.GROUP_ID == model.ID).ToListAsync();
-            foreach (var tag in tags) {
-                tag.GROUP_ID = null;
-                tag.UpdatedAt = DateTime.UtcNow;
+            var tagCount = await _db.Set<OpcTag>().CountAsync(x => x.GROUP_ID == model.ID);
+            if (tagCount > 0) {
+                throw new WebFlexMessageException("태그가 등록된 중그룹은 삭제할 수 없습니다. 태그를 먼저 다른 중그룹으로 이동하거나 삭제해 주세요.");
             }
 
             _db.Set<OpcGroup>().Remove(entity);
             await _db.SaveChangesAsync();
             await tran.CommitAsync();
-
-            if (tags.Count > 0) {
-                await UpdateCurrentValueGroupAsync(tags.Select(x => x.ID).ToList(), "");
-            }
 
             return Success("삭제되었습니다.");
         } catch (WebFlexMessageException ex) {

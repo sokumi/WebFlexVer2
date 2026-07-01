@@ -253,17 +253,16 @@ public static class WebFlexModelMapper {
     }
 
     private static object CreateModelFromElement(Type modelType, JsonElement element) {
+        if (element.ValueKind != JsonValueKind.Object) {
+            return ConvertJsonValue(element, modelType)
+                ?? (modelType.IsValueType ? Activator.CreateInstance(modelType)! : null!);
+        }
+
         var model = Activator.CreateInstance(modelType)
             ?? throw new InvalidOperationException($"{modelType.Name} 인스턴스를 생성할 수 없습니다.");
 
-        if (element.ValueKind == JsonValueKind.Object) {
-            ApplyModelByType(model, modelType, element);
-            return model;
-        }
-
-        var value = ConvertJsonValue(element, modelType);
-
-        return value ?? model;
+        ApplyModelByType(model, modelType, element);
+        return model;
     }
 
     private static void ApplyModelByType(object model, Type modelType, JsonElement element) {
