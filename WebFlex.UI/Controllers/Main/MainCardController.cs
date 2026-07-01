@@ -4,14 +4,14 @@ using WebFlex.Shared;
 using WebFlex.UI.Common;
 using WebFlex.UI.Data;
 
-namespace WebFlex.UI.Controllers.Api;
+namespace WebFlex.UI.Controllers;
 
-[Route("api/dashboard-card/[action]")]
-public class DashboardCardController : WebFlexApiController {
+[Route("main/card/[action]")]
+public class MainCardController : WebFlexApiController {
     private readonly WebFlexDbContext _db;
     private readonly TsdReadDbContext _tsdDb;
 
-    public DashboardCardController(WebFlexDbContext db, TsdReadDbContext tsdDb) {
+    public MainCardController(WebFlexDbContext db, TsdReadDbContext tsdDb) {
         _db = db;
         _tsdDb = tsdDb;
     }

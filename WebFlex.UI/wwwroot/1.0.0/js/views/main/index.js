@@ -122,7 +122,7 @@ class Page {
     async loadGroups() {
         var _a;
         try {
-            const response = await fetch("/api/currentvalue/groups");
+            const response = await fetch("/main/list/groups");
             if (!response.ok) {
                 throw new Error(await response.text());
             }
@@ -220,7 +220,7 @@ class Page {
             if (this.keyword.length > 0) {
                 query.set("keyword", this.keyword);
             }
-            const response = await fetch(`/api/currentvalue/page?${query.toString()}`);
+            const response = await fetch(`/main/list/page?${query.toString()}`);
             if (!response.ok) {
                 throw new Error(await response.text());
             }
@@ -273,7 +273,7 @@ class Page {
         var _a;
         (_a = this.eventSource) === null || _a === void 0 ? void 0 : _a.close();
         this.setStreamStatus("wait", "연결 중");
-        const source = new EventSource("/api/currentvalue/stream");
+        const source = new EventSource("/main/list/stream");
         this.eventSource = source;
         source.addEventListener("connected", () => {
             this.setStreamStatus("connected", "연결됨");

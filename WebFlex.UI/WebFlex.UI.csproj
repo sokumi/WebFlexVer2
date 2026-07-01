@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Scripts\src\css\views\option\opt1000.css">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="Scripts\src\css\views\device\dvc1020.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
@@ -20,7 +24,7 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-    <Content Include="Scripts\src\css\views\opc\opc1000.css">
+    <Content Include="Scripts\src\css\views\opcoption\opc1000.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
@@ -60,11 +64,11 @@
     <Content Include="Scripts\src\ts\views\device\dvc1020.ts" />
     <Content Include="Scripts\src\ts\views\main\dbd2000.ts" />
     <Content Include="Scripts\src\ts\views\main\index.ts" />
-    <Content Include="Scripts\src\ts\views\opc\opc4000.ts" />
-    <Content Include="Scripts\src\ts\views\opc\opc3000.ts" />
-    <Content Include="Scripts\src\ts\views\opc\opc1030.ts" />
-    <Content Include="Scripts\src\ts\views\opc\opc1020.ts" />
-    <Content Include="Scripts\src\ts\views\opc\opc1000.ts" />
+    <Content Include="Scripts\src\ts\views\opcoption\opc4000.ts" />
+    <Content Include="Scripts\src\ts\views\opcoption\opc3000.ts" />
+    <Content Include="Scripts\src\ts\views\opcoption\opc1030.ts" />
+    <Content Include="Scripts\src\ts\views\opcoption\opc1020.ts" />
+    <Content Include="Scripts\src\ts\views\opcoption\opc1000.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1010.ts" />
     <Content Include="Scripts\src\ts\views\device\dvc1000.ts" />
     <Content Include="webpack.config.js" />

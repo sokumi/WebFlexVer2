@@ -135,7 +135,7 @@ export default class Page {
 
     async loadGroups(): Promise<void> {
         try {
-            const response = await fetch("/api/currentvalue/groups");
+            const response = await fetch("/main/list/groups");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -259,7 +259,7 @@ export default class Page {
                 query.set("keyword", this.keyword);
             }
 
-            const response = await fetch(`/api/currentvalue/page?${query.toString()}`);
+            const response = await fetch(`/main/list/page?${query.toString()}`);
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -327,7 +327,7 @@ export default class Page {
         this.eventSource?.close();
         this.setStreamStatus("wait", "연결 중");
 
-        const source = new EventSource("/api/currentvalue/stream");
+        const source = new EventSource("/main/list/stream");
         this.eventSource = source;
 
         source.addEventListener("connected", () => {

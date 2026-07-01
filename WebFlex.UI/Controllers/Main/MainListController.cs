@@ -6,16 +6,16 @@ using WebFlex.Shared;
 using WebFlex.UI.Data;
 using WebFlex.UI.Services;
 
-namespace WebFlex.UI.Controllers.Api;
+namespace WebFlex.UI.Controllers;
 
 [ApiController]
-[Route("api/currentvalue")]
-public class CurrentValueController : ControllerBase {
+[Route("main/list")]
+public class MainListController : ControllerBase {
     private readonly TsdReadDbContext _db;
     private readonly WebFlexDbContext _webFlexDb;
     private readonly CurrentValueNotifyService _notifyService;
 
-    public CurrentValueController(
+    public MainListController(
         TsdReadDbContext db,
         WebFlexDbContext webFlexDb,
         CurrentValueNotifyService notifyService) {

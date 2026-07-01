@@ -1,0 +1,167 @@
+﻿@{
+    ViewData["Title"] = "카드 대시보드 옵션";
+}
+
+<div class="wf-page-layout wf-option-card-page">
+    <section class="wf-option-card-layout">
+        <aside class="wf-card wf-option-group-panel">
+            <div class="wf-card-body">
+                <div class="wf-grid-toolbar">
+                    <div class="wf-grid-toolbar-left">
+                        <div class="wf-grid-toolbar-title">
+                            <span>중그룹</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="wf-grid-search wf-option-search">
+                    <i data-lucide="search"></i>
+                    <input id="txtGroupKeyword" type="text" class="form-control" placeholder="그룹 검색..." />
+                </div>
+
+                <div id="groupList" class="wf-option-group-list"></div>
+            </div>
+        </aside>
+
+        <section class="wf-card wf-option-tag-panel">
+            <div class="wf-card-body">
+                <div class="wf-grid-toolbar">
+                    <div class="wf-grid-toolbar-left">
+                        <div>
+                            <div class="wf-grid-toolbar-title">
+                                <span id="lblSelectedGroup">태그 목록</span>
+                                <span id="lblTagCount" class="wf-count-badge">0건</span>
+                            </div>
+                            <div class="wf-grid-toolbar-desc">대시보드 표시 여부와 정렬 순서를 설정합니다.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tagList" class="wf-option-tag-list"></div>
+            </div>
+        </section>
+
+        <aside class="wf-card wf-option-editor-panel">
+            <div class="wf-card-body">
+                <div class="wf-option-editor-head">
+                    <div>
+                        <strong id="lblSelectedTag">태그 선택</strong>
+                        <span id="lblSelectedTagSub">옵션을 수정할 태그를 선택하세요.</span>
+                    </div>
+                </div>
+
+                <div id="tagDisplayForm" class="wf-option-display-form d-none">
+                    <label class="wf-switch-field">
+                        <input id="chkShowDashboard" type="checkbox" class="form-check-input" />
+                        <span>카드 대시보드 표시</span>
+                    </label>
+
+                    <div class="wf-form-row">
+                        <label for="numTagSortOrder">태그 정렬 순서</label>
+                        <input id="numTagSortOrder" type="number" class="form-control" placeholder="미지정" />
+                    </div>
+
+                    <button id="btnSaveTagDisplay" type="button" class="btn btn-primary btn-sm">
+                        <i data-lucide="save"></i>
+                        표시 설정 저장
+                    </button>
+                </div>
+
+                <hr />
+
+                <div class="wf-option-rule-toolbar">
+                    <strong>상태 조건</strong>
+                    <button id="btnNewOption" type="button" class="btn btn-outline-primary btn-sm">
+                        <i data-lucide="plus"></i>
+                        조건 추가
+                    </button>
+                </div>
+
+                <div id="optionList" class="wf-option-rule-list">
+                    <div class="wf-option-empty">태그를 선택해 주세요.</div>
+                </div>
+            </div>
+        </aside>
+    </section>
+</div>
+
+<div id="optionDrawerBackdrop" class="wf-drawer-backdrop d-none"></div>
+
+<aside id="optionDrawer" class="wf-drawer">
+    <div class="wf-drawer-header">
+        <div>
+            <h3 id="drawerTitle">조건 추가</h3>
+            <p>변환값 기준으로 카드 색상을 설정합니다.</p>
+        </div>
+        <button id="btnCloseDrawer" type="button" class="btn btn-light btn-sm">
+            <i data-lucide="x"></i>
+        </button>
+    </div>
+
+    <div class="wf-drawer-body">
+        <input id="txtOptionId" type="hidden" />
+
+        <div class="wf-form-row">
+            <label for="selState">표시 상태</label>
+            <select id="selState" class="form-select">
+                <option value="green">초록색 - 정상</option>
+                <option value="orange">주황색 - 주의</option>
+                <option value="red">빨간색 - 경고</option>
+                <option value="flashRed">반짝이는 빨간색 - 위험/점검</option>
+                <option value="gray">회색 - 꺼짐</option>
+            </select>
+        </div>
+
+        <div class="wf-form-row">
+            <label for="selMatchType">조건 타입</label>
+            <select id="selMatchType" class="form-select">
+                <option value="Equals">같음</option>
+                <option value="Contains">포함</option>
+                <option value="NumberRange">숫자 범위</option>
+                <option value="NumberGte">숫자 이상</option>
+                <option value="NumberLte">숫자 이하</option>
+                <option value="BoolEquals">true/false</option>
+                <option value="Always">항상</option>
+            </select>
+        </div>
+
+        <div class="wf-form-row">
+            <label for="txtTextValue">문자/Bool 값</label>
+            <input id="txtTextValue" type="text" class="form-control" placeholder="예: true, 가동, STOP" />
+        </div>
+
+        <div class="wf-form-grid two">
+            <div class="wf-form-row">
+                <label for="numMinValue">최소값</label>
+                <input id="numMinValue" type="number" class="form-control" placeholder="미지정" />
+            </div>
+
+            <div class="wf-form-row">
+                <label for="numMaxValue">최대값</label>
+                <input id="numMaxValue" type="number" class="form-control" placeholder="미지정" />
+            </div>
+        </div>
+
+        <div class="wf-form-row">
+            <label for="numOptionSortOrder">조건 우선순서</label>
+            <input id="numOptionSortOrder" type="number" class="form-control" placeholder="미지정" />
+        </div>
+
+        <div class="wf-form-row">
+            <label for="txtOptionDescription">설명</label>
+            <input id="txtOptionDescription" type="text" class="form-control" placeholder="예: 180 이상이면 경고" />
+        </div>
+    </div>
+
+    <div class="wf-drawer-footer">
+        <button id="btnCancelDrawer" type="button" class="btn btn-light btn-sm">취소</button>
+        <button id="btnSaveOption" type="button" class="btn btn-primary btn-sm">
+            <i data-lucide="save"></i>
+            저장
+        </button>
+    </div>
+</aside>
+
+@section Scripts {
+    <script src="~/1.0.0/js/views/options/opt1000.js" asp-append-version="true"></script>
+}

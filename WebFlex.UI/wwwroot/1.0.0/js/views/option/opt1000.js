@@ -109,6 +109,106 @@ function dispatchLayoutChanged() {
 
 /***/ },
 
+/***/ "./Scripts/src/ts/framework/notify.ts"
+/*!********************************************!*\
+  !*** ./Scripts/src/ts/framework/notify.ts ***!
+  \********************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   notify: () => (/* binding */ notify)
+/* harmony export */ });
+const defaultDuration = 2500;
+function getHost() {
+    let host = document.getElementById("wfToastHost");
+    if (host != null) {
+        return host;
+    }
+    host = document.createElement("div");
+    host.id = "wfToastHost";
+    host.className = "wf-toast-host";
+    host.setAttribute("aria-live", "polite");
+    host.setAttribute("aria-atomic", "true");
+    document.body.appendChild(host);
+    return host;
+}
+function getIcon(type) {
+    if (type === "success") {
+        return "✓";
+    }
+    if (type === "warning") {
+        return "!";
+    }
+    if (type === "error") {
+        return "×";
+    }
+    return "i";
+}
+function removeToast(toast) {
+    toast.classList.add("is-hide");
+    window.setTimeout(() => {
+        toast.remove();
+    }, 180);
+}
+function show(message, options = {}) {
+    var _a, _b;
+    const type = (_a = options.type) !== null && _a !== void 0 ? _a : "info";
+    const duration = (_b = options.duration) !== null && _b !== void 0 ? _b : defaultDuration;
+    const host = getHost();
+    const toast = document.createElement("div");
+    toast.className = `wf-toast ${type}`;
+    toast.innerHTML = `
+        <span class="wf-toast-icon">${getIcon(type)}</span>
+        <span class="wf-toast-message"></span>
+        <button class="wf-toast-close" type="button" aria-label="알림 닫기">×</button>
+    `;
+    const messageElement = toast.querySelector(".wf-toast-message");
+    const closeButton = toast.querySelector(".wf-toast-close");
+    if (messageElement != null) {
+        messageElement.textContent = message;
+    }
+    closeButton === null || closeButton === void 0 ? void 0 : closeButton.addEventListener("click", () => {
+        removeToast(toast);
+    });
+    host.appendChild(toast);
+    if (duration > 0) {
+        window.setTimeout(() => {
+            removeToast(toast);
+        }, duration);
+    }
+}
+const notify = {
+    success(message, duration) {
+        show(message, {
+            type: "success",
+            duration
+        });
+    },
+    info(message, duration) {
+        show(message, {
+            type: "info",
+            duration
+        });
+    },
+    warning(message, duration) {
+        show(message, {
+            type: "warning",
+            duration
+        });
+    },
+    error(message, duration) {
+        show(message, {
+            type: "error",
+            duration
+        });
+    },
+    show
+};
+
+
+/***/ },
+
 /***/ "./Scripts/src/ts/framework/page.ts"
 /*!******************************************!*\
   !*** ./Scripts/src/ts/framework/page.ts ***!
@@ -130,10 +230,10 @@ function runPage(Page) {
 
 /***/ },
 
-/***/ "./Scripts/src/ts/views/main/dbd2000.ts"
-/*!**********************************************!*\
-  !*** ./Scripts/src/ts/views/main/dbd2000.ts ***!
-  \**********************************************/
+/***/ "./Scripts/src/ts/views/option/opt1000.ts"
+/*!************************************************!*\
+  !*** ./Scripts/src/ts/views/option/opt1000.ts ***!
+  \************************************************/
 (__unused_webpack_module, __webpack_exports__, __webpack_require__) {
 
 __webpack_require__.r(__webpack_exports__);
@@ -141,240 +241,359 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export */   "default": () => (/* binding */ Page)
 /* harmony export */ });
 /* harmony import */ var _framework_common__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../../framework/common */ "./Scripts/src/ts/framework/common.ts");
+/* harmony import */ var _framework_notify__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../../framework/notify */ "./Scripts/src/ts/framework/notify.ts");
+
 
 class Page {
     constructor() {
-        this.cards = [];
-        this.cardMap = new Map();
-        this.tagToGroupMap = new Map();
-        this.eventSource = null;
+        this.groups = [];
+        this.tags = [];
+        this.options = [];
+        this.selectedGroupId = "";
+        this.selectedTag = null;
     }
     init() {
-        void this.loadCards();
-        this.connectStream();
-        window.addEventListener("beforeunload", () => {
-            var _a;
-            (_a = this.eventSource) === null || _a === void 0 ? void 0 : _a.close();
+        this.bindEvents();
+        void this.loadGroups();
+    }
+    bindEvents() {
+        $("#txtGroupKeyword").on("input", (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.debounce)(() => this.renderGroups(), 200));
+        $("#btnSaveTagDisplay").on("click", () => {
+            void this.saveTagDisplay();
+        });
+        $("#btnNewOption").on("click", () => {
+            this.openOptionDrawer(null);
+        });
+        $("#btnCloseDrawer, #btnCancelDrawer, #optionDrawerBackdrop").on("click", () => {
+            this.closeDrawer();
+        });
+        $("#btnSaveOption").on("click", () => {
+            void this.saveOption();
         });
     }
-    async loadCards() {
+    async loadGroups() {
         var _a, _b;
         try {
-            const response = await fetch("/main/card/list");
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-            const result = await response.json();
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({ url: "/option/dashboard/tree" });
             if (!result.success) {
-                throw new Error((_a = result.message) !== null && _a !== void 0 ? _a : "카드 데이터 조회 실패");
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "그룹 조회에 실패했습니다.");
+                return;
             }
-            this.cards = (_b = result.data) !== null && _b !== void 0 ? _b : [];
-            this.rebuildMaps();
-            this.render();
+            this.groups = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            this.renderGroups();
         }
         catch (e) {
             console.error(e);
-            $("#cardDashboardHost").html(`<div class="wf-dashboard-empty">카드 데이터를 조회하지 못했습니다.</div>`);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("그룹 조회 중 오류가 발생했습니다.");
         }
     }
-    rebuildMaps() {
-        var _a;
-        this.cardMap.clear();
-        this.tagToGroupMap.clear();
-        for (const card of this.cards) {
-            this.cardMap.set(card.groupId, card);
-            for (const tag of (_a = card.tags) !== null && _a !== void 0 ? _a : []) {
-                this.tagToGroupMap.set(tag.tagId, card.groupId);
-            }
-        }
-    }
-    render() {
-        if (this.cards.length === 0) {
-            $("#cardDashboardHost").html(`<div class="wf-dashboard-empty">표시할 카드가 없습니다.</div>`);
+    renderGroups() {
+        const keyword = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtGroupKeyword").toLowerCase();
+        const rows = this.groups.filter(x => {
+            var _a, _b, _c;
+            return keyword.length === 0 ||
+                String((_a = x.groupId) !== null && _a !== void 0 ? _a : "").toLowerCase().includes(keyword) ||
+                String((_b = x.groupName) !== null && _b !== void 0 ? _b : "").toLowerCase().includes(keyword) ||
+                String((_c = x.majorGroupName) !== null && _c !== void 0 ? _c : "").toLowerCase().includes(keyword);
+        });
+        if (rows.length === 0) {
+            $("#groupList").html(`<div class="wf-option-empty">조회된 그룹이 없습니다.</div>`);
             return;
         }
-        $("#cardDashboardHost").html(this.cards.map(card => this.renderCard(card)).join(""));
+        $("#groupList").html(rows.map(group => {
+            var _a, _b;
+            return `
+            <button type="button"
+                    class="wf-option-group-item ${this.selectedGroupId === group.groupId ? "is-active" : ""}"
+                    data-group-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.groupId)}">
+                <span>
+                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.groupName)}</strong>
+                    ${group.majorGroupName ? `<em>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(group.majorGroupName)}</em>` : ""}
+                </span>
+                <small>${Number((_a = group.dashboardTagCount) !== null && _a !== void 0 ? _a : 0)} / ${Number((_b = group.tagCount) !== null && _b !== void 0 ? _b : 0)}</small>
+            </button>
+        `;
+        }).join(""));
+        $("#groupList").find("[data-group-id]").on("click", event => {
+            const groupId = String($(event.currentTarget).data("group-id"));
+            void this.selectGroup(groupId);
+        });
         this.refreshIcons();
     }
-    renderCard(card) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k;
-        const state = (_a = card.state) !== null && _a !== void 0 ? _a : "gray";
-        const tags = (_b = card.tags) !== null && _b !== void 0 ? _b : [];
-        return `
-            <article class="wf-dashboard-card is-${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(state)}" data-group-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(card.groupId)}">
-                <header class="wf-dashboard-card-header">
-                    <div class="wf-dashboard-card-title-area">
-                        <div class="wf-dashboard-card-code-row">
-                            <span class="wf-dashboard-card-code">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_c = card.identityText) !== null && _c !== void 0 ? _c : card.groupId)}</span>
-                            <span class="wf-dashboard-state-badge is-${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(state)}">
-                                ${this.getStateIcon(state)}
-                                ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_d = card.stateText) !== null && _d !== void 0 ? _d : "")}
-                            </span>
-                        </div>
-
-                        <h3>
-                            ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_e = card.groupName) !== null && _e !== void 0 ? _e : "")}
-                            ${card.majorGroupName ? `<small>(${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(card.majorGroupName)})</small>` : ""}
-                        </h3>
-
-                        <p>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_f = card.description) !== null && _f !== void 0 ? _f : "")}</p>
-                    </div>
-
-                    <div class="wf-dashboard-connect-counts">
-                        <span class="is-red">${Number((_g = card.disconnectedCount) !== null && _g !== void 0 ? _g : 0).toLocaleString()}</span>
-                        <span class="is-gray">${Number((_h = card.totalCount) !== null && _h !== void 0 ? _h : 0).toLocaleString()}</span>
-                        <span class="is-green">${Number((_j = card.connectedCount) !== null && _j !== void 0 ? _j : 0).toLocaleString()}</span>
-                    </div>
-                </header>
-
-                <div class="wf-dashboard-tag-list">
-                    ${tags.length === 0
-            ? `<div class="wf-dashboard-tag-empty">대시보드 표시 태그가 없습니다.</div>`
-            : tags.map((tag) => this.renderTag(tag)).join("")}
-                </div>
-
-                <footer class="wf-dashboard-card-footer">
-                    <span>
-                        ${this.getFooterIcon(state)}
-                        ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_k = card.footerText) !== null && _k !== void 0 ? _k : "")}
-                    </span>
-                    ${state === "flashRed" || state === "red" ? `<i data-lucide="zap"></i>` : ""}
-                </footer>
-            </article>
-        `;
+    async selectGroup(groupId) {
+        var _a;
+        this.selectedGroupId = groupId;
+        this.selectedTag = null;
+        this.options = [];
+        const group = this.groups.find(x => x.groupId === groupId);
+        $("#lblSelectedGroup").text((_a = group === null || group === void 0 ? void 0 : group.groupName) !== null && _a !== void 0 ? _a : "태그 목록");
+        $("#lblSelectedTag").text("태그 선택");
+        $("#lblSelectedTagSub").text("옵션을 수정할 태그를 선택하세요.");
+        $("#tagDisplayForm").addClass("d-none");
+        $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
+        this.renderGroups();
+        await this.loadTags();
     }
-    renderTag(tag) {
-        var _a, _b, _c, _d, _e, _f;
-        const state = (_a = tag.state) !== null && _a !== void 0 ? _a : "gray";
-        const value = (_c = (_b = tag.cookieValue) !== null && _b !== void 0 ? _b : tag.value) !== null && _c !== void 0 ? _c : "---";
-        return `
-            <div class="wf-dashboard-tag-row" data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)}">
-                <span class="wf-dashboard-tag-dot is-${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(state)}"></span>
-                <span class="wf-dashboard-tag-name">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_f = (_e = (_d = tag.description) !== null && _d !== void 0 ? _d : tag.tagName) !== null && _e !== void 0 ? _e : tag.nodeId) !== null && _f !== void 0 ? _f : tag.tagId)}</span>
-                <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(value)}</strong>
+    async loadTags() {
+        var _a, _b;
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
+                url: `/option/dashboard/tags?groupId=${encodeURIComponent(this.selectedGroupId)}`
+            });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "태그 조회에 실패했습니다.");
+                return;
+            }
+            this.tags = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            $("#lblTagCount").text(`${this.tags.length}건`);
+            this.renderTags();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그 조회 중 오류가 발생했습니다.");
+        }
+    }
+    renderTags() {
+        if (this.tags.length === 0) {
+            $("#tagList").html(`<div class="wf-option-empty">등록된 태그가 없습니다.</div>`);
+            return;
+        }
+        $("#tagList").html(this.tags.map(tag => {
+            var _a, _b, _c, _d, _e, _f;
+            return `
+            <button type="button"
+                    class="wf-option-tag-item ${((_a = this.selectedTag) === null || _a === void 0 ? void 0 : _a.tagId) === tag.tagId ? "is-active" : ""}"
+                    data-tag-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)}">
+                <span class="wf-option-tag-main">
+                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_d = (_c = (_b = tag.description) !== null && _b !== void 0 ? _b : tag.tagName) !== null && _c !== void 0 ? _c : tag.nodeId) !== null && _d !== void 0 ? _d : tag.tagId)}</strong>
+                    <em>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(tag.tagId)} / ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_e = tag.nodeId) !== null && _e !== void 0 ? _e : "")}</em>
+                </span>
+                <span class="wf-option-tag-meta">
+                    ${tag.showOnDashboard ? `<b class="is-on">표시</b>` : `<b>숨김</b>`}
+                    <small>${Number((_f = tag.optionCount) !== null && _f !== void 0 ? _f : 0)}개</small>
+                </span>
+            </button>
+        `;
+        }).join(""));
+        $("#tagList").find("[data-tag-id]").on("click", event => {
+            const tagId = String($(event.currentTarget).data("tag-id"));
+            void this.selectTag(tagId);
+        });
+    }
+    async selectTag(tagId) {
+        var _a, _b, _c, _d;
+        this.selectedTag = this.tags.find(x => x.tagId === tagId);
+        if (this.selectedTag == null) {
+            return;
+        }
+        $("#lblSelectedTag").text((_b = (_a = this.selectedTag.description) !== null && _a !== void 0 ? _a : this.selectedTag.tagName) !== null && _b !== void 0 ? _b : this.selectedTag.tagId);
+        $("#lblSelectedTagSub").text(`${this.selectedTag.tagId} / ${(_c = this.selectedTag.nodeId) !== null && _c !== void 0 ? _c : ""}`);
+        $("#tagDisplayForm").removeClass("d-none");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setChecked)("#chkShowDashboard", this.selectedTag.showOnDashboard);
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numTagSortOrder", (_d = this.selectedTag.sortOrder) !== null && _d !== void 0 ? _d : "");
+        this.renderTags();
+        await this.loadOptions();
+    }
+    async loadOptions() {
+        var _a, _b;
+        if (this.selectedTag == null)
+            return;
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.get({
+                url: `/option/dashboard/options?tagId=${encodeURIComponent(this.selectedTag.tagId)}`
+            });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "옵션 조회에 실패했습니다.");
+                return;
+            }
+            this.options = (_b = result.data) !== null && _b !== void 0 ? _b : [];
+            this.renderOptions();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("옵션 조회 중 오류가 발생했습니다.");
+        }
+    }
+    renderOptions() {
+        if (this.selectedTag == null) {
+            $("#optionList").html(`<div class="wf-option-empty">태그를 선택해 주세요.</div>`);
+            return;
+        }
+        if (this.options.length === 0) {
+            $("#optionList").html(`<div class="wf-option-empty">등록된 조건이 없습니다.</div>`);
+            return;
+        }
+        $("#optionList").html(this.options.map(option => {
+            var _a;
+            return `
+            <div class="wf-option-rule-item">
+                <div>
+                    <span class="wf-option-state is-${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.state)}">${this.getStateText(option.state)}</span>
+                    <strong>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(this.getConditionText(option))}</strong>
+                    <p>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)((_a = option.description) !== null && _a !== void 0 ? _a : "")}</p>
+                </div>
+                <div class="wf-option-rule-actions">
+                    <button type="button" class="wf-row-icon-btn" data-edit-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
+                        <i data-lucide="pencil"></i>
+                    </button>
+                    <button type="button" class="wf-row-icon-btn is-danger" data-delete-option="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.escapeHtml)(option.id)}">
+                        <i data-lucide="trash-2"></i>
+                    </button>
+                </div>
             </div>
         `;
-    }
-    connectStream() {
-        var _a;
-        (_a = this.eventSource) === null || _a === void 0 ? void 0 : _a.close();
-        const source = new EventSource("/main/list/stream");
-        this.eventSource = source;
-        source.addEventListener("currentvalue", (event) => {
-            try {
-                this.applyCurrentValue(JSON.parse(event.data));
-            }
-            catch (e) {
-                console.error("card currentvalue parse error", e, event.data);
-            }
+        }).join(""));
+        $("#optionList").find("[data-edit-option]").on("click", event => {
+            var _a;
+            const id = String($(event.currentTarget).data("edit-option"));
+            this.openOptionDrawer((_a = this.options.find(x => x.id === id)) !== null && _a !== void 0 ? _a : null);
         });
-        source.onerror = e => {
-            console.error("card currentvalue stream error", e);
-        };
-    }
-    applyCurrentValue(row) {
-        var _a, _b, _c, _d, _e, _f;
-        const tagId = (_a = row.tagId) !== null && _a !== void 0 ? _a : row.TAG_ID;
-        const groupId = this.tagToGroupMap.get(tagId);
-        if (groupId == null) {
-            return;
-        }
-        const card = this.cardMap.get(groupId);
-        if (card == null) {
-            return;
-        }
-        const tag = ((_b = card.tags) !== null && _b !== void 0 ? _b : []).find((x) => x.tagId === tagId);
-        if (tag == null) {
-            return;
-        }
-        tag.value = (_c = row.value) !== null && _c !== void 0 ? _c : row.VALUE;
-        tag.cookieValue = (_d = row.cookieValue) !== null && _d !== void 0 ? _d : row.COOKIE_VALUE;
-        tag.status = (_e = row.status) !== null && _e !== void 0 ? _e : row.STATUS;
-        tag.state = this.resolveState((_f = row.status) !== null && _f !== void 0 ? _f : row.STATUS);
-        card.state = this.resolveCardState(card);
-        card.stateText = this.getStateText(card.state);
-        card.footerText = this.getFooterText(card.state);
-        const $old = $(`[data-group-id="${this.escapeSelectorValue(groupId)}"]`);
-        $old.replaceWith(this.renderCard(card));
+        $("#optionList").find("[data-delete-option]").on("click", event => {
+            const id = String($(event.currentTarget).data("delete-option"));
+            void this.deleteOption(id);
+        });
         this.refreshIcons();
     }
-    resolveState(status) {
-        const text = String(status !== null && status !== void 0 ? status : "").toLowerCase();
-        if (text === "0" || text === "good") {
-            return "green";
+    async saveTagDisplay() {
+        var _a, _b;
+        if (this.selectedTag == null) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
+            return;
         }
-        return "red";
+        const request = {
+            ID: this.selectedTag.tagId,
+            SHOW_ON_DASHBOARD: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getChecked)("#chkShowDashboard"),
+            SORT_ORDER: this.readNumber("#numTagSortOrder")
+        };
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/dashboard/save-tag", data: request });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
+                return;
+            }
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
+            await this.loadTags();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("표시 설정 저장 중 오류가 발생했습니다.");
+        }
     }
-    resolveCardState(card) {
-        var _a, _b, _c;
-        const states = ((_a = card.tags) !== null && _a !== void 0 ? _a : []).map((x) => { var _a; return (_a = x.state) !== null && _a !== void 0 ? _a : "gray"; });
-        if (Number((_b = card.totalCount) !== null && _b !== void 0 ? _b : 0) === 0) {
-            return "gray";
+    openOptionDrawer(option) {
+        var _a, _b, _c, _d, _e, _f, _g, _h;
+        if (this.selectedTag == null) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
+            return;
         }
-        if (states.length === 0) {
-            return Number((_c = card.connectedCount) !== null && _c !== void 0 ? _c : 0) === 0 ? "gray" : "green";
-        }
-        return states.sort((a, b) => this.getPriority(a) - this.getPriority(b))[0];
+        $("#drawerTitle").text(option == null ? "조건 추가" : "조건 수정");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#txtOptionId", (_a = option === null || option === void 0 ? void 0 : option.id) !== null && _a !== void 0 ? _a : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#selState", (_b = option === null || option === void 0 ? void 0 : option.state) !== null && _b !== void 0 ? _b : "green");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#selMatchType", (_c = option === null || option === void 0 ? void 0 : option.matchType) !== null && _c !== void 0 ? _c : "Equals");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#txtTextValue", (_d = option === null || option === void 0 ? void 0 : option.textValue) !== null && _d !== void 0 ? _d : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numMinValue", (_e = option === null || option === void 0 ? void 0 : option.minValue) !== null && _e !== void 0 ? _e : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numMaxValue", (_f = option === null || option === void 0 ? void 0 : option.maxValue) !== null && _f !== void 0 ? _f : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#numOptionSortOrder", (_g = option === null || option === void 0 ? void 0 : option.sortOrder) !== null && _g !== void 0 ? _g : "");
+        (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.setValue)("#txtOptionDescription", (_h = option === null || option === void 0 ? void 0 : option.description) !== null && _h !== void 0 ? _h : "");
+        $("#optionDrawerBackdrop").removeClass("d-none");
+        $("#optionDrawer").addClass("is-open");
+        this.refreshIcons();
     }
-    getPriority(state) {
-        if (state === "gray")
-            return 0;
-        if (state === "flashRed")
-            return 1;
-        if (state === "red")
-            return 2;
-        if (state === "orange")
-            return 3;
-        if (state === "green")
-            return 4;
-        return 9;
+    closeDrawer() {
+        $("#optionDrawerBackdrop").addClass("d-none");
+        $("#optionDrawer").removeClass("is-open");
+    }
+    async saveOption() {
+        var _a, _b;
+        if (this.selectedTag == null) {
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("태그를 선택해 주세요.");
+            return;
+        }
+        const request = {
+            ID: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtOptionId"),
+            TAG_ID: this.selectedTag.tagId,
+            STATE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selState"),
+            MATCH_TYPE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#selMatchType"),
+            TEXT_VALUE: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtTextValue"),
+            MIN_VALUE: this.readNumber("#numMinValue"),
+            MAX_VALUE: this.readNumber("#numMaxValue"),
+            SORT_ORDER: this.readNumber("#numOptionSortOrder"),
+            DESCRIPTION: (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)("#txtOptionDescription")
+        };
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({ url: "/option/dashboard/save-option", data: request });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "저장에 실패했습니다.");
+                return;
+            }
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "저장되었습니다.");
+            this.closeDrawer();
+            await this.loadOptions();
+            await this.loadTags();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("조건 저장 중 오류가 발생했습니다.");
+        }
+    }
+    async deleteOption(id) {
+        var _a, _b;
+        if (!confirm("조건을 삭제하시겠습니까?"))
+            return;
+        try {
+            const result = await _framework_common__WEBPACK_IMPORTED_MODULE_0__.api.post({
+                url: "/option/dashboard/delete-option",
+                data: { ID: id }
+            });
+            if (!result.success) {
+                _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning((_a = result.message) !== null && _a !== void 0 ? _a : "삭제에 실패했습니다.");
+                return;
+            }
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.success((_b = result.message) !== null && _b !== void 0 ? _b : "삭제되었습니다.");
+            await this.loadOptions();
+            await this.loadTags();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_1__.notify.warning("조건 삭제 중 오류가 발생했습니다.");
+        }
+    }
+    getConditionText(option) {
+        var _a, _b, _c, _d, _e, _f, _g;
+        if (option.matchType === "Always")
+            return "항상 적용";
+        if (option.matchType === "Equals")
+            return `값 = ${(_a = option.textValue) !== null && _a !== void 0 ? _a : ""}`;
+        if (option.matchType === "Contains")
+            return `값 포함 ${(_b = option.textValue) !== null && _b !== void 0 ? _b : ""}`;
+        if (option.matchType === "NumberRange")
+            return `${(_c = option.minValue) !== null && _c !== void 0 ? _c : ""} ~ ${(_d = option.maxValue) !== null && _d !== void 0 ? _d : ""}`;
+        if (option.matchType === "NumberGte")
+            return `${(_e = option.minValue) !== null && _e !== void 0 ? _e : ""} 이상`;
+        if (option.matchType === "NumberLte")
+            return `${(_f = option.maxValue) !== null && _f !== void 0 ? _f : ""} 이하`;
+        if (option.matchType === "BoolEquals")
+            return `Bool = ${(_g = option.textValue) !== null && _g !== void 0 ? _g : ""}`;
+        return "";
     }
     getStateText(state) {
         if (state === "gray")
-            return "휴면";
+            return "회색";
         if (state === "flashRed")
-            return "위험";
+            return "반짝임";
         if (state === "red")
-            return "점검 필요";
+            return "빨강";
         if (state === "orange")
-            return "주의";
+            return "주황";
         if (state === "green")
-            return "정상";
-        return "확인";
+            return "초록";
+        return state;
     }
-    getFooterText(state) {
-        if (state === "gray")
-            return "설비가 가동 중이 아닙니다";
-        if (state === "flashRed")
-            return "즉시 점검이 필요한 태그가 있습니다";
-        if (state === "red")
-            return "점검이 필요한 태그가 있습니다";
-        if (state === "orange")
-            return "주의가 필요한 태그가 있습니다";
-        if (state === "green")
-            return "모든 태그 정상 작동 중";
-        return "상태 확인이 필요합니다";
-    }
-    getStateIcon(state) {
-        if (state === "green")
-            return `<i data-lucide="check-circle"></i>`;
-        if (state === "orange")
-            return `<i data-lucide="triangle-alert"></i>`;
-        if (state === "gray")
-            return `<i data-lucide="moon"></i>`;
-        return `<i data-lucide="x"></i>`;
-    }
-    getFooterIcon(state) {
-        if (state === "green")
-            return `<i data-lucide="check-circle"></i>`;
-        if (state === "gray")
-            return `<i data-lucide="moon"></i>`;
-        if (state === "orange")
-            return `<i data-lucide="triangle-alert"></i>`;
-        return `<i data-lucide="circle-alert"></i>`;
-    }
-    escapeSelectorValue(value) {
-        return String(value).replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    readNumber(selector) {
+        const value = (0,_framework_common__WEBPACK_IMPORTED_MODULE_0__.getValue)(selector);
+        if (value.length === 0)
+            return null;
+        const numberValue = Number(value);
+        return Number.isFinite(numberValue) ? numberValue : null;
     }
     refreshIcons() {
         var _a;
@@ -6672,23 +6891,23 @@ var __webpack_exports__ = {};
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
 (() => {
 var __webpack_exports__ = {};
-/*!****************************************************!*\
-  !*** ./Scripts/.generated/views__main__dbd2000.ts ***!
-  \****************************************************/
+/*!******************************************************!*\
+  !*** ./Scripts/.generated/views__option__opt1000.ts ***!
+  \******************************************************/
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _src_ts_views_main_dbd2000__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/main/dbd2000 */ "./Scripts/src/ts/views/main/dbd2000.ts");
+/* harmony import */ var _src_ts_views_option_opt1000__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./../src/ts/views/option/opt1000 */ "./Scripts/src/ts/views/option/opt1000.ts");
 /* harmony import */ var _src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../src/ts/framework/page */ "./Scripts/src/ts/framework/page.ts");
 
 
-(0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_main_dbd2000__WEBPACK_IMPORTED_MODULE_0__["default"]);
+(0,_src_ts_framework_page__WEBPACK_IMPORTED_MODULE_1__.runPage)(_src_ts_views_option_opt1000__WEBPACK_IMPORTED_MODULE_0__["default"]);
 
 })();
 
 // This entry needs to be wrapped in an IIFE because it needs to be isolated against other entry modules.
 (() => {
-/*!************************************************!*\
-  !*** ./Scripts/src/css/views/main/dbd2000.css ***!
-  \************************************************/
+/*!**************************************************!*\
+  !*** ./Scripts/src/css/views/option/opt1000.css ***!
+  \**************************************************/
 __webpack_require__.r(__webpack_exports__);
 // extracted by mini-css-extract-plugin
 
@@ -6696,4 +6915,4 @@ __webpack_require__.r(__webpack_exports__);
 
 /******/ })()
 ;
-//# sourceMappingURL=dbd2000.js.map
+//# sourceMappingURL=opt1000.js.map

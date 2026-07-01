@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WebFlex.UI.Data;
@@ -11,9 +12,11 @@ using WebFlex.UI.Data;
 namespace WebFlex.UI.Migrations
 {
     [DbContext(typeof(WebFlexDbContext))]
-    partial class WebFlexDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260701042446_model_009")]
+    partial class model_009
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -370,21 +373,6 @@ namespace WebFlex.UI.Migrations
                             SHOW_IN_MENU = true,
                             SORT_ORDER = 64,
                             URL = "/opc/opc4000"
-                        },
-                        new
-                        {
-                            ID = "OPTION_CARD",
-                            ACTION_NAME = "opt1000",
-                            CONTROLLER_NAME = "Options",
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            ICON = "panel-top",
-                            IsEnabled = true,
-                            MENU_CODE = "OPTIONS.CARD",
-                            MENU_NAME = "카드 대시보드 옵션",
-                            PARENT_MENU_ID = "OPTIONS",
-                            SHOW_IN_MENU = true,
-                            SORT_ORDER = 65,
-                            URL = "/option/opt1000"
                         });
                 });
 
@@ -1630,25 +1618,12 @@ namespace WebFlex.UI.Migrations
                             CAN_UPDATE = true,
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
-                            MENU_ID = "OPTION_CARD",
-                            ROLE_ID = "DevAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0077",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
                             MENU_ID = "OPC",
                             ROLE_ID = "TestAuth"
                         },
                         new
                         {
-                            ID = "RM0078",
+                            ID = "RM0077",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1661,7 +1636,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0079",
+                            ID = "RM0078",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1674,7 +1649,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0080",
+                            ID = "RM0079",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1687,7 +1662,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0081",
+                            ID = "RM0080",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1700,7 +1675,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0082",
+                            ID = "RM0081",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1713,7 +1688,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0083",
+                            ID = "RM0082",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1726,7 +1701,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0084",
+                            ID = "RM0083",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1739,7 +1714,7 @@ namespace WebFlex.UI.Migrations
                         },
                         new
                         {
-                            ID = "RM0085",
+                            ID = "RM0084",
                             CAN_CREATE = true,
                             CAN_DELETE = true,
                             CAN_EXPORT = true,
@@ -1748,19 +1723,6 @@ namespace WebFlex.UI.Migrations
                             CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             IsEnabled = true,
                             MENU_ID = "OPTION_TSD",
-                            ROLE_ID = "TestAuth"
-                        },
-                        new
-                        {
-                            ID = "RM0086",
-                            CAN_CREATE = true,
-                            CAN_DELETE = true,
-                            CAN_EXPORT = true,
-                            CAN_READ = true,
-                            CAN_UPDATE = true,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            IsEnabled = true,
-                            MENU_ID = "OPTION_CARD",
                             ROLE_ID = "TestAuth"
                         });
                 });

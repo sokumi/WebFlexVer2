@@ -26,6 +26,10 @@ public static class MVCPath {
         public const string OPC4000 = "~/Views/Opc/OPC4000.cshtml";
     }
 
+    internal static class Options {
+        public const string OPT1000 = "~/Views/Options/OPT1000.cshtml";
+    }
+
     internal static class System {
         public const string SVC1000 = "~/Views/System/SVC1000.cshtml";
     }

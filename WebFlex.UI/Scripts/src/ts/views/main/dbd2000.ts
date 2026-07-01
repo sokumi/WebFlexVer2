@@ -17,7 +17,7 @@ export default class Page {
 
     async loadCards(): Promise<void> {
         try {
-            const response = await fetch("/api/dashboard-card/list");
+            const response = await fetch("/main/card/list");
 
             if (!response.ok) {
                 throw new Error(await response.text());
@@ -125,7 +125,7 @@ export default class Page {
     connectStream(): void {
         this.eventSource?.close();
 
-        const source = new EventSource("/api/currentvalue/stream");
+        const source = new EventSource("/main/list/stream");
         this.eventSource = source;
 
         source.addEventListener("currentvalue", (event: MessageEvent) => {
