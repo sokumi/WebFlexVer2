@@ -11123,10 +11123,10 @@ class Page {
         this.refreshIcons();
     }
     renderDeviceCards() {
-        const rows = this.devices.map(device => {
+        const rows = this.devices.map((device) => {
             var _a, _b, _c;
             const deviceId = (_a = device.id) !== null && _a !== void 0 ? _a : "";
-            const summary = (_b = this.deviceSummaries.find(x => x.deviceId === deviceId)) !== null && _b !== void 0 ? _b : null;
+            const summary = (_b = this.deviceSummaries.find((x) => x.deviceId === deviceId)) !== null && _b !== void 0 ? _b : null;
             const status = (_c = this.deviceStatuses.get(deviceId)) !== null && _c !== void 0 ? _c : null;
             return {
                 device,
@@ -11136,7 +11136,7 @@ class Page {
         });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceSummaryText").text(`${rows.length.toLocaleString()}개 디바이스`);
         const html = rows
-            .map(row => this.createDeviceCardHtml(row))
+            .map((row) => this.createDeviceCardHtml(row))
             .join("");
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").html(html || this.createEmptyHtml("조회된 디바이스가 없습니다."));
         this.refreshIcons();
@@ -11251,10 +11251,10 @@ class Page {
         var _a, _b, _c, _d;
         const runtime = (_b = (_a = row.status) === null || _a === void 0 ? void 0 : _a.runtimeStatus) !== null && _b !== void 0 ? _b : {};
         const summaryStatus = (_d = (_c = row.summary) === null || _c === void 0 ? void 0 : _c.subscriptionStatus) !== null && _d !== void 0 ? _d : "";
-        return runtime.subscriptionStopped === true
-            || summaryStatus === "Stopped"
-            || summaryStatus === "SubscriptionStopped"
-            || summaryStatus === "중지";
+        return runtime.subscriptionStopped === true ||
+            summaryStatus === "Stopped" ||
+            summaryStatus === "SubscriptionStopped" ||
+            summaryStatus === "중지";
     }
     updateStoppedDeviceCount() {
         const totalCount = this.devices.length;
@@ -11262,10 +11262,10 @@ class Page {
             jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblStoppedCount").text("0개 구독중지");
             return;
         }
-        const stoppedCount = this.devices.filter(device => {
+        const stoppedCount = this.devices.filter((device) => {
             var _a, _b, _c;
             const deviceId = (_a = device.id) !== null && _a !== void 0 ? _a : "";
-            const summary = (_b = this.deviceSummaries.find(x => x.deviceId === deviceId)) !== null && _b !== void 0 ? _b : null;
+            const summary = (_b = this.deviceSummaries.find((x) => x.deviceId === deviceId)) !== null && _b !== void 0 ? _b : null;
             const status = (_c = this.deviceStatuses.get(deviceId)) !== null && _c !== void 0 ? _c : null;
             return this.isSubscriptionStopped({
                 device,
@@ -11331,16 +11331,18 @@ class Page {
         try {
             const logs = await this.getJson("/api/opc-collector/logs?count=100");
             const html = logs
-                .map(x => {
+                .map((x) => {
                 var _a, _b, _c;
                 const time = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_a = x.time) !== null && _a !== void 0 ? _a : "");
                 const level = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_b = x.level) !== null && _b !== void 0 ? _b : "");
                 const message = (0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)((_c = x.message) !== null && _c !== void 0 ? _c : "");
-                return `<div class="wf-opc-log-row">
-                        <span class="wf-opc-log-time">${time}</span>
-                        <span class="wf-opc-log-level">${level}</span>
-                        <span class="wf-opc-log-message">${message}</span>
-                    </div>`;
+                return `
+                        <div class="wf-opc-log-row">
+                            <span class="wf-opc-log-time">${time}</span>
+                            <span class="wf-opc-log-level">${level}</span>
+                            <span class="wf-opc-log-message">${message}</span>
+                        </div>
+                    `;
             })
                 .join("");
             jquery__WEBPACK_IMPORTED_MODULE_0___default()("#logBox").html(html || "<div class='wf-opc-log-empty'>로그가 없습니다.</div>");
@@ -11445,7 +11447,7 @@ class Page {
                 return row[name];
             }
         }
-        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+        const normalizedNames = names.map((x) => this.normalizeFieldName(x));
         for (const key of Object.keys(row)) {
             if (normalizedNames.includes(this.normalizeFieldName(key))) {
                 return row[key];
@@ -11476,7 +11478,9 @@ class Page {
             return null;
         }
         const numberValue = Number(value);
-        return Number.isFinite(numberValue) ? numberValue : null;
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
     }
     normalizeFieldName(value) {
         return String(value !== null && value !== void 0 ? value : "")

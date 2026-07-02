@@ -1,66 +1,15 @@
-﻿type TimescaleOptionTable = {
-    schemaName: string;
-    tableName: string;
-    fullName: string;
+﻿export default class Page {
+    tables: any[] = [];
+    selectedFullName = "";
 
-    isHypertable: boolean;
-    timeColumnName?: string | null;
-    chunkTimeInterval?: string | null;
-
-    chunkCount?: number | null;
-    totalSize?: string | null;
-    tableSize?: string | null;
-    indexSize?: string | null;
-
-    retentionEnabled: boolean;
-    retentionDropAfter?: string | null;
-    retentionScheduleInterval?: string | null;
-
-    compressionEnabled: boolean;
-    compressionPolicyEnabled: boolean;
-    compressionAfter?: string | null;
-    compressionScheduleInterval?: string | null;
-    compressionSegmentBy?: string | null;
-    compressionOrderBy?: string | null;
-
-    lastError?: string | null;
-};
-
-type TimescaleApplyRequest = {
-    schemaName: string;
-    tableName: string;
-
-    chunkTimeInterval?: string | null;
-
-    retentionEnabled: boolean;
-    retentionDropAfter?: string | null;
-    retentionScheduleInterval?: string | null;
-
-    compressionEnabled: boolean;
-    compressionAfter?: string | null;
-    compressionScheduleInterval?: string | null;
-    compressionSegmentBy?: string | null;
-    compressionOrderBy?: string | null;
-};
-
-type TimescaleApplyResult = {
-    success: boolean;
-    message: string;
-    logs: string[];
-};
-
-export default class Page {
-    private tables: TimescaleOptionTable[] = [];
-    private selectedFullName = "";
-
-    init(): void {
+    init() {
         $("#btnSearch").on("click", () => this.search());
         $("#btnApply").on("click", () => this.apply());
 
         this.search();
     }
 
-    private async search(): Promise<void> {
+    async search() {
         try {
             this.setStatus("조회 중...");
 
@@ -70,12 +19,12 @@ export default class Page {
                 throw new Error(await response.text());
             }
 
-            this.tables = await response.json() as TimescaleOptionTable[];
+            this.tables = await response.json();
 
             this.renderTables();
 
             if (this.tables.length > 0) {
-                const firstHypertable = this.tables.find(x => x.isHypertable) ?? this.tables[0];
+                const firstHypertable = this.tables.find((x: any) => x.isHypertable) ?? this.tables[0];
                 this.selectTable(firstHypertable.fullName);
             }
 
@@ -88,7 +37,7 @@ export default class Page {
         }
     }
 
-    private async apply(): Promise<void> {
+    async apply() {
         try {
             const request = this.getApplyRequest();
 
@@ -97,7 +46,7 @@ export default class Page {
                 return;
             }
 
-            const selected = this.tables.find(x => x.fullName === this.selectedFullName);
+            const selected = this.tables.find((x: any) => x.fullName === this.selectedFullName);
 
             if (selected == null || !selected.isHypertable) {
                 alert("Hypertable에만 TimescaleDB 옵션을 적용할 수 있습니다.");
@@ -139,13 +88,13 @@ export default class Page {
                 body: JSON.stringify(request)
             });
 
-            const result = await response.json() as TimescaleApplyResult;
+            const result = await response.json();
 
             if (!response.ok || !result.success) {
                 throw new Error(result.message ?? "적용 실패");
             }
 
-            this.setLog(result.logs.join("\n"));
+            this.setLog((result.logs ?? []).join("\n"));
             this.setStatus(result.message);
             alert(result.message);
 
@@ -158,13 +107,13 @@ export default class Page {
         }
     }
 
-    private renderTables(): void {
+    renderTables() {
         if (this.tables.length === 0) {
             $("#tableBody").html(`<tr><td colspan="9">조회된 테이블이 없습니다.</td></tr>`);
             return;
         }
 
-        const html = this.tables.map(x => `
+        const html = this.tables.map((x: any) => `
             <tr data-full-name="${this.escapeHtml(x.fullName)}">
                 <td>
                     <button type="button" class="btnSelectTable btn-basic" data-full-name="${this.escapeHtml(x.fullName)}">선택</button>
@@ -182,14 +131,14 @@ export default class Page {
 
         $("#tableBody").html(html.join(""));
 
-        $(".btnSelectTable").on("click", (e) => {
+        $(".btnSelectTable").on("click", e => {
             const fullName = String($(e.currentTarget).data("full-name") ?? "");
             this.selectTable(fullName);
         });
     }
 
-    private selectTable(fullName: string): void {
-        const table = this.tables.find(x => x.fullName === fullName);
+    selectTable(fullName: any) {
+        const table = this.tables.find((x: any) => x.fullName === fullName);
 
         if (table == null) {
             return;
@@ -228,7 +177,7 @@ export default class Page {
         }
     }
 
-    private getApplyRequest(): TimescaleApplyRequest {
+    getApplyRequest() {
         return {
             schemaName: this.getText("schemaName"),
             tableName: this.getText("tableName"),
@@ -247,11 +196,11 @@ export default class Page {
         };
     }
 
-    private getText(id: string): string {
+    getText(id: any) {
         return String($(`#${id}`).val() ?? "").trim();
     }
 
-    private getNullableText(id: string): string | null {
+    getNullableText(id: any) {
         const value = this.getText(id);
 
         return value === ""
@@ -259,24 +208,24 @@ export default class Page {
             : value;
     }
 
-    private getChecked(id: string): boolean {
+    getChecked(id: any) {
         return Boolean($(`#${id}`).prop("checked"));
     }
 
-    private isEmpty(value?: string | null): boolean {
-        return value == null || value.trim() === "";
+    isEmpty(value: any = null) {
+        return value == null || String(value).trim() === "";
     }
 
-    private setStatus(message: string): void {
+    setStatus(message: any) {
         $("#lblStatus").text(message);
     }
 
-    private setLog(message: string): void {
+    setLog(message: any) {
         $("#txtLog").val(message);
     }
 
-    private escapeHtml(value: string): string {
-        return value
+    escapeHtml(value: any) {
+        return String(value ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
@@ -284,7 +233,7 @@ export default class Page {
             .replace(/'/g, "&#039;");
     }
 
-    private escapeSelector(value: string): string {
-        return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+    escapeSelector(value: any) {
+        return String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
 }

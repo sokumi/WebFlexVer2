@@ -54,7 +54,7 @@ class Page {
             this.tables = await response.json();
             this.renderTables();
             if (this.tables.length > 0) {
-                const firstHypertable = (_a = this.tables.find(x => x.isHypertable)) !== null && _a !== void 0 ? _a : this.tables[0];
+                const firstHypertable = (_a = this.tables.find((x) => x.isHypertable)) !== null && _a !== void 0 ? _a : this.tables[0];
                 this.selectTable(firstHypertable.fullName);
             }
             this.setStatus("조회 완료");
@@ -67,14 +67,14 @@ class Page {
         }
     }
     async apply() {
-        var _a;
+        var _a, _b;
         try {
             const request = this.getApplyRequest();
             if (request.tableName === "") {
                 alert("적용할 테이블을 선택해 주세요.");
                 return;
             }
-            const selected = this.tables.find(x => x.fullName === this.selectedFullName);
+            const selected = this.tables.find((x) => x.fullName === this.selectedFullName);
             if (selected == null || !selected.isHypertable) {
                 alert("Hypertable에만 TimescaleDB 옵션을 적용할 수 있습니다.");
                 return;
@@ -112,7 +112,7 @@ class Page {
             if (!response.ok || !result.success) {
                 throw new Error((_a = result.message) !== null && _a !== void 0 ? _a : "적용 실패");
             }
-            this.setLog(result.logs.join("\n"));
+            this.setLog(((_b = result.logs) !== null && _b !== void 0 ? _b : []).join("\n"));
             this.setStatus(result.message);
             alert(result.message);
             await this.search();
@@ -129,7 +129,7 @@ class Page {
             $("#tableBody").html(`<tr><td colspan="9">조회된 테이블이 없습니다.</td></tr>`);
             return;
         }
-        const html = this.tables.map(x => {
+        const html = this.tables.map((x) => {
             var _a, _b, _c, _d, _e;
             return `
             <tr data-full-name="${this.escapeHtml(x.fullName)}">
@@ -148,7 +148,7 @@ class Page {
         `;
         });
         $("#tableBody").html(html.join(""));
-        $(".btnSelectTable").on("click", (e) => {
+        $(".btnSelectTable").on("click", e => {
             var _a;
             const fullName = String((_a = $(e.currentTarget).data("full-name")) !== null && _a !== void 0 ? _a : "");
             this.selectTable(fullName);
@@ -156,7 +156,7 @@ class Page {
     }
     selectTable(fullName) {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
-        const table = this.tables.find(x => x.fullName === fullName);
+        const table = this.tables.find((x) => x.fullName === fullName);
         if (table == null) {
             return;
         }
@@ -215,8 +215,8 @@ class Page {
     getChecked(id) {
         return Boolean($(`#${id}`).prop("checked"));
     }
-    isEmpty(value) {
-        return value == null || value.trim() === "";
+    isEmpty(value = null) {
+        return value == null || String(value).trim() === "";
     }
     setStatus(message) {
         $("#lblStatus").text(message);
@@ -225,7 +225,7 @@ class Page {
         $("#txtLog").val(message);
     }
     escapeHtml(value) {
-        return value
+        return String(value !== null && value !== void 0 ? value : "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
@@ -233,7 +233,7 @@ class Page {
             .replace(/'/g, "&#039;");
     }
     escapeSelector(value) {
-        return value.replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
+        return String(value !== null && value !== void 0 ? value : "").replace(/\\/g, "\\\\").replace(/"/g, "\\\"");
     }
 }
 

@@ -112,9 +112,6 @@
     <TypeScriptCompile Include="Scripts\src\ts\components\webflexPopup.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>
-    <TypeScriptCompile Include="Scripts\src\ts\components\webflexTagRegisterPopup.ts">
-      <SubType>Code</SubType>
-    </TypeScriptCompile>
     <TypeScriptCompile Include="Scripts\src\ts\components\webflexCheckTree.ts">
       <SubType>Code</SubType>
     </TypeScriptCompile>

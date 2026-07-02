@@ -11839,7 +11839,7 @@ class Page {
                 return row[name];
             }
         }
-        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+        const normalizedNames = names.map((x) => this.normalizeFieldName(x));
         for (const key of Object.keys(row)) {
             if (normalizedNames.includes(this.normalizeFieldName(key))) {
                 return row[key];

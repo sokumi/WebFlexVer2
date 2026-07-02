@@ -3,78 +3,20 @@
 import { api, escapeHtml } from "../../framework/common";
 import { notify } from "../../framework/notify";
 
-type DeviceRow = {
-    id: string;
-    deviceCode?: string | null;
-    deviceName?: string | null;
-    deviceType?: string | null;
-    endpointUrl?: string | null;
-    deviceAddress?: string | null;
-    port?: number | string | null;
-    tagCount?: number | null;
-    isCollectEnabled?: boolean | null;
-    isEnabled?: boolean | null;
-};
-
-type DeviceSummaryRow = {
-    deviceId: string;
-    deviceName?: string | null;
-    subscriptionStatus?: string | null;
-    todayInsertedCount?: number | null;
-};
-
-type CollectorStatusDto = {
-    deviceCount?: number;
-    subscribedCount?: number;
-    totalSnapshotRows?: number;
-    totalInserted?: number;
-    subscriptionStopped?: boolean;
-    version?: string;
-    collectorVersion?: string;
-    dbStatus?: string;
-};
-
-type DeviceRuntimeStatusDto = {
-    subscribedCount?: number;
-    currentValueCount?: number;
-    subscriptionStopped?: boolean;
-};
-
-type DeviceStatusDto = {
-    deviceId?: string;
-    deviceName?: string;
-    tagCount?: number;
-    totalSnapshotRows?: number;
-    totalInserted?: number;
-    runtimeStatus?: DeviceRuntimeStatusDto;
-};
-
-type LogRow = {
-    time?: string;
-    level?: string;
-    message?: string;
-};
-
-type DeviceCardViewModel = {
-    device: DeviceRow;
-    summary: DeviceSummaryRow | null;
-    status: DeviceStatusDto | null;
-};
-
 export default class Page {
-    private devices: DeviceRow[] = [];
-    private deviceSummaries: DeviceSummaryRow[] = [];
-    private deviceStatuses = new Map<string, DeviceStatusDto>();
-    private isLogAutoRefresh = false;
-    private isLogCollapsed = true;
-    private refreshTimerId: number | null = null;
-    private isRefreshing = false;
+    devices: any[] = [];
+    deviceSummaries: any[] = [];
+    deviceStatuses = new Map<any, any>();
+    isLogAutoRefresh = false;
+    isLogCollapsed = true;
+    refreshTimerId: any = null;
+    isRefreshing = false;
 
-    init(): void {
+    init() {
         $("#deviceCardHost").on("click", "[data-subscription-action]", event => {
             const $button = $(event.currentTarget);
             const deviceId = String($button.attr("data-device-id") ?? "");
-            const action = String($button.attr("data-subscription-action") ?? "") as "start" | "stop";
+            const action = String($button.attr("data-subscription-action") ?? "");
 
             void this.postDeviceSubscription(deviceId, action);
         });
@@ -105,7 +47,7 @@ export default class Page {
         });
     }
 
-    private async refresh(): Promise<void> {
+    async refresh() {
         if (this.isRefreshing) {
             return;
         }
@@ -126,7 +68,7 @@ export default class Page {
         }
     }
 
-    private async loadDevices(): Promise<void> {
+    async loadDevices() {
         try {
             const result = await api.get({
                 url: "/device/manage/list"
@@ -146,9 +88,9 @@ export default class Page {
         }
     }
 
-    private async loadStatus(): Promise<void> {
+    async loadStatus() {
         try {
-            const data = await this.getJson<CollectorStatusDto>("/api/opc-collector/status");
+            const data = await this.getJson("/api/opc-collector/status");
 
             const version = data.collectorVersion ?? data.version ?? "-";
             const totalDeviceCount = this.devices.length > 0
@@ -179,23 +121,23 @@ export default class Page {
         }
     }
 
-    private async loadDeviceSummary(): Promise<void> {
+    async loadDeviceSummary() {
         try {
-            this.deviceSummaries = await this.getJson<DeviceSummaryRow[]>("/api/opc-collector/device-summary");
+            this.deviceSummaries = await this.getJson("/api/opc-collector/device-summary");
         } catch (e) {
             console.error(e);
             this.deviceSummaries = [];
         }
     }
 
-    private async loadDeviceCards(): Promise<void> {
+    async loadDeviceCards() {
         if (this.devices.length === 0) {
             this.renderDeviceEmpty();
             return;
         }
 
         await Promise.all(
-            this.devices.map(async device => {
+            this.devices.map(async (device: any) => {
                 const deviceId = device.id ?? "";
 
                 if (deviceId.length === 0) {
@@ -203,10 +145,7 @@ export default class Page {
                 }
 
                 try {
-                    const status = await this.getJson<DeviceStatusDto>(
-                        `/api/opc-collector/device/${encodeURIComponent(deviceId)}/status`
-                    );
-
+                    const status = await this.getJson(`/api/opc-collector/device/${encodeURIComponent(deviceId)}/status`);
                     this.deviceStatuses.set(deviceId, status);
                 } catch (e) {
                     console.error(e);
@@ -230,10 +169,10 @@ export default class Page {
         this.refreshIcons();
     }
 
-    private renderDeviceCards(): void {
-        const rows: DeviceCardViewModel[] = this.devices.map(device => {
+    renderDeviceCards() {
+        const rows = this.devices.map((device: any) => {
             const deviceId = device.id ?? "";
-            const summary = this.deviceSummaries.find(x => x.deviceId === deviceId) ?? null;
+            const summary = this.deviceSummaries.find((x: any) => x.deviceId === deviceId) ?? null;
             const status = this.deviceStatuses.get(deviceId) ?? null;
 
             return {
@@ -246,14 +185,14 @@ export default class Page {
         $("#lblDeviceSummaryText").text(`${rows.length.toLocaleString()}개 디바이스`);
 
         const html = rows
-            .map(row => this.createDeviceCardHtml(row))
+            .map((row: any) => this.createDeviceCardHtml(row))
             .join("");
 
         $("#deviceCardHost").html(html || this.createEmptyHtml("조회된 디바이스가 없습니다."));
         this.refreshIcons();
     }
 
-    private createDeviceCardHtml(row: DeviceCardViewModel): string {
+    createDeviceCardHtml(row: any) {
         const device = row.device;
         const status = row.status;
         const runtime = status?.runtimeStatus ?? {};
@@ -363,17 +302,17 @@ export default class Page {
         `;
     }
 
-    private isSubscriptionStopped(row: DeviceCardViewModel): boolean {
+    isSubscriptionStopped(row: any) {
         const runtime = row.status?.runtimeStatus ?? {};
         const summaryStatus = row.summary?.subscriptionStatus ?? "";
 
-        return runtime.subscriptionStopped === true
-            || summaryStatus === "Stopped"
-            || summaryStatus === "SubscriptionStopped"
-            || summaryStatus === "중지";
+        return runtime.subscriptionStopped === true ||
+            summaryStatus === "Stopped" ||
+            summaryStatus === "SubscriptionStopped" ||
+            summaryStatus === "중지";
     }
 
-    private updateStoppedDeviceCount(): void {
+    updateStoppedDeviceCount() {
         const totalCount = this.devices.length;
 
         if (totalCount === 0) {
@@ -381,9 +320,9 @@ export default class Page {
             return;
         }
 
-        const stoppedCount = this.devices.filter(device => {
+        const stoppedCount = this.devices.filter((device: any) => {
             const deviceId = device.id ?? "";
-            const summary = this.deviceSummaries.find(x => x.deviceId === deviceId) ?? null;
+            const summary = this.deviceSummaries.find((x: any) => x.deviceId === deviceId) ?? null;
             const status = this.deviceStatuses.get(deviceId) ?? null;
 
             return this.isSubscriptionStopped({
@@ -396,21 +335,21 @@ export default class Page {
         $("#lblStoppedCount").text(`${stoppedCount.toLocaleString()}개 구독중지`);
     }
 
-    private renderDeviceEmpty(): void {
+    renderDeviceEmpty() {
         $("#lblDeviceSummaryText").text("0개 디바이스");
         $("#lblStoppedCount").text("0개 구독중지");
         $("#deviceCardHost").html(this.createEmptyHtml("조회된 디바이스가 없습니다."));
         this.refreshIcons();
     }
 
-    private renderDeviceError(message: string): void {
+    renderDeviceError(message: any) {
         $("#lblDeviceSummaryText").text("0개 디바이스");
         $("#lblStoppedCount").text("상태 조회 실패");
         $("#deviceCardHost").html(this.createEmptyHtml(message));
         this.refreshIcons();
     }
 
-    private createEmptyHtml(message: string): string {
+    createEmptyHtml(message: any) {
         return `
             <article class="wf-opc-empty-card">
                 <i data-lucide="server-off"></i>
@@ -420,7 +359,7 @@ export default class Page {
         `;
     }
 
-    private async postDeviceSubscription(deviceId: string, action: "start" | "stop"): Promise<void> {
+    async postDeviceSubscription(deviceId: any, action: any) {
         if (deviceId.length === 0) {
             notify.warning("디바이스 정보가 없습니다.");
             return;
@@ -446,32 +385,34 @@ export default class Page {
         }
     }
 
-    private async startLogAutoRefresh(): Promise<void> {
+    async startLogAutoRefresh() {
         this.isLogAutoRefresh = true;
         this.setLogCollapsed(false);
         await this.loadLogs();
     }
 
-    private clearLogs(): void {
+    clearLogs() {
         $("#logBox").empty();
         $("#lblLogCount").text("0개 항목");
     }
 
-    private async loadLogs(): Promise<void> {
+    async loadLogs() {
         try {
-            const logs = await this.getJson<LogRow[]>("/api/opc-collector/logs?count=100");
+            const logs = await this.getJson("/api/opc-collector/logs?count=100");
 
             const html = logs
-                .map(x => {
+                .map((x: any) => {
                     const time = escapeHtml(x.time ?? "");
                     const level = escapeHtml(x.level ?? "");
                     const message = escapeHtml(x.message ?? "");
 
-                    return `<div class="wf-opc-log-row">
-                        <span class="wf-opc-log-time">${time}</span>
-                        <span class="wf-opc-log-level">${level}</span>
-                        <span class="wf-opc-log-message">${message}</span>
-                    </div>`;
+                    return `
+                        <div class="wf-opc-log-row">
+                            <span class="wf-opc-log-time">${time}</span>
+                            <span class="wf-opc-log-level">${level}</span>
+                            <span class="wf-opc-log-message">${message}</span>
+                        </div>
+                    `;
                 })
                 .join("");
 
@@ -484,11 +425,11 @@ export default class Page {
         }
     }
 
-    private toggleLogs(): void {
+    toggleLogs() {
         this.setLogCollapsed(!this.isLogCollapsed);
     }
 
-    private setLogCollapsed(isCollapsed: boolean): void {
+    setLogCollapsed(isCollapsed: any) {
         this.isLogCollapsed = isCollapsed;
 
         $("#opcLogCard").toggleClass("is-collapsed", isCollapsed);
@@ -498,7 +439,7 @@ export default class Page {
         window.dispatchEvent(new CustomEvent("webflex:layoutChanged"));
     }
 
-    private getEndpointText(device: DeviceRow): string {
+    getEndpointText(device: any) {
         if (device.endpointUrl != null && device.endpointUrl.length > 0) {
             return device.endpointUrl.replace(/^opc\.tcp:\/\//i, "");
         }
@@ -513,7 +454,7 @@ export default class Page {
         return "-";
     }
 
-    private getCurrentTimeText(): string {
+    getCurrentTimeText() {
         const now = new Date();
 
         return [
@@ -523,7 +464,7 @@ export default class Page {
         ].join(":");
     }
 
-    private formatNumber(value: number | string | null | undefined): string {
+    formatNumber(value: any) {
         if (value == null || value === "") {
             return "-";
         }
@@ -537,17 +478,17 @@ export default class Page {
         return numberValue.toLocaleString();
     }
 
-    private async getJson<T>(url: string): Promise<T> {
+    async getJson(url: any) {
         const response = await fetch(url);
 
         if (!response.ok) {
             throw new Error(await response.text());
         }
 
-        return await response.json() as T;
+        return await response.json();
     }
 
-    private refreshIcons(): void {
+    refreshIcons() {
         window.setTimeout(() => {
             const lucide = (window as any).lucide;
 
@@ -557,7 +498,7 @@ export default class Page {
         }, 0);
     }
 
-    private setTextWithFlash(selector: string, value: unknown): void {
+    setTextWithFlash(selector: any, value: any) {
         const $el = $(selector);
         const newText = value == null || value === "" ? "-" : String(value);
         const oldText = $el.text();
@@ -568,14 +509,14 @@ export default class Page {
 
         $el.text(newText);
 
-        const element = $el[0] as HTMLElement | undefined;
+        const element = $el[0] as any;
 
         if (element != null) {
             void element.offsetWidth;
         }
     }
 
-    private normalizeDeviceRow(row: any): DeviceRow {
+    normalizeDeviceRow(row: any) {
         return {
             ...row,
             id: this.readValue(row, "id", "ID", "deviceId", "DEVICE_ID") ?? "",
@@ -591,7 +532,7 @@ export default class Page {
         };
     }
 
-    private readValue(row: any, ...names: string[]): any {
+    readValue(row: any, ...names: any[]) {
         if (row == null) {
             return null;
         }
@@ -602,7 +543,7 @@ export default class Page {
             }
         }
 
-        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+        const normalizedNames = names.map((x: any) => this.normalizeFieldName(x));
 
         for (const key of Object.keys(row)) {
             if (normalizedNames.includes(this.normalizeFieldName(key))) {
@@ -613,7 +554,7 @@ export default class Page {
         return null;
     }
 
-    private readBool(row: any, defaultValue: boolean, ...names: string[]): boolean {
+    readBool(row: any, defaultValue: any, ...names: any[]) {
         const value = this.readValue(row, ...names);
 
         if (value == null) {
@@ -637,7 +578,7 @@ export default class Page {
         return defaultValue;
     }
 
-    private readNumber(row: any, ...names: string[]): number | null {
+    readNumber(row: any, ...names: any[]) {
         const value = this.readValue(row, ...names);
 
         if (value == null || value === "") {
@@ -646,10 +587,12 @@ export default class Page {
 
         const numberValue = Number(value);
 
-        return Number.isFinite(numberValue) ? numberValue : null;
+        return Number.isFinite(numberValue)
+            ? numberValue
+            : null;
     }
 
-    private normalizeFieldName(value: string): string {
+    normalizeFieldName(value: any) {
         return String(value ?? "")
             .replace(/_/g, "")
             .replace(/-/g, "")

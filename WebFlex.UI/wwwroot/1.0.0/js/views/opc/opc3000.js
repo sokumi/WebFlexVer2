@@ -45,7 +45,7 @@ class Page {
         $("#endTime").val(this.toDateTimeLocalValue(end));
     }
     async search() {
-        var _a;
+        var _a, _b;
         try {
             const request = this.getRequest();
             if (request.endpointUrl === "") {
@@ -70,7 +70,7 @@ class Page {
             if (!response.ok || !result.success) {
                 throw new Error((_a = result.message) !== null && _a !== void 0 ? _a : "History 조회 실패");
             }
-            this.render(result.values);
+            this.render((_b = result.values) !== null && _b !== void 0 ? _b : []);
             this.setStatus(result.message);
         }
         catch (e) {
@@ -105,7 +105,7 @@ class Page {
             $("#historyBody").html(`<tr><td colspan="4">조회된 데이터가 없습니다.</td></tr>`);
             return;
         }
-        const html = values.map(x => {
+        const html = values.map((x) => {
             var _a, _b;
             return `
             <tr>
@@ -143,13 +143,13 @@ class Page {
         const mi = String(date.getMinutes()).padStart(2, "0");
         return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
     }
-    formatDate(value) {
+    formatDate(value = null) {
         if (value == null || value === "") {
             return "";
         }
         const date = new Date(value);
         if (Number.isNaN(date.getTime())) {
-            return value;
+            return String(value);
         }
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
@@ -160,7 +160,7 @@ class Page {
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
     escapeHtml(value) {
-        return value
+        return String(value !== null && value !== void 0 ? value : "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")

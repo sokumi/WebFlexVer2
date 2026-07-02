@@ -13,34 +13,12 @@ const DEFAULT_DEVICE_TYPE = "OPCUA";
 const DEFAULT_PORT = 4840;
 const DEFAULT_INTERVAL = 1000;
 
-type DeviceRow = {
-    id: string;
-    deviceCode: string;
-    deviceName: string;
-    deviceType: string;
-    deviceAddress: string;
-    port: number | null;
-    endpointUrl: string;
-    isCollectEnabled: boolean;
-    isEnabled: boolean;
-    useSecurity: boolean;
-    securityMode: string;
-    securityPolicy: string;
-    useAnonymous: boolean;
-    userName: string;
-    password: string;
-    publishingIntervalMs: number | null;
-    samplingIntervalMs: number | null;
-    description: string;
-    tagCount: number;
-};
-
 export default class Page {
-    grid: WebFlexGrid<DeviceRow> | null = null;
-    rows: DeviceRow[] = [];
+    grid: any = null;
+    rows: any[] = [];
     selectedId = "";
 
-    init(): void {
+    init() {
         this.initGrid();
         this.bindEvents();
         this.clearForm();
@@ -53,7 +31,7 @@ export default class Page {
         });
     }
 
-    bindEvents(): void {
+    bindEvents() {
         $("#btnNew").on("click", () => this.clearForm());
         $("#btnSave").on("click", () => void this.save());
         $("#btnDelete").on("click", () => void this.delete());
@@ -86,9 +64,9 @@ export default class Page {
         });
     }
 
-    initGrid(): void {
+    initGrid() {
         this.grid = WebFlexGrid
-            .create<DeviceRow>("#gridDevice")
+            .create("#gridDevice")
             .height("100%")
             .pagination(12)
             .selectableRows(1)
@@ -161,7 +139,7 @@ export default class Page {
             .build();
     }
 
-    async loadDeviceTypes(): Promise<void> {
+    async loadDeviceTypes() {
         try {
             const result = await api.get({
                 url: "/device/manage/types"
@@ -188,7 +166,7 @@ export default class Page {
         }
     }
 
-    async loadList(): Promise<void> {
+    async loadList() {
         try {
             this.grid?.showLoading("디바이스 목록 조회 중입니다...");
 
@@ -210,7 +188,7 @@ export default class Page {
         }
     }
 
-    async applyClientFilter(): Promise<void> {
+    async applyClientFilter() {
         const keyword = String($("#txtGridKeyword").val() ?? "").trim().toLowerCase();
 
         const filteredRows = keyword.length === 0
@@ -228,12 +206,12 @@ export default class Page {
         this.updateSelectedAfterReload();
     }
 
-    updateGridSummary(visibleCount: number, totalCount: number): void {
+    updateGridSummary(visibleCount: any, totalCount: any) {
         $("#lblDeviceGridCount").text(`${totalCount.toLocaleString()}건`);
         $("#lblGridSummary").text(`총 ${totalCount.toLocaleString()}건 · ${visibleCount.toLocaleString()}건 표시`);
     }
 
-    updateSelectedAfterReload(): void {
+    updateSelectedAfterReload() {
         if (this.selectedId.length === 0) {
             return;
         }
@@ -248,7 +226,7 @@ export default class Page {
         $("#lblSelectedDevice").text(`${selected.deviceName} 선택됨`);
     }
 
-    selectRow(row: DeviceRow): void {
+    selectRow(row: any) {
         const device = this.normalizeRow(row);
 
         this.selectedId = device.id;
@@ -278,7 +256,7 @@ export default class Page {
         this.syncAccountFields();
     }
 
-    clearForm(): void {
+    clearForm() {
         this.selectedId = "";
 
         $("#hidId").val("");
@@ -306,7 +284,7 @@ export default class Page {
         this.syncAccountFields();
     }
 
-    setCreateMode(): void {
+    setCreateMode() {
         $("#lblFormMode")
             .removeClass("edit")
             .addClass("create")
@@ -315,7 +293,7 @@ export default class Page {
         $("#lblSelectedDevice").text("선택 없음");
     }
 
-    setEditMode(deviceName: string): void {
+    setEditMode(deviceName: any) {
         $("#lblFormMode")
             .removeClass("create")
             .addClass("edit")
@@ -324,7 +302,7 @@ export default class Page {
         $("#lblSelectedDevice").text(`${deviceName} 선택됨`);
     }
 
-    getFormData(): any {
+    getFormData() {
         return {
             id: this.selectedId || null,
             deviceName: String($("#txtDeviceName").val() ?? "").trim(),
@@ -346,7 +324,7 @@ export default class Page {
         };
     }
 
-    validate(request: any): string | null {
+    validate(request: any) {
         if (request.deviceName.length === 0) {
             return "디바이스명을 입력해 주세요.";
         }
@@ -386,7 +364,7 @@ export default class Page {
         return null;
     }
 
-    async save(): Promise<void> {
+    async save() {
         const request = this.getFormData();
         const errorMessage = this.validate(request);
 
@@ -425,7 +403,7 @@ export default class Page {
         }
     }
 
-    async delete(): Promise<void> {
+    async delete() {
         if (this.selectedId.length === 0) {
             notify.warning("삭제할 디바이스를 선택해 주세요.");
             return;
@@ -459,7 +437,7 @@ export default class Page {
         }
     }
 
-    async previewEndpoint(): Promise<void> {
+    async previewEndpoint() {
         const deviceType = encodeURIComponent(String($("#selDeviceType").val() ?? ""));
         const address = encodeURIComponent(String($("#txtDeviceAddress").val() ?? "").trim());
         const port = Number($("#txtPort").val() ?? 0);
@@ -481,7 +459,7 @@ export default class Page {
         }
     }
 
-    applyEndpointPlaceholder(): void {
+    applyEndpointPlaceholder() {
         const deviceType = String($("#selDeviceType").val() ?? "");
         const address = String($("#txtDeviceAddress").val() ?? "").trim();
         const port = Number($("#txtPort").val() ?? 0);
@@ -494,7 +472,7 @@ export default class Page {
         $("#txtEndpointUrl").attr("placeholder", "비워두면 자동 생성");
     }
 
-    syncSecurityFields(): void {
+    syncSecurityFields() {
         const useSecurity = $("#chkUseSecurity").prop("checked") === true;
 
         $("#selSecurityMode").prop("disabled", !useSecurity);
@@ -506,7 +484,7 @@ export default class Page {
         }
     }
 
-    syncAccountFields(): void {
+    syncAccountFields() {
         const useAnonymous = $("#chkUseAnonymous").prop("checked") === true;
 
         $("#txtUserName").prop("disabled", useAnonymous);
@@ -518,7 +496,7 @@ export default class Page {
         }
     }
 
-    normalizeRow(row: any): DeviceRow {
+    normalizeRow(row: any) {
         return {
             ...row,
             id: this.readValue(row, "id", "ID", "deviceId", "DEVICE_ID") ?? "",
@@ -543,7 +521,7 @@ export default class Page {
         };
     }
 
-    readValue(row: any, ...names: string[]): any {
+    readValue(row: any, ...names: any[]) {
         if (row == null) {
             return null;
         }
@@ -554,7 +532,7 @@ export default class Page {
             }
         }
 
-        const normalizedNames = names.map(x => this.normalizeFieldName(x));
+        const normalizedNames = names.map((x: any) => this.normalizeFieldName(x));
 
         for (const key of Object.keys(row)) {
             if (normalizedNames.includes(this.normalizeFieldName(key))) {
@@ -565,7 +543,7 @@ export default class Page {
         return null;
     }
 
-    readBool(row: any, defaultValue: boolean, ...names: string[]): boolean {
+    readBool(row: any, defaultValue: any, ...names: any[]) {
         const value = this.readValue(row, ...names);
 
         if (value == null) {
@@ -589,7 +567,7 @@ export default class Page {
         return defaultValue;
     }
 
-    readNumber(row: any, ...names: string[]): number | null {
+    readNumber(row: any, ...names: any[]) {
         const value = this.readValue(row, ...names);
 
         if (value == null || value === "") {
@@ -601,7 +579,7 @@ export default class Page {
         return Number.isFinite(numberValue) ? numberValue : null;
     }
 
-    normalizeFieldName(value: string): string {
+    normalizeFieldName(value: any) {
         return String(value ?? "")
             .replace(/_/g, "")
             .replace(/-/g, "")

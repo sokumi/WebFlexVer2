@@ -413,24 +413,24 @@ public class DeviceGroupController : WebFlexController {
 
     private async Task<string> CreateMajorGroupIdAsync() {
         var ids = await _db.Set<OpcMajorGroup>().AsNoTracking().Select(x => x.ID).ToListAsync();
-        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("MGR"))
-            .Select(x => x.Replace("MGR", ""))
+        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("GN"))
+            .Select(x => x.Replace("GN", ""))
             .Where(x => int.TryParse(x, out _))
             .Select(int.Parse)
             .DefaultIfEmpty(0)
             .Max();
-        return $"MGR{max + 1:0000}";
+        return $"GN{max + 1:0000}";
     }
 
     private async Task<string> CreateGroupIdAsync() {
         var ids = await _db.Set<OpcGroup>().AsNoTracking().Select(x => x.ID).ToListAsync();
-        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("GRP"))
-            .Select(x => x.Replace("GRP", ""))
+        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("DG"))
+            .Select(x => x.Replace("DG", ""))
             .Where(x => int.TryParse(x, out _))
             .Select(int.Parse)
             .DefaultIfEmpty(0)
             .Max();
-        return $"GRP{max + 1:0000}";
+        return $"DG{max + 1:0000}";
     }
 
     private async Task<int> CreateMajorGroupSortOrderAsync() {

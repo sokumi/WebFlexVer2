@@ -511,14 +511,14 @@ public class DeviceTagController : WebFlexController {
             .ToListAsync();
 
         var max = ids
-            .Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("GRP"))
-            .Select(x => x.Replace("GRP", ""))
+            .Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("DG"))
+            .Select(x => x.Replace("DG", ""))
             .Where(x => int.TryParse(x, out _))
             .Select(int.Parse)
             .DefaultIfEmpty(0)
             .Max();
 
-        return $"GRP{max + 1:0000}";
+        return $"DG{max + 1:0000}";
     }
 
     private async Task<int> CreateGroupSortOrderAsync() {

@@ -1,47 +1,11 @@
-﻿type OpcHistoryReadRequest = {
-    endpointUrl: string;
-    nodeId: string;
-
-    useSecurity: boolean;
-    useAnonymous: boolean;
-    userName: string;
-    password: string;
-
-    startTime: string;
-    endTime: string;
-
-    readMode: string;
-    returnBounds: boolean;
-    readModified: boolean;
-    numValuesPerNode: number;
-    timestampsToReturn: string;
-    releaseContinuationPoints: boolean;
-    maxContinuationReads: number;
-};
-
-type OpcHistoryValue = {
-    sourceTimestamp?: string | null;
-    serverTimestamp?: string | null;
-    value?: string | null;
-    statusCode: string;
-};
-
-type OpcHistoryReadResponse = {
-    success: boolean;
-    message: string;
-    endpointUrl: string;
-    nodeId: string;
-    values: OpcHistoryValue[];
-};
-
-export default class Page {
-    init(): void {
+﻿export default class Page {
+    init() {
         $("#btnSearch").on("click", () => this.search());
 
         this.setDefaultTimeRange();
     }
 
-    private setDefaultTimeRange(): void {
+    setDefaultTimeRange() {
         const end = new Date();
         const start = new Date(end.getTime() - 60 * 60 * 1000);
 
@@ -49,7 +13,7 @@ export default class Page {
         $("#endTime").val(this.toDateTimeLocalValue(end));
     }
 
-    private async search(): Promise<void> {
+    async search() {
         try {
             const request = this.getRequest();
 
@@ -75,13 +39,13 @@ export default class Page {
                 body: JSON.stringify(request)
             });
 
-            const result = await response.json() as OpcHistoryReadResponse;
+            const result = await response.json();
 
             if (!response.ok || !result.success) {
                 throw new Error(result.message ?? "History 조회 실패");
             }
 
-            this.render(result.values);
+            this.render(result.values ?? []);
             this.setStatus(result.message);
         } catch (e) {
             console.error(e);
@@ -91,7 +55,7 @@ export default class Page {
         }
     }
 
-    private getRequest(): OpcHistoryReadRequest {
+    getRequest() {
         return {
             endpointUrl: this.getText("endpointUrl"),
             nodeId: this.getText("nodeId"),
@@ -114,7 +78,7 @@ export default class Page {
         };
     }
 
-    private render(values: OpcHistoryValue[]): void {
+    render(values: any) {
         $("#lblCount").text(String(values.length));
 
         if (values.length === 0) {
@@ -122,7 +86,7 @@ export default class Page {
             return;
         }
 
-        const html = values.map(x => `
+        const html = values.map((x: any) => `
             <tr>
                 <td>${this.escapeHtml(this.formatDate(x.sourceTimestamp))}</td>
                 <td>${this.escapeHtml(this.formatDate(x.serverTimestamp))}</td>
@@ -134,11 +98,11 @@ export default class Page {
         $("#historyBody").html(html.join(""));
     }
 
-    private getText(id: string): string {
+    getText(id: any) {
         return String($(`#${id}`).val() ?? "").trim();
     }
 
-    private getNumber(id: string): number {
+    getNumber(id: any) {
         const value = Number($(`#${id}`).val());
 
         if (Number.isNaN(value)) {
@@ -148,15 +112,15 @@ export default class Page {
         return value;
     }
 
-    private getChecked(id: string): boolean {
+    getChecked(id: any) {
         return Boolean($(`#${id}`).prop("checked"));
     }
 
-    private setStatus(message: string): void {
+    setStatus(message: any) {
         $("#lblStatus").text(message);
     }
 
-    private toDateTimeLocalValue(date: Date): string {
+    toDateTimeLocalValue(date: any) {
         const yyyy = date.getFullYear();
         const mm = String(date.getMonth() + 1).padStart(2, "0");
         const dd = String(date.getDate()).padStart(2, "0");
@@ -166,7 +130,7 @@ export default class Page {
         return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
     }
 
-    private formatDate(value?: string | null): string {
+    formatDate(value: any = null) {
         if (value == null || value === "") {
             return "";
         }
@@ -174,7 +138,7 @@ export default class Page {
         const date = new Date(value);
 
         if (Number.isNaN(date.getTime())) {
-            return value;
+            return String(value);
         }
 
         const yyyy = date.getFullYear();
@@ -187,8 +151,8 @@ export default class Page {
         return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
     }
 
-    private escapeHtml(value: string): string {
-        return value
+    escapeHtml(value: any) {
+        return String(value ?? "")
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
