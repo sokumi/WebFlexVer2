@@ -5,6 +5,7 @@ using WebFlex.Shared;
 using WebFlex.Shared.Exceptions;
 using WebFlex.UI.Common;
 using WebFlex.UI.Data;
+using WebFlex.UI.Services;
 
 namespace WebFlex.UI.Controllers.Device;
 
@@ -12,10 +13,15 @@ namespace WebFlex.UI.Controllers.Device;
 public class DeviceGroupController : WebFlexController {
     private readonly WebFlexDbContext _db;
     private readonly TsdReadDbContext _tsdDb;
+    private readonly INewNoService _newNo;
 
-    public DeviceGroupController(WebFlexDbContext db, TsdReadDbContext tsdDb) {
+    public DeviceGroupController(
+        WebFlexDbContext db,
+        TsdReadDbContext tsdDb,
+        INewNoService newNo) {
         _db = db;
         _tsdDb = tsdDb;
+        _newNo = newNo;
     }
 
     [HttpGet, ActionName("group-tree")]
@@ -122,7 +128,8 @@ public class DeviceGroupController : WebFlexController {
                     throw new WebFlexMessageException("이미 등록된 대그룹명입니다.");
                 }
 
-                model.ID = await CreateMajorGroupIdAsync();
+                var ids = await _newNo.NewNosAsync("GN", 1);
+                model.ID = ids[0];
                 model.SORT_ORDER ??= await CreateMajorGroupSortOrderAsync();
                 model.IsEnabled = true;
                 model.CreatedAt = now;
@@ -196,7 +203,8 @@ public class DeviceGroupController : WebFlexController {
                     throw new WebFlexMessageException("이미 등록된 중그룹명입니다.");
                 }
 
-                model.ID = await CreateGroupIdAsync();
+                var ids = await _newNo.NewNosAsync("DG", 1);
+                model.ID = ids[0];
                 model.SORT_ORDER ??= await CreateGroupSortOrderAsync(model.MAJOR_GROUP_ID);
                 model.IsEnabled = true;
                 model.CreatedAt = now;
@@ -409,28 +417,6 @@ public class DeviceGroupController : WebFlexController {
         model.GROUP_NAME = model.GROUP_NAME?.Trim() ?? "";
         model.DESCRIPTION = string.IsNullOrWhiteSpace(model.DESCRIPTION) ? null : model.DESCRIPTION.Trim();
         model.SORT_ORDER = model.SORT_ORDER <= 0 ? null : model.SORT_ORDER;
-    }
-
-    private async Task<string> CreateMajorGroupIdAsync() {
-        var ids = await _db.Set<OpcMajorGroup>().AsNoTracking().Select(x => x.ID).ToListAsync();
-        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("GN"))
-            .Select(x => x.Replace("GN", ""))
-            .Where(x => int.TryParse(x, out _))
-            .Select(int.Parse)
-            .DefaultIfEmpty(0)
-            .Max();
-        return $"GN{max + 1:0000}";
-    }
-
-    private async Task<string> CreateGroupIdAsync() {
-        var ids = await _db.Set<OpcGroup>().AsNoTracking().Select(x => x.ID).ToListAsync();
-        var max = ids.Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("DG"))
-            .Select(x => x.Replace("DG", ""))
-            .Where(x => int.TryParse(x, out _))
-            .Select(int.Parse)
-            .DefaultIfEmpty(0)
-            .Max();
-        return $"DG{max + 1:0000}";
     }
 
     private async Task<int> CreateMajorGroupSortOrderAsync() {
