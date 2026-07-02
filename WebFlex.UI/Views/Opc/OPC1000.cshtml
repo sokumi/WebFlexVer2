@@ -61,6 +61,11 @@
                 <i data-lucide="refresh-cw"></i>
                 새로고침
             </button>
+
+            <button type="button" id="btnRestartAllSubscription" class="btn btn-outline-primary btn-sm">
+                <i data-lucide="rotate-cw"></i>
+                전체 구독 자동 재구독
+            </button>
         </div>
     </section>
 
@@ -71,6 +76,92 @@
             <span>Collector 상태와 디바이스 런타임 정보를 불러오는 중입니다.</span>
         </article>
     </section>
+
+    <template id="deviceCardTemplate">
+        <article class="wf-opc-device-card is-stopped" data-device-card>
+            <div class="wf-opc-device-head">
+                <div class="wf-opc-device-title">
+                    <span class="wf-opc-device-icon">
+                        <i data-lucide="cpu"></i>
+                    </span>
+                    <div>
+                        <h4 data-field="deviceName">-</h4>
+                        <small data-field="deviceCode">-</small>
+                    </div>
+                </div>
+
+                <span class="wf-opc-device-status is-stopped" data-field="statusBadge">
+                    <span class="wf-status-dot"></span>
+                    <span data-field="statusText">구독중지</span>
+                </span>
+            </div>
+
+            <div class="wf-opc-device-type" data-field="deviceType">OPCUA</div>
+
+            <div class="wf-opc-endpoint">
+                <i data-lucide="link"></i>
+                <span data-field="endpoint">-</span>
+            </div>
+
+            <div class="wf-opc-device-metrics">
+                <div>
+                    <span>구독 태그</span>
+                    <strong>
+                        <span data-field="subscribedCount">-</span>
+                        <small>/ <span data-field="tagCount">-</span></small>
+                    </strong>
+                </div>
+                <div>
+                    <span>현재값</span>
+                    <strong>
+                        <span data-field="currentValueCount">-</span>
+                        <small>rows</small>
+                    </strong>
+                </div>
+                <div>
+                    <span>Snapshot</span>
+                    <strong data-field="totalSnapshotRows">-</strong>
+                </div>
+                <div>
+                    <span>DB Insert</span>
+                    <strong data-field="totalInserted">-</strong>
+                </div>
+            </div>
+
+            <div class="wf-opc-progress">
+                <span data-field="progressBar" style="width:0%"></span>
+            </div>
+
+            <div class="wf-opc-device-footer">
+                <div class="wf-opc-device-time">
+                    <span>
+                        <i data-lucide="timer"></i>
+                        <span data-field="percent">0%</span>
+                    </span>
+                    <span>
+                        <i data-lucide="clock"></i>
+                        <span data-field="updatedTime">-</span>
+                    </span>
+                </div>
+
+                <div class="wf-opc-device-actions">
+                    <button type="button"
+                            class="btn btn-outline-primary btn-sm"
+                            data-subscription-button
+                            data-device-id=""
+                            data-subscription-action="start">
+                        <i data-lucide="play-circle" data-field="actionIcon"></i>
+                        <span data-field="actionText">구독시작</span>
+                    </button>
+
+                    <span class="wf-opc-db-badge">
+                        <i data-lucide="save"></i>
+                        <span data-field="dbStatusText">DB대기</span>
+                    </span>
+                </div>
+            </div>
+        </article>
+    </template>
 
     <section class="wf-card wf-opc-log-card is-collapsed" id="opcLogCard">
         <header class="wf-opc-log-header">

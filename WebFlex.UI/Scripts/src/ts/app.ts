@@ -360,6 +360,82 @@ function bindSearchPanelToggle(): void {
     });
 }
 
+function initGridSearchClearButtons(root: ParentNode = document): void {
+    root.querySelectorAll<HTMLElement>(".wf-grid-search").forEach(search => {
+        const input = search.querySelector<HTMLInputElement>("input.form-control, input");
+
+        if (input == null) {
+            return;
+        }
+
+        search.classList.add("has-clear");
+
+        let button = search.querySelector<HTMLButtonElement>(".wf-grid-search-clear");
+
+        if (button == null) {
+            button = document.createElement("button");
+            button.type = "button";
+            button.className = "wf-grid-search-clear";
+            button.setAttribute("aria-label", "검색어 지우기");
+            button.textContent = "×";
+            search.appendChild(button);
+        }
+
+        const sync = (): void => {
+            search.classList.toggle("has-value", input.value.length > 0);
+        };
+
+        if (input.dataset.wfSearchClearBound !== "true") {
+            input.dataset.wfSearchClearBound = "true";
+            input.addEventListener("input", sync);
+            input.addEventListener("change", sync);
+        }
+
+        if (button.dataset.wfSearchClearBound !== "true") {
+            button.dataset.wfSearchClearBound = "true";
+            button.addEventListener("click", () => {
+                if (input.value.length === 0) {
+                    input.focus();
+                    return;
+                }
+
+                input.value = "";
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+                input.dispatchEvent(new Event("change", { bubbles: true }));
+                input.focus();
+            });
+        }
+
+        sync();
+    });
+}
+
+function observeGridSearchClearButtons(): void {
+    const observer = new MutationObserver(mutations => {
+        mutations.forEach(mutation => {
+            mutation.addedNodes.forEach(node => {
+                if (!(node instanceof HTMLElement)) {
+                    return;
+                }
+
+                if (node.classList.contains("wf-grid-search")) {
+                    initGridSearchClearButtons(node.parentElement ?? document);
+                    return;
+                }
+
+                if (node.querySelector(".wf-grid-search") != null) {
+                    initGridSearchClearButtons(node);
+                }
+            });
+        });
+    });
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+}
+
 function normalizeCurrentPath(): string {
     let path = window.location.pathname.toLowerCase();
 
@@ -422,6 +498,8 @@ document.addEventListener("DOMContentLoaded", () => {
     bindSidebarToggle();
     bindThemeToggle();
     bindSearchPanelToggle();
+    initGridSearchClearButtons();
+    observeGridSearchClearButtons();
     initHeaderClock();
     initWebFlexIcons();
 

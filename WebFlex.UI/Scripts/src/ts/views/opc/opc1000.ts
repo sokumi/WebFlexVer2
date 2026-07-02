@@ -7,14 +7,21 @@ export default class Page {
     devices: any[] = [];
     deviceSummaries: any[] = [];
     deviceStatuses = new Map<any, any>();
+    renderedDeviceIds: any[] = [];
     isLogAutoRefresh = false;
     isLogCollapsed = true;
     refreshTimerId: any = null;
     isRefreshing = false;
+    isRestartingAllSubscription = false;
 
     init() {
-        $("#deviceCardHost").on("click", "[data-subscription-action]", event => {
+        $("#deviceCardHost").on("click", "[data-subscription-button]", event => {
             const $button = $(event.currentTarget);
+
+            if ($button.prop("disabled")) {
+                return;
+            }
+
             const deviceId = String($button.attr("data-device-id") ?? "");
             const action = String($button.attr("data-subscription-action") ?? "");
 
@@ -23,6 +30,10 @@ export default class Page {
 
         $("#btnRefreshStatus").on("click", () => {
             void this.refresh();
+        });
+
+        $("#btnRestartAllSubscription").on("click", () => {
+            void this.restartAllSubscription();
         });
 
         $("#btnClearLogs").on("click", () => this.clearLogs());
@@ -184,15 +195,66 @@ export default class Page {
 
         $("#lblDeviceSummaryText").text(`${rows.length.toLocaleString()}개 디바이스`);
 
-        const html = rows
-            .map((row: any) => this.createDeviceCardHtml(row))
-            .join("");
+        if (rows.length === 0) {
+            this.renderDeviceEmpty();
+            return;
+        }
 
-        $("#deviceCardHost").html(html || this.createEmptyHtml("조회된 디바이스가 없습니다."));
-        this.refreshIcons();
+        $("#deviceCardHost .wf-opc-empty-card").remove();
+
+        const nextDeviceIds = rows
+            .map((row: any) => String(row.device.id ?? row.status?.deviceId ?? ""))
+            .filter((x: any) => x.length > 0);
+
+        $("#deviceCardHost [data-device-card]").each((_, el) => {
+            const deviceId = String($(el).attr("data-device-id") ?? "");
+
+            if (!nextDeviceIds.includes(deviceId)) {
+                $(el).remove();
+            }
+        });
+
+        for (const row of rows) {
+            const deviceId = String(row.device.id ?? row.status?.deviceId ?? "");
+
+            if (deviceId.length === 0) {
+                continue;
+            }
+
+            const $card = this.ensureDeviceCard(deviceId);
+            this.updateDeviceCard($card, row);
+        }
+
+        this.renderedDeviceIds = nextDeviceIds;
     }
 
-    createDeviceCardHtml(row: any) {
+    ensureDeviceCard(deviceId: any) {
+        let $card = this.findDeviceCard(deviceId);
+
+        if ($card.length > 0) {
+            return $card;
+        }
+
+        const template = document.getElementById("deviceCardTemplate") as any;
+
+        if (template == null || template.content == null || template.content.firstElementChild == null) {
+            return $();
+        }
+
+        const newCard = template.content.firstElementChild.cloneNode(true);
+        const $newCard = $(newCard);
+
+        $newCard.attr("data-device-id", deviceId);
+        $("#deviceCardHost").append($newCard);
+
+        return $newCard;
+    }
+
+    updateDeviceCard($card: any, row: any) {
+        if ($card.length === 0) {
+            return;
+        }
+
         const device = row.device;
         const status = row.status;
         const runtime = status?.runtimeStatus ?? {};
@@ -205,6 +267,7 @@ export default class Page {
         const subscribedCount = runtime.subscribedCount ?? 0;
         const currentValueCount = runtime.currentValueCount ?? 0;
         const totalInserted = status?.totalInserted ?? 0;
+        const totalSnapshotRows = status?.totalSnapshotRows ?? 0;
 
         const subscriptionStopped = this.isSubscriptionStopped(row);
         const isRunning = !subscriptionStopped && subscribedCount > 0;
@@ -220,86 +283,61 @@ export default class Page {
         const percent = tagCount > 0
             ? Math.min(100, Math.round((subscribedCount / tagCount) * 100))
             : 0;
+        const action = isRunning ? "stop" : "start";
+        const actionText = isRunning ? "구독중지" : "구독시작";
+        const actionIcon = isRunning ? "pause-circle" : "play-circle";
 
-        return `
-            <article class="wf-opc-device-card ${cardStateClass}">
-                <div class="wf-opc-device-head">
-                    <div class="wf-opc-device-title">
-                        <span class="wf-opc-device-icon">
-                            <i data-lucide="cpu"></i>
-                        </span>
-                        <div>
-                            <h4>${escapeHtml(deviceName)}</h4>
-                            <small>${escapeHtml(deviceCode)}</small>
-                        </div>
-                    </div>
+        $card
+            .removeClass("is-running is-stopped")
+            .addClass(cardStateClass)
+            .attr("data-device-id", deviceId);
 
-                    <span class="wf-opc-device-status ${cardStateClass}">
-                        <span class="wf-status-dot"></span>
-                        ${escapeHtml(statusText)}
-                    </span>
-                </div>
+        const $statusBadge = $card.find("[data-field='statusBadge']");
+        $statusBadge
+            .removeClass("is-running is-stopped")
+            .addClass(cardStateClass);
 
-                <div class="wf-opc-device-type">${escapeHtml(deviceType)}</div>
+        this.setCardText($card, "deviceName", deviceName);
+        this.setCardText($card, "deviceCode", deviceCode);
+        this.setCardText($card, "statusText", statusText);
+        this.setCardText($card, "deviceType", deviceType);
+        this.setCardText($card, "endpoint", endpoint);
+        this.setCardText($card, "subscribedCount", this.formatNumber(subscribedCount));
+        this.setCardText($card, "tagCount", this.formatNumber(tagCount));
+        this.setCardText($card, "currentValueCount", this.formatNumber(currentValueCount));
+        this.setCardText($card, "totalSnapshotRows", this.formatNumber(totalSnapshotRows));
+        this.setCardText($card, "totalInserted", this.formatNumber(totalInserted));
+        this.setCardText($card, "percent", `${percent}%`);
+        this.setCardText($card, "updatedTime", this.getCurrentTimeText());
+        this.setCardText($card, "actionText", actionText);
+        this.setCardText($card, "dbStatusText", totalInserted > 0 ? "DB저장중" : "DB대기");
 
-                <div class="wf-opc-endpoint">
-                    <i data-lucide="link"></i>
-                    <span>${escapeHtml(endpoint)}</span>
-                </div>
+        $card.find("[data-field='progressBar']").css("width", `${percent}%`);
 
-                <div class="wf-opc-device-metrics">
-                    <div>
-                        <span>구독 태그</span>
-                        <strong>${this.formatNumber(subscribedCount)} <small>/ ${this.formatNumber(tagCount)}</small></strong>
-                    </div>
-                    <div>
-                        <span>현재값</span>
-                        <strong>${this.formatNumber(currentValueCount)} <small>rows</small></strong>
-                    </div>
-                    <div>
-                        <span>Snapshot</span>
-                        <strong>${this.formatNumber(status?.totalSnapshotRows)}</strong>
-                    </div>
-                    <div>
-                        <span>DB Insert</span>
-                        <strong>${this.formatNumber(totalInserted)}</strong>
-                    </div>
-                </div>
+        const $button = $card.find("[data-subscription-button]");
+        $button
+            .attr("data-device-id", deviceId)
+            .attr("data-subscription-action", action)
+            .prop("disabled", !isEnabled);
 
-                <div class="wf-opc-progress">
-                    <span style="width:${percent}%"></span>
-                </div>
+        $card.find("[data-field='actionIcon']").attr("data-lucide", actionIcon);
+    }
 
-                <div class="wf-opc-device-footer">
-                    <div class="wf-opc-device-time">
-                        <span>
-                            <i data-lucide="timer"></i>
-                            ${percent}%
-                        </span>
-                        <span>
-                            <i data-lucide="clock"></i>
-                            ${this.getCurrentTimeText()}
-                        </span>
-                    </div>
+    setCardText($card: any, field: any, value: any) {
+        const $el = $card.find(`[data-field='${field}']`);
+        const text = value == null || value === "" ? "-" : String(value);
 
-                    <div class="wf-opc-device-actions">
-                        <button type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                data-device-id="${escapeHtml(deviceId)}"
-                                data-subscription-action="${isRunning ? "stop" : "start"}"
-                                ${!isEnabled ? "disabled" : ""}>
-                            <i data-lucide="${isRunning ? "pause-circle" : "play-circle"}"></i>
-                            ${isRunning ? "구독중지" : "구독시작"}
-                        </button>
+        if ($el.text() === text) {
+            return;
+        }
 
-                        <span class="wf-opc-db-badge">
-                            <i data-lucide="save"></i>
-                            ${totalInserted > 0 ? "DB저장중" : "DB대기"}
-                        </span>
-                    </div>
-                </div>
-            </article>
-        `;
+        $el.text(text);
+    }
+
+    findDeviceCard(deviceId: any) {
+        return $("#deviceCardHost [data-device-card]").filter((_, el) =>
+            String($(el).attr("data-device-id") ?? "") === String(deviceId ?? "")
+        );
     }
 
     isSubscriptionStopped(row: any) {
@@ -338,6 +376,8 @@ export default class Page {
     renderDeviceEmpty() {
         $("#lblDeviceSummaryText").text("0개 디바이스");
         $("#lblStoppedCount").text("0개 구독중지");
+        this.renderedDeviceIds = [];
+        this.deviceStatuses.clear();
         $("#deviceCardHost").html(this.createEmptyHtml("조회된 디바이스가 없습니다."));
         this.refreshIcons();
     }
@@ -345,6 +385,7 @@ export default class Page {
     renderDeviceError(message: any) {
         $("#lblDeviceSummaryText").text("0개 디바이스");
         $("#lblStoppedCount").text("상태 조회 실패");
+        this.renderedDeviceIds = [];
         $("#deviceCardHost").html(this.createEmptyHtml(message));
         this.refreshIcons();
     }
@@ -383,6 +424,55 @@ export default class Page {
             console.error(e);
             notify.error(e instanceof Error ? e.message : "요청 처리 중 오류가 발생했습니다.");
         }
+    }
+
+    async restartAllSubscription() {
+        if (this.isRestartingAllSubscription) {
+            return;
+        }
+
+        if (!confirm("전체 디바이스 구독을 모두 끊고 다시 재구독하시겠습니까?")) {
+            return;
+        }
+
+        this.isRestartingAllSubscription = true;
+
+        const $button = $("#btnRestartAllSubscription");
+        $button.prop("disabled", true);
+        $button.html(`<i data-lucide="loader-circle"></i> 재구독 중`);
+
+        try {
+            await this.postCollectorAction("/api/opc-collector/subscription/stop");
+            await this.postCollectorAction("/api/opc-collector/subscription/start");
+
+            notify.success("전체 디바이스 구독 자동 재구독 요청 완료");
+
+            await this.loadStatus();
+            await this.loadDeviceSummary();
+            await this.loadDeviceCards();
+        } catch (e) {
+            console.error(e);
+            notify.error(e instanceof Error ? e.message : "전체 구독 자동 재구독 중 오류가 발생했습니다.");
+        } finally {
+            this.isRestartingAllSubscription = false;
+
+            $button.prop("disabled", false);
+            $button.html(`<i data-lucide="rotate-cw"></i> 전체 구독 자동 재구독`);
+
+            this.refreshIcons();
+        }
+    }
+
+    async postCollectorAction(url: any) {
+        const response = await fetch(url, {
+            method: "POST"
+        });
+
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+
+        return await response.json();
     }
 
     async startLogAutoRefresh() {

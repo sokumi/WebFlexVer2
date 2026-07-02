@@ -14,9 +14,19 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
 
     private table: TabulatorInstance | null = null;
     private tableOptions: Options = {};
+    private focusedRow: any = null;
+    private focusRowOnClick: boolean = true;
 
     constructor(selector: string | HTMLElement, options: Options = {}) {
         this.element = this.resolveElement(selector);
+        const webFlexOptions = options as any;
+        this.focusRowOnClick = webFlexOptions.focusRowOnClick !== false;
+
+        const tabulatorOptions = {
+            ...options
+        } as any;
+
+        delete tabulatorOptions.focusRowOnClick;
 
         this.tableOptions = {
             layout: "fitColumns",
@@ -24,7 +34,7 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
             movableColumns: true,
             selectableRows: false,
             placeholder: "조회된 데이터가 없습니다.",
-            ...options
+            ...tabulatorOptions
         };
     }
 
@@ -135,10 +145,12 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
 
     build(): this {
         if (this.table != null) {
+            this.clearFocusedRow();
             this.table.destroy();
         }
 
         this.table = new Tabulator(this.element, this.tableOptions);
+        this.bindFocusedRowClick();
         return this;
     }
 
@@ -152,14 +164,17 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
 
     async setData(rows: TRow[] = []): Promise<void> {
         await this.instance.setData(rows);
+        this.clearFocusedRow();
     }
 
     async replaceData(rows: TRow[] = []): Promise<void> {
         await this.instance.replaceData(rows);
+        this.clearFocusedRow();
     }
 
     async clearData(): Promise<void> {
         await this.instance.clearData();
+        this.clearFocusedRow();
     }
 
     async addRow(row: TRow, top: boolean = false): Promise<void> {
@@ -216,6 +231,11 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
         this.instance.deselectRow();
     }
 
+    clearFocusedRow(): void {
+        this.getFocusedRowElement()?.classList.remove("is-focused");
+        this.focusedRow = null;
+    }
+
     setFilter(field: string, type: string, value: any): this {
         this.instance.setFilter(field, type, value);
         return this;
@@ -237,6 +257,7 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
     }
 
     destroy(): void {
+        this.clearFocusedRow();
         this.table?.destroy();
         this.table = null;
     }
@@ -340,6 +361,35 @@ export class WebFlexGrid<TRow extends object = WebFlexGridRow> {
         }
 
         this.table.setOptions?.(this.tableOptions);
+    }
+
+    private bindFocusedRowClick(): void {
+        if (!this.focusRowOnClick || this.table == null) {
+            return;
+        }
+
+        this.table.on("rowClick", (_event: Event, row: any) => {
+            this.focusRow(row);
+        });
+    }
+
+    private focusRow(row: any): void {
+        this.clearFocusedRow();
+
+        this.focusedRow = row;
+        this.getFocusedRowElement()?.classList.add("is-focused");
+    }
+
+    private getFocusedRowElement(): HTMLElement | null {
+        if (this.focusedRow == null || typeof this.focusedRow.getElement !== "function") {
+            return null;
+        }
+
+        try {
+            return this.focusedRow.getElement() as HTMLElement;
+        } catch {
+            return null;
+        }
     }
 
     private escapeAttributeSelector(value: any): string {

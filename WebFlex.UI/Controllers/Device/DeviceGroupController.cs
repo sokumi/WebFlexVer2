@@ -205,7 +205,7 @@ public class DeviceGroupController : WebFlexController {
 
                 var ids = await _newNo.NewNosAsync("DG", 1);
                 model.ID = ids[0];
-                model.SORT_ORDER ??= await CreateGroupSortOrderAsync(model.MAJOR_GROUP_ID);
+                model.SORT_ORDER = null;
                 model.IsEnabled = true;
                 model.CreatedAt = now;
                 model.UpdatedAt = now;
@@ -325,21 +325,35 @@ public class DeviceGroupController : WebFlexController {
         await using var tran = await _db.Database.BeginTransactionAsync();
 
         try {
-            var groupExists = await _db.Set<OpcGroup>().AsNoTracking().AnyAsync(x => x.ID == model.GROUP_ID);
-            if (!groupExists) throw new WebFlexMessageException("중그룹을 찾을 수 없습니다.");
+            var groupExists = await _db.Set<OpcGroup>()
+                .AsNoTracking()
+                .AnyAsync(x => x.ID == model.GROUP_ID);
 
-            var tags = await _db.Set<OpcTag>().Where(x => model.TAG_IDS.Contains(x.ID)).ToListAsync();
-            if (tags.Count == 0) throw new WebFlexMessageException("이동할 태그를 찾을 수 없습니다.");
+            if (!groupExists) {
+                throw new WebFlexMessageException("중그룹을 찾을 수 없습니다.");
+            }
+
+            var tags = await _db.Set<OpcTag>()
+                .Where(x => model.TAG_IDS.Contains(x.ID))
+                .ToListAsync();
+
+            if (tags.Count == 0) {
+                throw new WebFlexMessageException("이동할 태그를 찾을 수 없습니다.");
+            }
 
             var now = DateTime.UtcNow;
+            var tagIds = tags.Select(x => x.ID).ToList();
+
             foreach (var tag in tags) {
                 tag.GROUP_ID = model.GROUP_ID;
                 tag.UpdatedAt = now;
             }
 
             await _db.SaveChangesAsync();
+
+            await UpdateCurrentValueGroupAsync(tagIds, model.GROUP_ID, now);
+
             await tran.CommitAsync();
-            await UpdateCurrentValueGroupAsync(tags.Select(x => x.ID).ToList(), model.GROUP_ID);
 
             return Success($"{tags.Count}개의 태그를 이동했습니다.");
         } catch (WebFlexMessageException ex) {
@@ -349,6 +363,25 @@ public class DeviceGroupController : WebFlexController {
             await tran.RollbackAsync();
             return ErrorData(GetErrorMessage(ex));
         }
+    }
+
+    private async Task UpdateCurrentValueGroupAsync(
+    List<string> tagIds,
+    string groupId,
+    DateTime updatedAt) {
+
+        if (tagIds.Count == 0) {
+            return;
+        }
+
+        await _tsdDb.Set<CurrentValue>()
+            .Where(x => tagIds.Contains(x.TAG_ID))
+            .ExecuteUpdateAsync(x => x
+                .SetProperty(v => v.GROUP_ID, groupId)
+                .SetProperty(v => v.UPDATEDAT, updatedAt)
+            );
+
+        await _tsdDb.SaveChangesAsync();
     }
 
     [HttpPost, ActionName("delete-tags")]
@@ -421,11 +454,6 @@ public class DeviceGroupController : WebFlexController {
 
     private async Task<int> CreateMajorGroupSortOrderAsync() {
         var values = await _db.Set<OpcMajorGroup>().AsNoTracking().Select(x => x.SORT_ORDER).ToListAsync();
-        return values.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty(0).Max() + 1;
-    }
-
-    private async Task<int> CreateGroupSortOrderAsync(string? majorGroupId) {
-        var values = await _db.Set<OpcGroup>().AsNoTracking().Where(x => x.MAJOR_GROUP_ID == majorGroupId).Select(x => x.SORT_ORDER).ToListAsync();
         return values.Where(x => x.HasValue).Select(x => x!.Value).DefaultIfEmpty(0).Max() + 1;
     }
 

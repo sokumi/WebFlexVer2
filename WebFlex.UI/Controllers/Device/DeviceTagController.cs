@@ -490,9 +490,9 @@ public class DeviceTagController : WebFlexController {
         var now = DateTime.UtcNow;
 
         group = new OpcGroup {
-            ID = await CreateGroupIdAsync(),
+            ID = await _newNo.NewNoAsync("DG"),
             GROUP_NAME = device.DEVICE_NAME,
-            SORT_ORDER = await CreateGroupSortOrderAsync(),
+            SORT_ORDER = null,
             DESCRIPTION = $"{device.DEVICE_NAME} 자동 생성 그룹",
             IsEnabled = true,
             CreatedAt = now,
@@ -502,36 +502,6 @@ public class DeviceTagController : WebFlexController {
         _db.Set<OpcGroup>().Add(group);
 
         return group;
-    }
-
-    private async Task<string> CreateGroupIdAsync() {
-        var ids = await _db.Set<OpcGroup>()
-            .AsNoTracking()
-            .Select(x => x.ID)
-            .ToListAsync();
-
-        var max = ids
-            .Where(x => !string.IsNullOrWhiteSpace(x) && x.StartsWith("DG"))
-            .Select(x => x.Replace("DG", ""))
-            .Where(x => int.TryParse(x, out _))
-            .Select(int.Parse)
-            .DefaultIfEmpty(0)
-            .Max();
-
-        return $"DG{max + 1:0000}";
-    }
-
-    private async Task<int> CreateGroupSortOrderAsync() {
-        var values = await _db.Set<OpcGroup>()
-            .AsNoTracking()
-            .Select(x => x.SORT_ORDER)
-            .ToListAsync();
-
-        return values
-            .Where(x => x.HasValue)
-            .Select(x => x!.Value)
-            .DefaultIfEmpty(0)
-            .Max() + 1;
     }
 
     private async Task InsertCurrentValuesAsync(List<CurrentValue> currentValues) {

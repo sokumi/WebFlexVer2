@@ -21,6 +21,7 @@ export default class Page {
     isLoading = false;
     hasMore = true;
     searchTimer: any = null;
+    reloadSeq = 0;
 
     init() {
         this.initGrid();
@@ -47,16 +48,6 @@ export default class Page {
             index: "rowKey",
             height: "100%",
             layout: "fitColumns",
-            // renderVertical 은 기본값인 "virtual" (가상 스크롤) 을 사용합니다.
-            // "basic" 은 전체 행을 DOM에 유지하기 때문에 2000행 규모에서
-            // SSE 갱신마다 브라우저 부하가 급격히 커집니다.
-            // 이전에는 스크롤 중 addData() 로 데이터를 계속 이어붙이는 방식과
-            // virtual 모드가 겹치면서 내부 렌더 범위(vDom top/bottom, scrollHeight)
-            // 계산이 어긋나 "위로 스크롤 시 지나온 행이 안 보이는" 문제가 있었습니다.
-            // 이제는 reload() 에서 스크롤과 무관하게 전체 데이터를 미리 다 불러온 뒤
-            // (loadAllPages), addData 직후 redraw(true) 로 범위를 강제 재계산하므로
-            // virtual 모드에서도 안전합니다. SSE 업데이트는 여전히 updateData() 대신
-            // 화면에 실제로 렌더링된 행만 골라 patchRowCells() 로 직접 DOM 패치합니다.
             reactiveData: false,
             movableColumns: true,
             placeholder: "조회된 데이터가 없습니다.",
@@ -258,7 +249,7 @@ export default class Page {
         // 이 시점엔 보통 hasMore 가 false 라 loadNextPage() 는 즉시 반환됩니다.
         // 배경 로딩이 아직 끝나지 않은 극히 짧은 순간을 위한 안전망으로만 남겨둡니다.
         if (remain < 320) {
-            void this.loadNextPage();
+            void this.loadNextPage(this.reloadSeq);
         }
 
         this.updateVisibleRange();
@@ -285,6 +276,9 @@ export default class Page {
             return;
         }
 
+        const seq = ++this.reloadSeq;
+
+        this.isLoading = false;
         this.rows = [];
         this.rowMap.clear();
         this.totalCount = 0;
@@ -298,7 +292,7 @@ export default class Page {
             await this.grid.replaceData([]);
         }
 
-        await this.loadAllPages();
+        await this.loadAllPages(seq);
     }
 
     /**
@@ -315,9 +309,9 @@ export default class Page {
      * setTimeout(0) 으로 매 페이지 사이에 브라우저에 제어권을 양보하여
      * 메인 스레드를 길게 블로킹하지 않도록 합니다.
      */
-    async loadAllPages() {
-        while (this.hasMore) {
-            await this.loadNextPage();
+    async loadAllPages(seq: any) {
+        while (this.hasMore && seq === this.reloadSeq) {
+            await this.loadNextPage(seq);
             await new Promise(resolve => window.setTimeout(resolve, 0));
         }
     }
@@ -442,34 +436,50 @@ export default class Page {
         void this.reload();
     }
 
-    async loadNextPage() {
-        if (this.isLoading || !this.hasMore) {
+    async loadNextPage(seq: any = this.reloadSeq) {
+        if (this.isLoading || !this.hasMore || seq !== this.reloadSeq) {
             return;
         }
 
         this.isLoading = true;
         $("#currentValueLoading").removeClass("d-none");
 
+        const groupId = this.selectedGroupId;
+        const keyword = this.keyword;
+        const skip = this.loadedCount;
+
         try {
             const query = new URLSearchParams();
-            query.set("skip", String(this.loadedCount));
+            query.set("skip", String(skip));
             query.set("take", String(this.pageSize));
 
-            if (this.selectedGroupId.length > 0) {
-                query.set("groupId", this.selectedGroupId);
+            if (groupId.length > 0) {
+                query.set("groupId", groupId);
             }
 
-            if (this.keyword.length > 0) {
-                query.set("keyword", this.keyword);
+            if (keyword.length > 0) {
+                query.set("keyword", keyword);
             }
 
             const response = await fetch(`/main/list/page?${query.toString()}`);
+
+            if (seq !== this.reloadSeq ||
+                groupId !== this.selectedGroupId ||
+                keyword !== this.keyword) {
+                return;
+            }
 
             if (!response.ok) {
                 throw new Error(await response.text());
             }
 
             const result: any = await response.json();
+
+            if (seq !== this.reloadSeq ||
+                groupId !== this.selectedGroupId ||
+                keyword !== this.keyword) {
+                return;
+            }
 
             if (!result.success) {
                 throw new Error("CurrentValue 조회 실패");
@@ -499,7 +509,6 @@ export default class Page {
 
             if (this.grid != null) {
                 if (newRows.length > 0) {
-                    // addData 후 스크롤 위치가 맨 위로 초기화되는 문제를 방지합니다.
                     await this.addDataPreserveScroll(newRows);
                 } else if (this.rows.length === 0) {
                     await this.grid.replaceData([]);
@@ -516,12 +525,14 @@ export default class Page {
                 await this.grid?.replaceData?.([]);
             }
         } finally {
-            this.isLoading = false;
-            $("#currentValueLoading").addClass("d-none");
+            if (seq === this.reloadSeq) {
+                this.isLoading = false;
+                $("#currentValueLoading").addClass("d-none");
 
-            window.setTimeout(() => {
-                this.ensureScrollableOrLoadMore();
-            }, 0);
+                window.setTimeout(() => {
+                    this.ensureScrollableOrLoadMore();
+                }, 0);
+            }
         }
     }
 
@@ -561,7 +572,7 @@ export default class Page {
         }
 
         if (holder.scrollHeight <= holder.clientHeight + 20) {
-            void this.loadNextPage();
+            void this.loadNextPage(this.reloadSeq);
         }
     }
 

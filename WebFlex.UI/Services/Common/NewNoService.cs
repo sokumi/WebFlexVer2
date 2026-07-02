@@ -17,13 +17,13 @@ public class NewNoService : INewNoService {
     }
 
     public async Task<string> NewNoAsync(string prefix) {
-        var list = await NewNosAsync(prefix, 1);
-        return list[0];
+        var nos = await NewNosAsync(prefix, 1);
+        return nos[0];
     }
 
     public async Task<List<string>> NewNosAsync(string prefix, int count) {
         if (string.IsNullOrWhiteSpace(prefix)) {
-            throw new ArgumentException("prefix 값이 비어 있습니다.", nameof(prefix));
+            throw new ArgumentException("prefix 값이 없습니다.", nameof(prefix));
         }
 
         if (count <= 0) {
@@ -32,55 +32,43 @@ public class NewNoService : INewNoService {
 
         prefix = prefix.Trim().ToUpperInvariant();
 
-        var datePart = DateTime.Now.ToString("yyMMdd");
-        var noId = $"{prefix}{datePart}";
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
+        var datePart = now.ToString("yyMMdd");
+        var utcNow = DateTime.UtcNow;
 
-        var sequence = await _db.Set<SNewNo>()
-            .FromSqlInterpolated($"""
-                SELECT *
-                FROM s_new_no
-                WHERE no_id = {noId}
-                FOR UPDATE
-                """)
-            .FirstOrDefaultAsync();
+        var newNo = await _db.Set<SNewNo>()
+            .FirstOrDefaultAsync(x => x.PREFIX == prefix && x.DATE_PART == datePart);
 
-        if (sequence == null) {
-            sequence = new SNewNo {
-                ID = noId,
+        if (newNo == null) {
+            newNo = new SNewNo {
+                ID = $"{prefix}{datePart}",
                 PREFIX = prefix,
                 DATE_PART = datePart,
                 CURRENT_NO = 0,
                 IsEnabled = true,
-                CreatedAt = now,
-                UpdatedAt = now
+                CreatedAt = utcNow,
+                UpdatedAt = utcNow
             };
 
-            _db.Set<SNewNo>().Add(sequence);
-            await _db.SaveChangesAsync();
-
-            sequence = await _db.Set<SNewNo>()
-                .FromSqlInterpolated($"""
-                    SELECT *
-                    FROM s_new_no
-                    WHERE no_id = {noId}
-                    FOR UPDATE
-                    """)
-                .FirstAsync();
+            _db.Set<SNewNo>().Add(newNo);
         }
 
-        var startNo = sequence.CURRENT_NO + 1;
-        var endNo = sequence.CURRENT_NO + count;
+        var startNo = newNo.CURRENT_NO + 1;
+        var endNo = newNo.CURRENT_NO + count;
 
-        sequence.CURRENT_NO = endNo;
-        sequence.UpdatedAt = now;
+        if (endNo > 9999) {
+            throw new InvalidOperationException($"{prefix}{datePart} 번호가 9999번을 초과했습니다.");
+        }
+
+        newNo.CURRENT_NO = endNo;
+        newNo.UpdatedAt = utcNow;
 
         await _db.SaveChangesAsync();
 
         var result = new List<string>();
 
-        for (var i = startNo; i <= endNo; i++) {
-            result.Add($"{noId}{i:000}");
+        for (var no = startNo; no <= endNo; no++) {
+            result.Add($"{prefix}{datePart}{no:0000}");
         }
 
         return result;

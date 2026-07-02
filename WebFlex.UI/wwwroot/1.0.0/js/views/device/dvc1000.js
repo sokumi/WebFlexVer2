@@ -10745,14 +10745,22 @@ class WebFlexGrid {
     constructor(selector, options = {}) {
         this.table = null;
         this.tableOptions = {};
+        this.focusedRow = null;
+        this.focusRowOnClick = true;
         this.element = this.resolveElement(selector);
+        const webFlexOptions = options;
+        this.focusRowOnClick = webFlexOptions.focusRowOnClick !== false;
+        const tabulatorOptions = {
+            ...options
+        };
+        delete tabulatorOptions.focusRowOnClick;
         this.tableOptions = {
             layout: "fitColumns",
             height: "100%",
             movableColumns: true,
             selectableRows: false,
             placeholder: "조회된 데이터가 없습니다.",
-            ...options
+            ...tabulatorOptions
         };
     }
     static create(selector, options = {}) {
@@ -10840,9 +10848,11 @@ class WebFlexGrid {
     }
     build() {
         if (this.table != null) {
+            this.clearFocusedRow();
             this.table.destroy();
         }
         this.table = new tabulator_tables__WEBPACK_IMPORTED_MODULE_0__.TabulatorFull(this.element, this.tableOptions);
+        this.bindFocusedRowClick();
         return this;
     }
     get instance() {
@@ -10853,12 +10863,15 @@ class WebFlexGrid {
     }
     async setData(rows = []) {
         await this.instance.setData(rows);
+        this.clearFocusedRow();
     }
     async replaceData(rows = []) {
         await this.instance.replaceData(rows);
+        this.clearFocusedRow();
     }
     async clearData() {
         await this.instance.clearData();
+        this.clearFocusedRow();
     }
     async addRow(row, top = false) {
         await this.instance.addRow(row, top);
@@ -10905,6 +10918,11 @@ class WebFlexGrid {
     clearSelection() {
         this.instance.deselectRow();
     }
+    clearFocusedRow() {
+        var _a;
+        (_a = this.getFocusedRowElement()) === null || _a === void 0 ? void 0 : _a.classList.remove("is-focused");
+        this.focusedRow = null;
+    }
     setFilter(field, type, value) {
         this.instance.setFilter(field, type, value);
         return this;
@@ -10923,6 +10941,7 @@ class WebFlexGrid {
     }
     destroy() {
         var _a;
+        this.clearFocusedRow();
         (_a = this.table) === null || _a === void 0 ? void 0 : _a.destroy();
         this.table = null;
     }
@@ -11014,6 +11033,31 @@ class WebFlexGrid {
             return;
         }
         (_b = (_a = this.table).setOptions) === null || _b === void 0 ? void 0 : _b.call(_a, this.tableOptions);
+    }
+    bindFocusedRowClick() {
+        if (!this.focusRowOnClick || this.table == null) {
+            return;
+        }
+        this.table.on("rowClick", (_event, row) => {
+            this.focusRow(row);
+        });
+    }
+    focusRow(row) {
+        var _a;
+        this.clearFocusedRow();
+        this.focusedRow = row;
+        (_a = this.getFocusedRowElement()) === null || _a === void 0 ? void 0 : _a.classList.add("is-focused");
+    }
+    getFocusedRowElement() {
+        if (this.focusedRow == null || typeof this.focusedRow.getElement !== "function") {
+            return null;
+        }
+        try {
+            return this.focusedRow.getElement();
+        }
+        catch {
+            return null;
+        }
     }
     escapeAttributeSelector(value) {
         return String(value !== null && value !== void 0 ? value : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');

@@ -10983,21 +10983,29 @@ class Page {
         this.devices = [];
         this.deviceSummaries = [];
         this.deviceStatuses = new Map();
+        this.renderedDeviceIds = [];
         this.isLogAutoRefresh = false;
         this.isLogCollapsed = true;
         this.refreshTimerId = null;
         this.isRefreshing = false;
+        this.isRestartingAllSubscription = false;
     }
     init() {
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").on("click", "[data-subscription-action]", event => {
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").on("click", "[data-subscription-button]", event => {
             var _a, _b;
             const $button = jquery__WEBPACK_IMPORTED_MODULE_0___default()(event.currentTarget);
+            if ($button.prop("disabled")) {
+                return;
+            }
             const deviceId = String((_a = $button.attr("data-device-id")) !== null && _a !== void 0 ? _a : "");
             const action = String((_b = $button.attr("data-subscription-action")) !== null && _b !== void 0 ? _b : "");
             void this.postDeviceSubscription(deviceId, action);
         });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnRefreshStatus").on("click", () => {
             void this.refresh();
+        });
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnRestartAllSubscription").on("click", () => {
+            void this.restartAllSubscription();
         });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnClearLogs").on("click", () => this.clearLogs());
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnLoadLogs").on("click", () => {
@@ -11123,6 +11131,7 @@ class Page {
         this.refreshIcons();
     }
     renderDeviceCards() {
+        var _a, _b, _c;
         const rows = this.devices.map((device) => {
             var _a, _b, _c;
             const deviceId = (_a = device.id) !== null && _a !== void 0 ? _a : "";
@@ -11135,14 +11144,51 @@ class Page {
             };
         });
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceSummaryText").text(`${rows.length.toLocaleString()}개 디바이스`);
-        const html = rows
-            .map((row) => this.createDeviceCardHtml(row))
-            .join("");
-        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").html(html || this.createEmptyHtml("조회된 디바이스가 없습니다."));
-        this.refreshIcons();
+        if (rows.length === 0) {
+            this.renderDeviceEmpty();
+            return;
+        }
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost .wf-opc-empty-card").remove();
+        const nextDeviceIds = rows
+            .map((row) => { var _a, _b, _c; return String((_c = (_a = row.device.id) !== null && _a !== void 0 ? _a : (_b = row.status) === null || _b === void 0 ? void 0 : _b.deviceId) !== null && _c !== void 0 ? _c : ""); })
+            .filter((x) => x.length > 0);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost [data-device-card]").each((_, el) => {
+            var _a;
+            const deviceId = String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).attr("data-device-id")) !== null && _a !== void 0 ? _a : "");
+            if (!nextDeviceIds.includes(deviceId)) {
+                jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).remove();
+            }
+        });
+        for (const row of rows) {
+            const deviceId = String((_c = (_a = row.device.id) !== null && _a !== void 0 ? _a : (_b = row.status) === null || _b === void 0 ? void 0 : _b.deviceId) !== null && _c !== void 0 ? _c : "");
+            if (deviceId.length === 0) {
+                continue;
+            }
+            const $card = this.ensureDeviceCard(deviceId);
+            this.updateDeviceCard($card, row);
+        }
+        this.renderedDeviceIds = nextDeviceIds;
     }
-    createDeviceCardHtml(row) {
-        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m;
+    ensureDeviceCard(deviceId) {
+        let $card = this.findDeviceCard(deviceId);
+        if ($card.length > 0) {
+            return $card;
+        }
+        const template = document.getElementById("deviceCardTemplate");
+        if (template == null || template.content == null || template.content.firstElementChild == null) {
+            return jquery__WEBPACK_IMPORTED_MODULE_0___default()();
+        }
+        const newCard = template.content.firstElementChild.cloneNode(true);
+        const $newCard = jquery__WEBPACK_IMPORTED_MODULE_0___default()(newCard);
+        $newCard.attr("data-device-id", deviceId);
+        jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").append($newCard);
+        return $newCard;
+    }
+    updateDeviceCard($card, row) {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o;
+        if ($card.length === 0) {
+            return;
+        }
         const device = row.device;
         const status = row.status;
         const runtime = (_a = status === null || status === void 0 ? void 0 : status.runtimeStatus) !== null && _a !== void 0 ? _a : {};
@@ -11155,6 +11201,7 @@ class Page {
         const subscribedCount = (_k = runtime.subscribedCount) !== null && _k !== void 0 ? _k : 0;
         const currentValueCount = (_l = runtime.currentValueCount) !== null && _l !== void 0 ? _l : 0;
         const totalInserted = (_m = status === null || status === void 0 ? void 0 : status.totalInserted) !== null && _m !== void 0 ? _m : 0;
+        const totalSnapshotRows = (_o = status === null || status === void 0 ? void 0 : status.totalSnapshotRows) !== null && _o !== void 0 ? _o : 0;
         const subscriptionStopped = this.isSubscriptionStopped(row);
         const isRunning = !subscriptionStopped && subscribedCount > 0;
         const isEnabled = device.isEnabled !== false && device.isCollectEnabled !== false;
@@ -11167,85 +11214,49 @@ class Page {
         const percent = tagCount > 0
             ? Math.min(100, Math.round((subscribedCount / tagCount) * 100))
             : 0;
-        return `
-            <article class="wf-opc-device-card ${cardStateClass}">
-                <div class="wf-opc-device-head">
-                    <div class="wf-opc-device-title">
-                        <span class="wf-opc-device-icon">
-                            <i data-lucide="cpu"></i>
-                        </span>
-                        <div>
-                            <h4>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(deviceName)}</h4>
-                            <small>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(deviceCode)}</small>
-                        </div>
-                    </div>
-
-                    <span class="wf-opc-device-status ${cardStateClass}">
-                        <span class="wf-status-dot"></span>
-                        ${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(statusText)}
-                    </span>
-                </div>
-
-                <div class="wf-opc-device-type">${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(deviceType)}</div>
-
-                <div class="wf-opc-endpoint">
-                    <i data-lucide="link"></i>
-                    <span>${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(endpoint)}</span>
-                </div>
-
-                <div class="wf-opc-device-metrics">
-                    <div>
-                        <span>구독 태그</span>
-                        <strong>${this.formatNumber(subscribedCount)} <small>/ ${this.formatNumber(tagCount)}</small></strong>
-                    </div>
-                    <div>
-                        <span>현재값</span>
-                        <strong>${this.formatNumber(currentValueCount)} <small>rows</small></strong>
-                    </div>
-                    <div>
-                        <span>Snapshot</span>
-                        <strong>${this.formatNumber(status === null || status === void 0 ? void 0 : status.totalSnapshotRows)}</strong>
-                    </div>
-                    <div>
-                        <span>DB Insert</span>
-                        <strong>${this.formatNumber(totalInserted)}</strong>
-                    </div>
-                </div>
-
-                <div class="wf-opc-progress">
-                    <span style="width:${percent}%"></span>
-                </div>
-
-                <div class="wf-opc-device-footer">
-                    <div class="wf-opc-device-time">
-                        <span>
-                            <i data-lucide="timer"></i>
-                            ${percent}%
-                        </span>
-                        <span>
-                            <i data-lucide="clock"></i>
-                            ${this.getCurrentTimeText()}
-                        </span>
-                    </div>
-
-                    <div class="wf-opc-device-actions">
-                        <button type="button"
-                                class="btn btn-outline-primary btn-sm"
-                                data-device-id="${(0,_framework_common__WEBPACK_IMPORTED_MODULE_1__.escapeHtml)(deviceId)}"
-                                data-subscription-action="${isRunning ? "stop" : "start"}"
-                                ${!isEnabled ? "disabled" : ""}>
-                            <i data-lucide="${isRunning ? "pause-circle" : "play-circle"}"></i>
-                            ${isRunning ? "구독중지" : "구독시작"}
-                        </button>
-
-                        <span class="wf-opc-db-badge">
-                            <i data-lucide="save"></i>
-                            ${totalInserted > 0 ? "DB저장중" : "DB대기"}
-                        </span>
-                    </div>
-                </div>
-            </article>
-        `;
+        const action = isRunning ? "stop" : "start";
+        const actionText = isRunning ? "구독중지" : "구독시작";
+        const actionIcon = isRunning ? "pause-circle" : "play-circle";
+        $card
+            .removeClass("is-running is-stopped")
+            .addClass(cardStateClass)
+            .attr("data-device-id", deviceId);
+        const $statusBadge = $card.find("[data-field='statusBadge']");
+        $statusBadge
+            .removeClass("is-running is-stopped")
+            .addClass(cardStateClass);
+        this.setCardText($card, "deviceName", deviceName);
+        this.setCardText($card, "deviceCode", deviceCode);
+        this.setCardText($card, "statusText", statusText);
+        this.setCardText($card, "deviceType", deviceType);
+        this.setCardText($card, "endpoint", endpoint);
+        this.setCardText($card, "subscribedCount", this.formatNumber(subscribedCount));
+        this.setCardText($card, "tagCount", this.formatNumber(tagCount));
+        this.setCardText($card, "currentValueCount", this.formatNumber(currentValueCount));
+        this.setCardText($card, "totalSnapshotRows", this.formatNumber(totalSnapshotRows));
+        this.setCardText($card, "totalInserted", this.formatNumber(totalInserted));
+        this.setCardText($card, "percent", `${percent}%`);
+        this.setCardText($card, "updatedTime", this.getCurrentTimeText());
+        this.setCardText($card, "actionText", actionText);
+        this.setCardText($card, "dbStatusText", totalInserted > 0 ? "DB저장중" : "DB대기");
+        $card.find("[data-field='progressBar']").css("width", `${percent}%`);
+        const $button = $card.find("[data-subscription-button]");
+        $button
+            .attr("data-device-id", deviceId)
+            .attr("data-subscription-action", action)
+            .prop("disabled", !isEnabled);
+        $card.find("[data-field='actionIcon']").attr("data-lucide", actionIcon);
+    }
+    setCardText($card, field, value) {
+        const $el = $card.find(`[data-field='${field}']`);
+        const text = value == null || value === "" ? "-" : String(value);
+        if ($el.text() === text) {
+            return;
+        }
+        $el.text(text);
+    }
+    findDeviceCard(deviceId) {
+        return jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost [data-device-card]").filter((_, el) => { var _a; return String((_a = jquery__WEBPACK_IMPORTED_MODULE_0___default()(el).attr("data-device-id")) !== null && _a !== void 0 ? _a : "") === String(deviceId !== null && deviceId !== void 0 ? deviceId : ""); });
     }
     isSubscriptionStopped(row) {
         var _a, _b, _c, _d;
@@ -11278,12 +11289,15 @@ class Page {
     renderDeviceEmpty() {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceSummaryText").text("0개 디바이스");
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblStoppedCount").text("0개 구독중지");
+        this.renderedDeviceIds = [];
+        this.deviceStatuses.clear();
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").html(this.createEmptyHtml("조회된 디바이스가 없습니다."));
         this.refreshIcons();
     }
     renderDeviceError(message) {
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblDeviceSummaryText").text("0개 디바이스");
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#lblStoppedCount").text("상태 조회 실패");
+        this.renderedDeviceIds = [];
         jquery__WEBPACK_IMPORTED_MODULE_0___default()("#deviceCardHost").html(this.createEmptyHtml(message));
         this.refreshIcons();
     }
@@ -11317,6 +11331,45 @@ class Page {
             console.error(e);
             _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "요청 처리 중 오류가 발생했습니다.");
         }
+    }
+    async restartAllSubscription() {
+        if (this.isRestartingAllSubscription) {
+            return;
+        }
+        if (!confirm("전체 디바이스 구독을 모두 끊고 다시 재구독하시겠습니까?")) {
+            return;
+        }
+        this.isRestartingAllSubscription = true;
+        const $button = jquery__WEBPACK_IMPORTED_MODULE_0___default()("#btnRestartAllSubscription");
+        $button.prop("disabled", true);
+        $button.html(`<i data-lucide="loader-circle"></i> 재구독 중`);
+        try {
+            await this.postCollectorAction("/api/opc-collector/subscription/stop");
+            await this.postCollectorAction("/api/opc-collector/subscription/start");
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.success("전체 디바이스 구독 자동 재구독 요청 완료");
+            await this.loadStatus();
+            await this.loadDeviceSummary();
+            await this.loadDeviceCards();
+        }
+        catch (e) {
+            console.error(e);
+            _framework_notify__WEBPACK_IMPORTED_MODULE_2__.notify.error(e instanceof Error ? e.message : "전체 구독 자동 재구독 중 오류가 발생했습니다.");
+        }
+        finally {
+            this.isRestartingAllSubscription = false;
+            $button.prop("disabled", false);
+            $button.html(`<i data-lucide="rotate-cw"></i> 전체 구독 자동 재구독`);
+            this.refreshIcons();
+        }
+    }
+    async postCollectorAction(url) {
+        const response = await fetch(url, {
+            method: "POST"
+        });
+        if (!response.ok) {
+            throw new Error(await response.text());
+        }
+        return await response.json();
     }
     async startLogAutoRefresh() {
         this.isLogAutoRefresh = true;
